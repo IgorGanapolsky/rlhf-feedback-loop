@@ -12,6 +12,7 @@ capture explicit feedback, convert valid memories, prevent repeated failures, an
 3. Regenerate prevention rules from repeated mistakes.
 4. Use context packs to bound retrieval for active tasks.
 5. Publish verification evidence before claiming completion.
+6. Respect autonomous GitOps: PR gate first, then auto-merge policies.
 
 ## Core Commands
 
@@ -28,10 +29,13 @@ npm run feedback:rules
 npm run feedback:export:dpo
 npm run intents:list
 npm run intents:plan
+npm run self-heal:check
+npm run self-heal:run
 
 # engineering proof gate
 npm test
 npm run prove:adapters
+npm run prove:automation
 ```
 
 ## MCP Profile Safety
@@ -45,7 +49,16 @@ npm run prove:adapters
 
 - Test output from `npm test`.
 - Adapter compatibility report in `proof/compatibility/report.json` and `proof/compatibility/report.md`.
+- Automation proof report in `proof/automation/report.json` and `proof/automation/report.md`.
 - Updated `docs/VERIFICATION_EVIDENCE.md` for any behavior change.
+
+## Semantic Cache Controls
+
+- `RLHF_SEMANTIC_CACHE_ENABLED` defaults to `true`
+- `RLHF_SEMANTIC_CACHE_THRESHOLD` defaults to `0.7`
+- `RLHF_SEMANTIC_CACHE_TTL_SECONDS` defaults to `86400`
+
+Use cache hit metadata from `/v1/context/construct` to validate cost/latency wins.
 
 ## Data Location
 

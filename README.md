@@ -1,6 +1,7 @@
 # RLHF Feedback Loop
 
 [![CI](https://github.com/IgorGanapolsky/rlhf-feedback-loop/actions/workflows/ci.yml/badge.svg)](https://github.com/IgorGanapolsky/rlhf-feedback-loop/actions/workflows/ci.yml)
+[![Self-Healing](https://github.com/IgorGanapolsky/rlhf-feedback-loop/actions/workflows/self-healing-monitor.yml/badge.svg)](https://github.com/IgorGanapolsky/rlhf-feedback-loop/actions/workflows/self-healing-monitor.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![MCP Ready](https://img.shields.io/badge/MCP-ready-black)](adapters/mcp/server-stdio.js)
 [![DPO Ready](https://img.shields.io/badge/DPO-ready-blue)](scripts/export-dpo-pairs.js)
@@ -112,6 +113,35 @@ Versioned orchestration bundles define intent-to-action plans and checkpoint pol
 The router marks high-risk intents as `checkpoint_required` unless explicitly approved.
 Details: [docs/INTENT_ROUTER.md](docs/INTENT_ROUTER.md)
 
+## Autonomous GitOps
+
+The repo now ships with PR-gated autonomous operations:
+
+- `CI` (`.github/workflows/ci.yml`): required quality gate (`npm test`, adapter proof, automation proof)
+- `Agent PR Auto-Merge` (`.github/workflows/agent-automerge.yml`): auto-merges eligible agent branches (`claude/*`, `codex/*`, `auto/*`, `agent/*`) after required checks pass
+- `Dependabot Auto-Merge` (`.github/workflows/dependabot-automerge.yml`): auto-approves and merges safe dependency updates after required checks pass
+- `Self-Healing Monitor` (`.github/workflows/self-healing-monitor.yml`): scheduled health checks, auto-created alert issue on failure, remediation PR generation when fixable
+- `Self-Healing Auto-Fix` (`.github/workflows/self-healing-auto-fix.yml`): scheduled safe-fix attempts that open remediation PRs
+- `Merge Branch to Main` (`.github/workflows/merge-branch.yml`): manual fallback that still uses PR flow and branch protections
+
+Required repo settings:
+
+- `main` protected + required check(s)
+- auto-merge enabled
+- branch deletion on merge enabled
+
+Secrets:
+
+- Required: `GH_PAT` (or rely on `GITHUB_TOKEN` where permitted)
+- Optional: `SENTRY_AUTH_TOKEN`, `SENTRY_DSN`
+- Optional (LLM router): `LLM_GATEWAY_BASE_URL`, `LLM_GATEWAY_API_KEY`, `TETRATE_API_KEY`
+
+Sync helper:
+
+```bash
+bash scripts/sync-gh-secrets-from-env.sh IgorGanapolsky/rlhf-feedback-loop
+```
+
 ## PaperBanana Diagrams
 
 Generate architecture visuals with a budget guard:
@@ -131,6 +161,31 @@ Automation proof artifacts: [proof/automation/report.md](proof/automation/report
 Default monthly cap is `$10` for paid external operations.
 The local budget ledger blocks additional spend if cap would be exceeded.
 
+## Semantic Cache (Cost + Latency)
+
+Context pack construction now supports semantic cache reuse for similar queries:
+
+- token-overlap (Jaccard) similarity gate
+- TTL-bound cache entries
+- full provenance (`context_pack_cache_hit`)
+
+Environment toggles:
+
+- `RLHF_SEMANTIC_CACHE_ENABLED=true|false` (default `true`)
+- `RLHF_SEMANTIC_CACHE_THRESHOLD=0.7`
+- `RLHF_SEMANTIC_CACHE_TTL_SECONDS=86400`
+
+This directly reduces repeated retrieval/LLM context assembly work and improves response latency under budget constraints.
+
+## Optional Tetrate Router
+
+Not required for core local RLHF logic.
+Recommended only when routing paid LLM calls (PaperBanana, external judges, hosted control-plane features):
+
+- centralized provider routing
+- price/fallback control
+- unified usage observability
+
 ## Commercialization
 
 - OSS core for adoption
@@ -142,3 +197,4 @@ See:
 - [docs/PACKAGING_AND_SALES_PLAN.md](docs/PACKAGING_AND_SALES_PLAN.md)
 - [docs/PLATFORM_RESEARCH_2026-03-03.md](docs/PLATFORM_RESEARCH_2026-03-03.md)
 - [docs/PLUGIN_DISTRIBUTION.md](docs/PLUGIN_DISTRIBUTION.md)
+- [docs/AUTONOMOUS_GITOPS.md](docs/AUTONOMOUS_GITOPS.md)

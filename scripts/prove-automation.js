@@ -13,6 +13,9 @@ const { exportDpoFromMemories } = require('./export-dpo-pairs');
 const { planIntent } = require('./intent-router');
 const { startServer } = require('../src/api/server');
 const { handleRequest } = require('../adapters/mcp/server-stdio');
+const { collectHealthReport } = require('./self-healing-check');
+const { runSelfHeal } = require('./self-heal');
+const { CONTEXTFS_ROOT, NAMESPACES } = require('./contextfs');
 
 const ROOT = path.join(__dirname, '..');
 const DEFAULT_PROOF_DIR = path.join(ROOT, 'proof', 'automation');
@@ -259,6 +262,56 @@ async function runAutomationProof(options = {}) {
       const evalBody = await evaluate.json();
       check(Boolean(evalBody.rubricEvaluation), 'expected rubricEvaluation on context evaluate result');
       addResult('context.evaluate.rubric', true, { rubricId: evalBody.rubricEvaluation.rubricId });
+    }
+
+    // 11) semantic cache hit on equivalent query
+    {
+      fs.rmSync(path.join(CONTEXTFS_ROOT, NAMESPACES.provenance, 'semantic-cache.jsonl'), { force: true });
+      const first = await fetch(`http://localhost:${port}/v1/context/construct`, {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer automation-proof-key',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query: 'verification testing evidence', maxItems: 5, maxChars: 5000 }),
+      });
+      check(first.status === 200, `first context construct expected 200, got ${first.status}`);
+      const firstPack = await first.json();
+
+      const second = await fetch(`http://localhost:${port}/v1/context/construct`, {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer automation-proof-key',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query: 'testing verification evidence', maxItems: 5, maxChars: 5000 }),
+      });
+      check(second.status === 200, `second context construct expected 200, got ${second.status}`);
+      const secondPack = await second.json();
+      check(firstPack.cache && firstPack.cache.hit === false, 'first pack expected cache miss');
+      check(secondPack.cache && secondPack.cache.hit === true, 'second pack expected cache hit');
+      addResult('context.semantic_cache.hit', true, {
+        firstHit: firstPack.cache.hit,
+        secondHit: secondPack.cache.hit,
+        similarity: secondPack.cache.similarity,
+      });
+    }
+
+    // 12) self-healing helpers produce healthy reports in baseline state
+    {
+      const health = collectHealthReport({
+        checks: [
+          { name: 'noop', command: ['node', '-e', 'process.exit(0)'] },
+        ],
+      });
+      check(health.overall_status === 'healthy', 'health report expected healthy for noop check');
+
+      const heal = runSelfHeal({ reason: 'automation-proof', cwd: ROOT });
+      check(heal.healthy === true, 'self-heal expected healthy execution');
+      addResult('self_healing.helpers', true, {
+        healthStatus: health.overall_status,
+        changed: heal.changed,
+      });
     }
   } catch (err) {
     addResult('fatal', false, { error: err.message });

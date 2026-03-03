@@ -13,7 +13,7 @@ Result summary:
 - `test:schema`: 7 passed, 0 failed
 - `test:loop`: 10 passed, 0 failed
 - `test:dpo`: 6 passed, 0 failed
-- `test:api`: 45 passed, 0 failed
+- `test:api`: 52 passed, 0 failed
 - `test:proof`: 2 passed, 0 failed
 
 ## Adapter compatibility proof harness
@@ -53,7 +53,7 @@ npm run prove:automation
 
 Observed result:
 
-- Summary: `10 passed`, `0 failed`
+- Summary: `12 passed`, `0 failed`
 - Evidence artifacts:
   - `proof/automation/report.json`
   - `proof/automation/report.md`
@@ -65,6 +65,26 @@ Observed result:
   - API + MCP rubric gate behavior
   - intent checkpoint enforcement
   - rubric-aware context evaluation
+  - semantic-cache hit behavior for similar context queries
+  - self-healing helper execution health checks
+
+## Self-healing automation verification
+
+Commands:
+
+```bash
+npm run self-heal:check
+node scripts/self-healing-check.js --json > proof/automation/self-healing-health.json
+node scripts/self-heal.js --reason=manual > proof/automation/self-heal-run.json
+```
+
+Observed result:
+
+- Health status: `healthy` (4/4 checks healthy: budget, tests, adapter proof, automation proof)
+- Self-heal execution: `healthy: true`, no failing fix steps
+- Evidence artifacts:
+  - `proof/automation/self-healing-health.json`
+  - `proof/automation/self-heal-run.json`
 
 ## API smoke verification
 
@@ -93,6 +113,28 @@ Observed results:
 - MCP allowlists enforce profile-scoped tool access (`default`, `readonly`, `locked`).
 - Rubric anti-hacking gate blocks unsafe positive memory promotion when guardrails fail or judges disagree.
 
+## Autonomous GitOps verification
+
+GitHub API checks:
+
+- `allow_auto_merge: true`
+- `delete_branch_on_merge: true`
+- `main` branch protection retains:
+  - required approvals: `1`
+  - required check contexts: `["test"]`
+  - required linear history: `true`
+  - required conversation resolution: `true`
+
+Workflow syntax validation command:
+
+```bash
+for f in .github/workflows/*.yml; do ruby -e 'require "yaml"; YAML.load_file(ARGV[0]); puts "OK #{ARGV[0]}"' "$f"; done
+```
+
+Observed result:
+
+- All workflow files parsed successfully (`OK` for each).
+
 ## Budget status
 
 Command:
@@ -104,9 +146,9 @@ npm run budget:status
 Observed result:
 
 - Month: `2026-03`
-- Tracked spend: `0.3`
+- Tracked spend: `0`
 - Budget: `10`
-- Remaining: `9.7`
+- Remaining: `10`
 
 ## PaperBanana verification
 

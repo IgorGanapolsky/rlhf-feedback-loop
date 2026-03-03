@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-03T20:01:04.596Z",
+  "generatedAt": "2026-03-03T20:25:11.760Z",
   "checks": [
     {
       "name": "feedback.capture.rubric_pass",
@@ -97,10 +97,27 @@
       "details": {
         "rubricId": "default-v1"
       }
+    },
+    {
+      "name": "context.semantic_cache.hit",
+      "passed": true,
+      "details": {
+        "firstHit": false,
+        "secondHit": true,
+        "similarity": 1
+      }
+    },
+    {
+      "name": "self_healing.helpers",
+      "passed": true,
+      "details": {
+        "healthStatus": "healthy",
+        "changed": false
+      }
     }
   ],
   "summary": {
-    "passed": 10,
+    "passed": 12,
     "failed": 0
   }
 }

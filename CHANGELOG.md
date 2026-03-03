@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0 - 2026-03-03
+
+- Added autonomous GitOps workflows: agent auto-merge, Dependabot auto-merge, self-healing monitor, and merge-branch fallback.
+- Enabled CI proof artifact uploads and strengthened CI concurrency/branch scoping.
+- Added self-healing command layer (`scripts/self-healing-check.js`, `scripts/self-heal.js`) with unit tests.
+- Added semantic cache for ContextFS context-pack construction with TTL + similarity gating and provenance events.
+- Added secret-sync helper (`scripts/sync-gh-secrets-from-env.sh`) and docs for required repo settings/secrets.
+
 ## 0.4.0 - 2026-03-03
 
 - Added rubric-based RLHF scoring with configurable criteria and weighted evaluation.
