@@ -13,12 +13,13 @@ Most teams collect feedback but do not convert it into reliable behavior change.
 This project gives you a working loop:
 
 1. Capture thumbs up/down with context.
-2. Promote only schema-valid memories.
-3. Generate prevention rules from repeated mistakes.
-4. Export DPO-ready preference pairs.
-5. Construct bounded context packs (constructor/loader/evaluator).
-6. Reuse the same core through API + MCP wrappers.
-7. Route intents through policy bundles with human checkpoints on high-risk actions.
+2. Score outcomes with weighted rubrics and objective guardrails.
+3. Promote only schema-valid, rubric-eligible memories.
+4. Generate prevention rules from repeated mistakes and failed rubric dimensions.
+5. Export DPO-ready preference pairs with rubric deltas.
+6. Construct bounded context packs (constructor/loader/evaluator).
+7. Reuse the same core through API + MCP wrappers.
+8. Route intents through policy bundles with human checkpoints on high-risk actions.
 
 ## Quick Start
 
@@ -89,6 +90,15 @@ Use least-privilege MCP profiles based on runtime risk:
 - `locked`: summary-only constrained mode
 
 Config: [config/mcp-allowlists.json](config/mcp-allowlists.json)
+
+## Rubric Engine
+
+Rubric config: `config/rubrics/default-v1.json`
+
+- Weighted criteria scoring (`1-5`)
+- Multi-judge disagreement detection
+- Objective guardrail checks (`testsPassed`, `pathSafety`, `budgetCompliant`)
+- Promotion gate blocks positive memory writes on unsafe/high-disagreement signals
 
 ## Intent Router
 

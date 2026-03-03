@@ -48,6 +48,32 @@ test('feedback capture accepts valid payload', async () => {
   assert.ok(body.memoryRecord);
 });
 
+test('feedback capture blocks positive memory promotion when rubric guardrail fails', async () => {
+  const res = await fetch('http://localhost:8790/v1/feedback/capture', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', ...authHeader },
+    body: JSON.stringify({
+      signal: 'up',
+      context: 'Looks correct',
+      whatWorked: 'No evidence attached',
+      rubricScores: [
+        { criterion: 'verification_evidence', score: 5, judge: 'judge-a' },
+        { criterion: 'verification_evidence', score: 2, judge: 'judge-b', evidence: 'missing test logs' },
+      ],
+      guardrails: {
+        testsPassed: false,
+        pathSafety: true,
+        budgetCompliant: true,
+      },
+      tags: ['verification'],
+    }),
+  });
+  assert.equal(res.status, 422);
+  const body = await res.json();
+  assert.equal(body.accepted, false);
+  assert.match(body.reason, /Rubric gate prevented promotion/);
+});
+
 test('intent catalog endpoint returns configured intents', async () => {
   const res = await fetch('http://localhost:8790/v1/intents/catalog?mcpProfile=locked', { headers: authHeader });
   assert.equal(res.status, 200);
@@ -123,11 +149,22 @@ test('context construct/evaluate/provenance endpoints work', async () => {
       outcome: 'useful',
       signal: 'positive',
       notes: 'api test',
+      rubricScores: [
+        { criterion: 'correctness', score: 4, evidence: 'tests green', judge: 'judge-a' },
+        { criterion: 'verification_evidence', score: 4, evidence: 'output attached', judge: 'judge-a' },
+      ],
+      guardrails: {
+        testsPassed: true,
+        pathSafety: true,
+        budgetCompliant: true,
+      },
     }),
   });
   assert.equal(evalRes.status, 200);
   const evalBody = await evalRes.json();
   assert.equal(evalBody.packId, constructBody.packId);
+  assert.ok(evalBody.rubricEvaluation);
+  assert.equal(typeof evalBody.rubricEvaluation.promotionEligible, 'boolean');
 
   const provRes = await fetch('http://localhost:8790/v1/context/provenance?limit=5', {
     headers: authHeader,

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-03T19:30:28.416Z",
+  "generatedAt": "2026-03-03T19:55:42.283Z",
   "checks": [
     {
       "name": "api.healthz",
@@ -39,18 +39,26 @@
       }
     },
     {
+      "name": "api.capture_feedback.rubric_gate",
+      "passed": true,
+      "details": {
+        "accepted": false
+      }
+    },
+    {
       "name": "api.context.construct",
       "passed": true,
       "details": {
-        "packId": "pack_1772566228464_5tuiy0",
-        "items": 4
+        "packId": "pack_1772567742336_p5tnq8",
+        "items": 5
       }
     },
     {
       "name": "api.context.evaluate",
       "passed": true,
       "details": {
-        "status": 200
+        "status": 200,
+        "rubric": "default-v1"
       }
     },
     {
@@ -79,6 +87,13 @@
       "passed": true,
       "details": {
         "status": "checkpoint_required"
+      }
+    },
+    {
+      "name": "mcp.tools.call.capture_feedback.rubric_gate",
+      "passed": true,
+      "details": {
+        "accepted": false
       }
     },
     {
@@ -130,7 +145,7 @@
     }
   ],
   "summary": {
-    "passed": 17,
+    "passed": 19,
     "failed": 0
   }
 }

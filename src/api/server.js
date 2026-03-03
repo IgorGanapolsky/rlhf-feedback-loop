@@ -23,6 +23,9 @@ const {
   getProvenance,
 } = require('../../scripts/contextfs');
 const {
+  buildRubricEvaluation,
+} = require('../../scripts/rubric-engine');
+const {
   listIntents,
   planIntent,
 } = require('../../scripts/intent-router');
@@ -84,6 +87,21 @@ function parseJsonBody(req, maxBytes = 1024 * 1024) {
 
     req.on('error', reject);
   });
+}
+
+function parseOptionalObject(input, name) {
+  if (input == null) return {};
+  if (typeof input === 'object' && !Array.isArray(input)) return input;
+  if (typeof input === 'string') {
+    const trimmed = input.trim();
+    if (!trimmed) return {};
+    const parsed = JSON.parse(trimmed);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      throw createHttpError(400, `${name} must be an object`);
+    }
+    return parsed;
+  }
+  throw createHttpError(400, `${name} must be an object`);
 }
 
 function getExpectedApiKey() {
@@ -201,6 +219,8 @@ function createApiServer() {
           whatWentWrong: body.whatWentWrong,
           whatToChange: body.whatToChange,
           whatWorked: body.whatWorked,
+          rubricScores: body.rubricScores,
+          guardrails: body.guardrails,
           tags: extractTags(body.tags),
           skill: body.skill,
         });
@@ -279,11 +299,23 @@ function createApiServer() {
         if (!body.packId || !body.outcome) {
           throw createHttpError(400, 'packId and outcome are required');
         }
+        let rubricEvaluation = null;
+        if (body.rubricScores != null || body.guardrails != null) {
+          try {
+            rubricEvaluation = buildRubricEvaluation({
+              rubricScores: body.rubricScores,
+              guardrails: parseOptionalObject(body.guardrails, 'guardrails'),
+            });
+          } catch (err) {
+            throw createHttpError(400, `Invalid rubric payload: ${err.message}`);
+          }
+        }
         const evaluation = evaluateContextPack({
           packId: body.packId,
           outcome: body.outcome,
           signal: body.signal || null,
           notes: body.notes || '',
+          rubricEvaluation,
         });
         sendJson(res, 200, evaluation);
         return;

@@ -12,6 +12,7 @@ On explicit user feedback signals (`thumbs up/down`, `that worked/failed`, `corr
 4. Regenerate prevention rules from accumulated mistakes.
 5. Do not mark work complete without test + proof artifacts.
 6. For high-risk intents (for example DPO publishing), require checkpoint approval before execution.
+7. Use rubric + guardrail signals where possible; do not promote positive memories when rubric gate fails.
 
 ## Required Commands
 

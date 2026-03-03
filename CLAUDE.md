@@ -19,6 +19,7 @@ capture explicit feedback, convert valid memories, prevent repeated failures, an
 # feedback capture
 node .claude/scripts/feedback/capture-feedback.js --feedback=up --context="..." --what-worked="..." --tags="..."
 node .claude/scripts/feedback/capture-feedback.js --feedback=down --context="..." --what-went-wrong="..." --what-to-change="..." --tags="..."
+node .claude/scripts/feedback/capture-feedback.js --feedback=up --context="..." --rubric-scores='[{"criterion":"correctness","score":4}]' --guardrails='{"testsPassed":true,"pathSafety":true,"budgetCompliant":true}' --tags="..."
 
 # analysis and prevention
 npm run feedback:stats

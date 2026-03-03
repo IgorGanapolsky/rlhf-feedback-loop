@@ -1,6 +1,6 @@
 {
   "name": "rlhf-feedback-loop",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Production-grade RLHF feedback operations for coding agents: capture thumbs signals, enforce schema quality, prevent repeated mistakes, and export DPO pairs.",
   "main": "scripts/feedback-loop.js",
   "type": "commonjs",
@@ -9,7 +9,7 @@
     "test:schema": "node scripts/feedback-schema.js --test",
     "test:loop": "node scripts/feedback-loop.js --test",
     "test:dpo": "node scripts/export-dpo-pairs.js --test",
-    "test:api": "node --test tests/api-server.test.js tests/api-auth-config.test.js tests/mcp-server.test.js tests/adapters.test.js tests/openapi-parity.test.js tests/budget-guard.test.js tests/contextfs.test.js tests/mcp-policy.test.js tests/subagent-profiles.test.js tests/intent-router.test.js",
+    "test:api": "node --test tests/api-server.test.js tests/api-auth-config.test.js tests/mcp-server.test.js tests/adapters.test.js tests/openapi-parity.test.js tests/budget-guard.test.js tests/contextfs.test.js tests/mcp-policy.test.js tests/subagent-profiles.test.js tests/intent-router.test.js tests/rubric-engine.test.js",
     "test:proof": "node --test tests/prove-adapters.test.js",
     "start:api": "node src/api/server.js",
     "start:mcp": "node adapters/mcp/server-stdio.js",

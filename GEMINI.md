@@ -21,6 +21,7 @@ Source of truth for Gemini declarations:
 - Map `up` to learning memory, `down` to mistake memory.
 - For low-context signals, preserve event but avoid memory promotion.
 - Keep tool calls within local safe paths unless `RLHF_ALLOW_EXTERNAL_PATHS=true`.
+- Provide `rubricScores` + `guardrails` when available so reward-hacking checks can block unsafe positive promotion.
 
 ## Suggested Runtime Mapping
 

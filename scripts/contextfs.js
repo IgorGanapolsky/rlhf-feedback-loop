@@ -322,13 +322,14 @@ function constructContextPack({ query = '', maxItems = 8, maxChars = 6000, names
   return pack;
 }
 
-function evaluateContextPack({ packId, outcome, signal = null, notes = '' }) {
+function evaluateContextPack({ packId, outcome, signal = null, notes = '', rubricEvaluation = null }) {
   const evaluation = {
     id: `eval_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
     packId,
     outcome,
     signal,
     notes,
+    rubricEvaluation,
     timestamp: nowIso(),
   };
 
@@ -338,6 +339,7 @@ function evaluateContextPack({ packId, outcome, signal = null, notes = '' }) {
     packId,
     outcome,
     signal,
+    rubricPromotionEligible: rubricEvaluation ? rubricEvaluation.promotionEligible : null,
   });
 
   return evaluation;

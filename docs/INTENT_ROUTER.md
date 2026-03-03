@@ -10,6 +10,7 @@ It converts free-form work goals into policy-aware plans:
 2. Expand to ordered actions.
 3. Apply risk policy for checkpoint requirements.
 4. Return `ready` or `checkpoint_required`.
+5. Pair execution outcomes with rubric-based evaluation for non-verifiable tasks.
 
 ## Policy Bundles
 
@@ -44,4 +45,3 @@ If approval is required and `approved` is not set, plan status is `checkpoint_re
 npm run intents:list
 npm run intents:plan
 ```
-

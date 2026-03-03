@@ -20,6 +20,9 @@ const {
   getProvenance,
 } = require('../../scripts/contextfs');
 const {
+  buildRubricEvaluation,
+} = require('../../scripts/rubric-engine');
+const {
   listIntents,
   planIntent,
 } = require('../../scripts/intent-router');
@@ -31,7 +34,7 @@ const {
 
 const SERVER_INFO = {
   name: 'rlhf-feedback-loop-mcp',
-  version: '1.0.0',
+  version: '1.1.0',
 };
 const SAFE_DATA_DIR = path.resolve(path.dirname(FEEDBACK_LOG_PATH));
 
@@ -64,6 +67,26 @@ const TOOLS = [
         whatWorked: { type: 'string' },
         tags: { type: 'array', items: { type: 'string' } },
         skill: { type: 'string' },
+        rubricScores: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              criterion: { type: 'string' },
+              score: { type: 'number' },
+              evidence: { type: 'string' },
+              judge: { type: 'string' },
+            },
+          },
+        },
+        guardrails: {
+          type: 'object',
+          properties: {
+            testsPassed: { type: 'boolean' },
+            pathSafety: { type: 'boolean' },
+            budgetCompliant: { type: 'boolean' },
+          },
+        },
       },
     },
   },
@@ -156,6 +179,26 @@ const TOOLS = [
         outcome: { type: 'string' },
         signal: { type: 'string' },
         notes: { type: 'string' },
+        rubricScores: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              criterion: { type: 'string' },
+              score: { type: 'number' },
+              evidence: { type: 'string' },
+              judge: { type: 'string' },
+            },
+          },
+        },
+        guardrails: {
+          type: 'object',
+          properties: {
+            testsPassed: { type: 'boolean' },
+            pathSafety: { type: 'boolean' },
+            budgetCompliant: { type: 'boolean' },
+          },
+        },
       },
     },
   },
@@ -176,6 +219,21 @@ function toText(result) {
   return JSON.stringify(result, null, 2);
 }
 
+function parseOptionalObject(input, name) {
+  if (input == null) return {};
+  if (typeof input === 'object' && !Array.isArray(input)) return input;
+  if (typeof input === 'string') {
+    const trimmed = input.trim();
+    if (!trimmed) return {};
+    const parsed = JSON.parse(trimmed);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      throw new Error(`${name} must be an object`);
+    }
+    return parsed;
+  }
+  throw new Error(`${name} must be an object`);
+}
+
 async function callTool(name, args = {}) {
   assertToolAllowed(name, getActiveMcpProfile());
 
@@ -186,6 +244,8 @@ async function callTool(name, args = {}) {
       whatWentWrong: args.whatWentWrong,
       whatToChange: args.whatToChange,
       whatWorked: args.whatWorked,
+      rubricScores: args.rubricScores,
+      guardrails: parseOptionalObject(args.guardrails, 'guardrails'),
       tags: args.tags || [],
       skill: args.skill,
     });
@@ -266,6 +326,12 @@ async function callTool(name, args = {}) {
       outcome: args.outcome,
       signal: args.signal || null,
       notes: args.notes || '',
+      rubricEvaluation: args.rubricScores || args.guardrails
+        ? buildRubricEvaluation({
+          rubricScores: args.rubricScores,
+          guardrails: parseOptionalObject(args.guardrails, 'guardrails'),
+        })
+        : null,
     });
     return { content: [{ type: 'text', text: toText(result) }] };
   }

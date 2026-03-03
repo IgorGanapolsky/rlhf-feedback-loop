@@ -10,10 +10,10 @@ npm test
 
 Result summary:
 
-- `test:schema`: 6 passed, 0 failed
-- `test:loop`: 8 passed, 0 failed
-- `test:dpo`: 5 passed, 0 failed
-- `test:api`: 40 passed, 0 failed
+- `test:schema`: 7 passed, 0 failed
+- `test:loop`: 10 passed, 0 failed
+- `test:dpo`: 6 passed, 0 failed
+- `test:api`: 45 passed, 0 failed
 - `test:proof`: 1 passed, 0 failed
 
 ## Adapter compatibility proof harness
@@ -26,16 +26,18 @@ npm run prove:adapters
 
 Observed result:
 
-- Summary: `17 passed`, `0 failed`
+- Summary: `19 passed`, `0 failed`
 - Evidence artifacts:
   - `proof/compatibility/report.json`
   - `proof/compatibility/report.md`
 - Verified checks include:
   - API auth and feedback/context/intents routes
+  - Rubric-based gating for positive feedback (`422` when guardrails/disagreement fail)
+  - Rubric-aware context evaluation payloads
   - API auth config hardening (`RLHF_API_KEY` required unless insecure mode enabled)
   - Context namespace traversal rejection on API + MCP surfaces
   - Intent router checkpoint flow (`checkpoint_required` for unapproved high-risk intents)
-  - MCP initialize/list/call flow (including `plan_intent`)
+  - MCP initialize/list/call flow (including `plan_intent` and rubric-gated `capture_feedback`)
   - MCP locked-profile write denial
   - OpenAPI parity for ChatGPT adapter
   - Gemini declaration validity
@@ -66,6 +68,7 @@ Observed results:
 - MCP `prevention_rules` blocks external `outputPath`.
 - MCP `export_dpo_pairs` blocks external `memoryLogPath`.
 - MCP allowlists enforce profile-scoped tool access (`default`, `readonly`, `locked`).
+- Rubric anti-hacking gate blocks unsafe positive memory promotion when guardrails fail or judges disagree.
 
 ## Budget status
 

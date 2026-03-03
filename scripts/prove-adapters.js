@@ -120,6 +120,31 @@ async function runProof(options = {}) {
     }
 
     {
+      const res = await fetch(`http://localhost:${port}/v1/feedback/capture`, {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer proof-key',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          signal: 'up',
+          context: 'unsafe approval attempt',
+          whatWorked: 'claimed success',
+          rubricScores: [
+            { criterion: 'verification_evidence', score: 5, judge: 'judge-a' },
+            { criterion: 'verification_evidence', score: 2, judge: 'judge-b', evidence: 'missing logs' },
+          ],
+          guardrails: { testsPassed: false, pathSafety: true, budgetCompliant: true },
+          tags: ['verification'],
+        }),
+      });
+      check(res.status === 422, `rubric-gated capture expected 422, got ${res.status}`);
+      const body = await res.json();
+      check(body.accepted === false, 'rubric-gated capture should not be accepted');
+      addResult('api.capture_feedback.rubric_gate', true, { accepted: body.accepted });
+    }
+
+    {
       const construct = await fetch(`http://localhost:${port}/v1/context/construct`, {
         method: 'POST',
         headers: {
@@ -139,10 +164,21 @@ async function runProof(options = {}) {
           Authorization: 'Bearer proof-key',
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ packId: pack.packId, outcome: 'useful', signal: 'positive' }),
+        body: JSON.stringify({
+          packId: pack.packId,
+          outcome: 'useful',
+          signal: 'positive',
+          rubricScores: [
+            { criterion: 'correctness', score: 4, evidence: 'tests pass', judge: 'judge-a' },
+            { criterion: 'verification_evidence', score: 4, evidence: 'logs attached', judge: 'judge-a' },
+          ],
+          guardrails: { testsPassed: true, pathSafety: true, budgetCompliant: true },
+        }),
       });
       check(evaluate.status === 200, `context evaluate expected 200, got ${evaluate.status}`);
-      addResult('api.context.evaluate', true, { status: evaluate.status });
+      const evalBody = await evaluate.json();
+      check(Boolean(evalBody.rubricEvaluation), 'context evaluate should include rubricEvaluation');
+      addResult('api.context.evaluate', true, { status: evaluate.status, rubric: evalBody.rubricEvaluation.rubricId });
     }
 
     // MCP checks
@@ -188,6 +224,30 @@ async function runProof(options = {}) {
       const plan = JSON.parse(call.content[0].text);
       check(plan.status === 'checkpoint_required', 'mcp plan_intent should return checkpoint_required by default');
       addResult('mcp.tools.call.plan_intent', true, { status: plan.status });
+    }
+
+    {
+      const call = await handleRequest({
+        jsonrpc: '2.0',
+        id: 32,
+        method: 'tools/call',
+        params: {
+          name: 'capture_feedback',
+          arguments: {
+            signal: 'up',
+            context: 'unsafe approval attempt',
+            whatWorked: 'claimed success',
+            rubricScores: [
+              { criterion: 'verification_evidence', score: 5, judge: 'judge-a' },
+              { criterion: 'verification_evidence', score: 2, judge: 'judge-b', evidence: 'missing logs' },
+            ],
+            guardrails: { testsPassed: false, pathSafety: true, budgetCompliant: true },
+          },
+        },
+      });
+      const payload = JSON.parse(call.content[0].text);
+      check(payload.accepted === false, 'mcp capture_feedback should apply rubric gating');
+      addResult('mcp.tools.call.capture_feedback.rubric_gate', true, { accepted: payload.accepted });
     }
 
     {
