@@ -13,18 +13,18 @@
 
 ### Data Quality (Subway → rlhf)
 
-- [ ] **QUAL-01**: Validate-feedback audits schema correctness, semantic quality, and anomaly detection on feedback entries
-- [ ] **QUAL-02**: Rich context enrichment (domain, filePaths, errorType, outcomeCategory) added to capture pipeline
-- [ ] **QUAL-03**: inferOutcome classifies feedback beyond binary into granular categories (quick-success, factual-error, etc.)
-- [ ] **QUAL-04**: All data quality features have unit tests
+- [x] **QUAL-01**: Validate-feedback audits schema correctness, semantic quality, and anomaly detection on feedback entries
+- [x] **QUAL-02**: Rich context enrichment (domain, filePaths, errorType, outcomeCategory) added to capture pipeline
+- [x] **QUAL-03**: inferOutcome classifies feedback beyond binary into granular categories (quick-success, factual-error, etc.)
+- [x] **QUAL-04**: All data quality features have unit tests
 
 ### Loop Closure (Subway → rlhf)
 
-- [ ] **LOOP-01**: Feedback-to-rules distills feedback patterns into actionable CLAUDE.md behavior rules
-- [ ] **LOOP-02**: Plan gate validates PRD markdown schema before execution
-- [ ] **LOOP-03**: Feedback inbox reader provides cursor-based reading for reflexion-preflight
-- [ ] **LOOP-04**: Feedback-to-memory bridge converts stdin JSON to MCP memory format
-- [ ] **LOOP-05**: All loop closure features have unit tests
+- [x] **LOOP-01**: Feedback-to-rules distills feedback patterns into actionable CLAUDE.md behavior rules
+- [x] **LOOP-02**: Plan gate validates PRD markdown schema before execution
+- [x] **LOOP-03**: Feedback inbox reader provides cursor-based reading for reflexion-preflight
+- [x] **LOOP-04**: Feedback-to-memory bridge converts stdin JSON to MCP memory format
+- [x] **LOOP-05**: All loop closure features have unit tests
 
 ### Intelligence (Subway → rlhf)
 
@@ -42,11 +42,11 @@
 
 ### Subway Upgrades (rlhf → Subway)
 
-- [ ] **SUBW-01**: LanceDB vector store with HuggingFace embeddings ported to Subway
-- [ ] **SUBW-02**: DPO optimizer (offline batch) ported to Subway
-- [ ] **SUBW-03**: Thompson Sampling JS module ported to Subway
-- [ ] **SUBW-04**: Self-healing GH Action workflows added to Subway
-- [ ] **SUBW-05**: All Subway upgrades have tests and proof report
+- [x] **SUBW-01**: LanceDB vector store with HuggingFace embeddings ported to Subway
+- [x] **SUBW-02**: DPO optimizer (offline batch) ported to Subway
+- [x] **SUBW-03**: Thompson Sampling JS module ported to Subway
+- [x] **SUBW-04**: Self-healing GH Action workflows added to Subway
+- [x] **SUBW-05**: All Subway upgrades have tests and proof report
 
 ### Proof Gate
 
@@ -80,15 +80,15 @@
 | ATTR-01 | Phase 6 | Complete |
 | ATTR-02 | Phase 6 | Complete |
 | ATTR-03 | Phase 6 | Complete |
-| QUAL-01 | Phase 7 | Pending |
-| QUAL-02 | Phase 7 | Pending |
-| QUAL-03 | Phase 7 | Pending |
-| QUAL-04 | Phase 7 | Pending |
-| LOOP-01 | Phase 8 | Pending |
-| LOOP-02 | Phase 8 | Pending |
-| LOOP-03 | Phase 8 | Pending |
-| LOOP-04 | Phase 8 | Pending |
-| LOOP-05 | Phase 8 | Pending |
+| QUAL-01 | Phase 7 | Complete |
+| QUAL-02 | Phase 7 | Complete |
+| QUAL-03 | Phase 7 | Complete |
+| QUAL-04 | Phase 7 | Complete |
+| LOOP-01 | Phase 8 | Complete |
+| LOOP-02 | Phase 8 | Complete |
+| LOOP-03 | Phase 8 | Complete |
+| LOOP-04 | Phase 8 | Complete |
+| LOOP-05 | Phase 8 | Complete |
 | INTL-01 | Phase 9 | Pending |
 | INTL-02 | Phase 9 | Pending |
 | INTL-03 | Phase 9 | Pending |
@@ -97,11 +97,11 @@
 | XPRT-03 | Phase 10 | Pending |
 | XPRT-04 | Phase 10 | Pending |
 | XPRT-05 | Phase 10 | Pending |
-| SUBW-01 | Phase 11 | Pending |
-| SUBW-02 | Phase 11 | Pending |
-| SUBW-03 | Phase 11 | Pending |
-| SUBW-04 | Phase 11 | Pending |
-| SUBW-05 | Phase 11 | Pending |
+| SUBW-01 | Phase 11 | Complete |
+| SUBW-02 | Phase 11 | Complete |
+| SUBW-03 | Phase 11 | Complete |
+| SUBW-04 | Phase 11 | Complete |
+| SUBW-05 | Phase 11 | Complete |
 | PROOF-01 | Phase 12 | Pending |
 | PROOF-02 | Phase 12 | Pending |
 
