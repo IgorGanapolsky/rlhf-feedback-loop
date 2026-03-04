@@ -2,6 +2,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const pkg = require('../../package.json');
 
 const {
   captureFeedback,
@@ -29,6 +30,15 @@ const {
   listIntents,
   planIntent,
 } = require('../../scripts/intent-router');
+const {
+  createCheckoutSession,
+  provisionApiKey,
+  validateApiKey,
+  recordUsage,
+  handleWebhook,
+  verifyWebhookSignature,
+  loadKeyStore,
+} = require('../../scripts/billing');
 
 function getSafeDataDir() {
   const { FEEDBACK_LOG_PATH } = getFeedbackPaths();
@@ -116,7 +126,26 @@ function getExpectedApiKey() {
 function isAuthorized(req, expected) {
   if (!expected) return true;
   const auth = req.headers.authorization || '';
-  return auth === `Bearer ${expected}`;
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+
+  // Check static RLHF_API_KEY first
+  if (token === expected) return true;
+
+  // Also accept any valid provisioned billing key
+  if (token) {
+    const result = validateApiKey(token);
+    return result.valid === true;
+  }
+
+  return false;
+}
+
+/**
+ * Extract the Bearer token from a request (returns '' if absent).
+ */
+function extractBearerToken(req) {
+  const auth = req.headers.authorization || '';
+  return auth.startsWith('Bearer ') ? auth.slice(7) : '';
 }
 
 function extractTags(input) {
@@ -151,13 +180,65 @@ function createApiServer() {
   const expectedApiKey = getExpectedApiKey();
 
   return http.createServer(async (req, res) => {
+    const parsed = new URL(req.url, 'http://localhost');
+    const pathname = parsed.pathname;
+
+    // Health check is unauthenticated — required for Railway/load-balancer probes
+    if (req.method === 'GET' && pathname === '/health') {
+      sendJson(res, 200, {
+        status: 'ok',
+        version: pkg.version,
+        uptime: process.uptime(),
+      });
+      return;
+    }
+
+    // Stripe webhook is unauthenticated — uses HMAC signature verification instead
+    if (req.method === 'POST' && pathname === '/v1/billing/webhook') {
+      try {
+        const rawBody = await new Promise((resolve, reject) => {
+          const chunks = [];
+          req.on('data', (c) => chunks.push(c));
+          req.on('end', () => resolve(Buffer.concat(chunks)));
+          req.on('error', reject);
+        });
+
+        const sig = req.headers['stripe-signature'] || '';
+        if (!verifyWebhookSignature(rawBody, sig)) {
+          sendJson(res, 400, { error: 'Invalid webhook signature' });
+          return;
+        }
+
+        let event;
+        try {
+          event = JSON.parse(rawBody.toString('utf-8'));
+        } catch {
+          sendJson(res, 400, { error: 'Invalid JSON in webhook body' });
+          return;
+        }
+
+        const result = handleWebhook(event);
+        sendJson(res, 200, result);
+      } catch (err) {
+        if (err.statusCode) {
+          sendJson(res, err.statusCode, { error: err.message });
+        } else {
+          sendJson(res, 500, { error: err.message || 'Internal Server Error' });
+        }
+      }
+      return;
+    }
+
     if (!isAuthorized(req, expectedApiKey)) {
       sendJson(res, 401, { error: 'Unauthorized' });
       return;
     }
 
-    const parsed = new URL(req.url, 'http://localhost');
-    const pathname = parsed.pathname;
+    // Usage metering — record request for billing keys (not static RLHF_API_KEY)
+    const _token = extractBearerToken(req);
+    if (_token && _token !== expectedApiKey) {
+      recordUsage(_token);
+    }
 
     try {
       if (req.method === 'GET' && pathname === '/healthz') {
@@ -330,6 +411,49 @@ function createApiServer() {
 
       if (req.method === 'GET' && pathname === '/') {
         sendText(res, 200, 'RLHF Feedback Loop API is running.');
+        return;
+      }
+
+      // ----------------------------------------------------------------
+      // Billing routes
+      // ----------------------------------------------------------------
+
+      // POST /v1/billing/checkout — create Stripe Checkout session
+      if (req.method === 'POST' && pathname === '/v1/billing/checkout') {
+        const body = await parseJsonBody(req);
+        const result = await createCheckoutSession({
+          successUrl: body.successUrl,
+          cancelUrl: body.cancelUrl,
+          customerEmail: body.customerEmail,
+        });
+        sendJson(res, 200, result);
+        return;
+      }
+
+      // GET /v1/billing/usage — usage for the authenticated key
+      if (req.method === 'GET' && pathname === '/v1/billing/usage') {
+        const token = extractBearerToken(req);
+        const validation = validateApiKey(token);
+        if (!validation.valid) {
+          sendJson(res, 401, { error: 'Unauthorized' });
+          return;
+        }
+        sendJson(res, 200, {
+          key: token,
+          customerId: validation.customerId,
+          usageCount: validation.usageCount,
+        });
+        return;
+      }
+
+      // POST /v1/billing/provision — manually provision key (admin)
+      if (req.method === 'POST' && pathname === '/v1/billing/provision') {
+        const body = await parseJsonBody(req);
+        if (!body.customerId) {
+          throw createHttpError(400, 'customerId is required');
+        }
+        const result = provisionApiKey(body.customerId);
+        sendJson(res, 200, result);
         return;
       }
 

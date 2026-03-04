@@ -4,146 +4,74 @@
 
 See: .planning/PROJECT.md (updated 2026-03-04)
 
-**Core value:** Every synced feature has tests, passes CI, and produces verification evidence — no tech debt
-**Current focus:** v2.0 milestone COMPLETE — all phases done, 314 tests, 0 failures
+**Core value:** Deploy, bill, distribute — first paying customer ($100/day north star)
+**Current focus:** v3.0 Commercialization — Phase 17: Proof Gate complete
 
 ## Current Position
 
-Phase: 12 — Proof Gate (COMPLETE)
-Plan: 12-01 (complete)
-Status: v2.0 milestone complete — Phases 9, 10, 12 executed; INTL-01..03, XPRT-01..05, PROOF-01..02 all satisfied
-Last activity: 2026-03-04 — Phases 9, 10, 12 executed: all proof gates passing; 314 tests, 0 failures; v2.0 DONE
+Phase: 17 of 17 (Proof Gate)
+Plan: 1/1 complete — Phase 17 Proof Gate complete; all PROOF-01 through PROOF-04 verified
+Status: v3.0 milestone COMPLETE — 362 tests pass, /health endpoint live, billing round-trip verified, CLI init verified, landing page + submissions ready
+Last activity: 2026-03-04 — Phase 16 + 17 executed; landing page, GPT Store + MCP Hub submissions, prove-v3-milestone.js (7/7 checks PASS)
 
-Progress: [██████████] 100% (v2.0)
+Progress: [████████████████████] ~100% (v3.0 Commercialization complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed (v2.0): 3 (phases 9, 10, 12)
-- Average duration: ~6min
-- Total execution time: ~18min (phases 9-12)
+- Total plans completed (all milestones): 33
+- Average duration: ~10 min/plan
+- Total execution time: ~5.5 hours (v1+v2+v3.0 Phases 13-15)
 
-**By Phase (v2.0):**
+**By Milestone:**
 
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| Phase 09-intelligence P09-01 | ~8min | 3 tasks | 6 files |
-| Phase 10-training-export P10-01 | ~5min | 3 tasks | 5 files |
-| Phase 12-proof-gate P12-01 | ~3min | 2 tasks | 3 files |
+| Milestone | Phases | Plans | Tests Shipped |
+|-----------|--------|-------|---------------|
+| v1.0 | 1-5 | 19 | 54 → 142 |
+| v2.0 | 6-12 | 12 | 142 → 314 |
+| v3.0 | 13-17 | 3 so far | 314 → 362 |
 
 **Recent Trend:**
-- Last 5 plans: none yet (v2.0)
-- Trend: -
-
-*Updated after each plan completion*
-
-**v1.0 Historical Metrics:**
-
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 01-contract-alignment P03 | 15min | 2 tasks | 3 files |
-| 01-contract-alignment P02 | 20min | 2 tasks | 2 files |
-| Phase 02-ml-into-rlhf-feedback-loop P02-01 | 8 | 1 tasks | 1 files |
-| Phase 02-ml-into-rlhf-feedback-loop P02-02 | 20min | 2 tasks | 2 files |
-| Phase 03-governance-into-subway P3-02 | 20min | 2 tasks | 9 files |
-| Phase 02-ml-into-rlhf-feedback-loop P02-04 | 10min | 2 tasks | 3 files |
-| Phase 02-ml-into-rlhf-feedback-loop P02-03 | 10min | 2 tasks | 1 files |
-| Phase 02-ml-into-rlhf-feedback-loop P02-05 | 10min | 2 tasks | 2 files |
-| Phase 03-governance-into-subway P3-03 | 25min | 2 tasks | 6 files |
-| Phase 04-lancedb-vector-storage P4-01 | 1m 2s | 2 tasks | 3 files |
-| Phase 04-lancedb-vector-storage P4-02 | 54s | 1 tasks | 1 files |
-| Phase 04-lancedb-vector-storage P4-03 | 1m 23s | 2 tasks | 3 files |
-| Phase 04-lancedb-vector-storage P4-04 | 112s | 2 tasks | 4 files |
-| Phase 05-rlaif-and-dpo-optimization P5-02 | 2min | 1 tasks | 3 files |
-| Phase 05-rlaif-and-dpo-optimization P5-01 | 278s | 2 tasks | 8 files |
-| Phase 05-rlaif-and-dpo-optimization P5-03 | 15min | 2 tasks | 6 files |
-| Phase 06-feedback-attribution P06-02 | 135s | 1 tasks | 1 files |
-| Phase 06-feedback-attribution P06-01 | 4min | 2 tasks | 2 files |
-| Phase 06 P03 | 8min | 2 tasks | 3 files |
-| Phase 06 P06-04 | 10min | 2 tasks | 7 files |
+- Last plan: Phase 15-01 Plugin Distribution (2026-03-04, ~10 min)
+- Trend: Stable
 
 ## Accumulated Context
 
 ### Decisions
 
-- [Init]: Cherry-pick best features from each repo — no full merge, library/prototype boundary preserved
-- [Init]: Both sync directions run simultaneously — ML into rlhf-feedback-loop, governance into Subway
-- [Init]: Phases 2 and 3 are independent and can run in parallel after Phase 1 clears
-- [Init]: ### Decisions
-
-0/month budget cap enforced by budget-guard.js on all API calls
-- [Phase 01-contract-alignment]: parseTimestamp() uses new Date(String(ts).trim()) returning null for invalid input — CNTR-03 rlhf side complete
-- [Phase 01-contract-alignment]: Baseline node-runner count is 60 (58 test:api + 2 test:proof) — authoritative Phase 2 and Phase 3 start gate in proof/baseline-test-count.md
-- [Phase 01-contract-alignment P02]: Subway feedback-schema.js is gitignored via .git/info/exclude (local-only) — verified in place with 44 inline tests passing; CNTR-02 complete
-- [Phase 02-ml-into-rlhf-feedback-loop]: Zero npm dependencies for Thompson Sampling: Marsaglia-Tsang gamma ratio (inline) replaces jStat library
-- [Phase 02-ml-into-rlhf-feedback-loop]: timeDecayWeight delegates to parseTimestamp from Phase 1 — no duplicate timestamp parsing
-- [Phase 02-ml-into-rlhf-feedback-loop P02-02]: ML side-effects (sequence + diversity) inline in feedback-loop.js, not a separate module — mirrors Subway architecture
-- [Phase 02-ml-into-rlhf-feedback-loop P02-02]: Python trainer PROJECT_ROOT = Path(__file__).parent.parent (2 levels, not Subway's 3)
-- [Phase 02-ml-into-rlhf-feedback-loop P02-02]: rewardSequence uses f.signal ('positive'/'negative'), not f.reward (1/-1) — rlhf schema difference from Subway
-- [Phase 03-governance-into-subway]: PROJECT_ROOT uses path.join(__dirname, '..', '..', '..') in Subway — 3 levels up from .claude/scripts/feedback/ to repo root
-- [Phase 02-ml-into-rlhf-feedback-loop]: require.cache invalidation per test ensures env var RLHF_FEEDBACK_DIR changes take effect for re-required modules in node:test suites
-- [Phase 02-ml-into-rlhf-feedback-loop]: ML-05 test coverage for ML-03 and ML-04 implemented as integration-style tmpdir tests in 02-04
-- [Phase 03-governance-into-subway]: budget-guard.js lock timeout: timeoutMs=30000/staleMs=60000 for concurrent GSD agent load (4+ parallel callers)
-- [Phase 03-governance-into-subway]: contextfs.js Jaccard threshold=0.7, TTL clamped to Math.max(60, raw) — TTL test uses Date.now monkeypatch (no jest.useFakeTimers)
-- [Phase 02-ml-into-rlhf-feedback-loop]: ml:* scripts invoke python3 scripts/train_from_feedback.py — no new binary dependencies
-- [Phase 02-ml-into-rlhf-feedback-loop]: SC-5 delta confirmed: Phase 2 total 89 node-runner tests vs 60 Phase 1 baseline (+29 ML tests)
-- [Phase 03-governance-into-subway]: KNOWN_FIX_SCRIPTS uses object array {name,command} in Subway self-heal.js — lookup via command[2] for correct npm script name matching
-- [Phase 03-governance-into-subway]: jest.governance.config.js (testEnvironment:node) required in Subway — main jest-expo config excludes scripts/ from test runs
-- [Phase 03-governance-into-subway]: All 6 governance scripts ported to Subway with zero new npm deps; 5 Jest test files passing (43 tests); proof committed in rlhf/proof/governance-into-subway/
-- [Phase 04-lancedb-vector-storage]: Dynamic import() pattern is the only CJS-compatible approach for ESM-only @lancedb/lancedb
-- [Phase 04-lancedb-vector-storage]: apache-arrow pinned to 18.1.0 — LanceDB 0.26.2 peer dep >=15.0.0 <=18.1.0; arrow 19+ breaks
-- [Phase 04-lancedb-vector-storage]: TABLE_NAME = rlhf_memories — JS-only table, never shared with Python Subway tables
-- [Phase 04-lancedb-vector-storage]: upsertFeedback() placed after primary JSONL write and all ML side-effects — fire-and-forget .catch() pattern, no await, vector index is optional enhancement
-- [Phase 04-lancedb-vector-storage]: RLHF_VECTOR_STUB_EMBED=true returns deterministic 384-dim unit vector in embed() to run vector-store tests fully offline without ONNX model
-- [Phase 04-lancedb-vector-storage]: Tests use it() (not test()) per node:test describe/it pattern matching thompson-sampling.test.js; require.cache invalidation isolates env per test
-- [Phase 04-lancedb-vector-storage]: prove-lancedb.js uses RLHF_VECTOR_STUB_EMBED=true for offline smoke test; VEC-05 self-referential via execSync node:test
-- [Phase 05-rlaif-and-dpo-optimization]: inferDomain exported from feedback-loop.js — was implemented but missing from module.exports; needed for meta-policy.js import
-- [Phase 05-rlaif-and-dpo-optimization]: meta-policy.js run() is synchronous — CLI uses try/catch not async .catch(); timeDecayWeight imported from thompson-sampling.js (not feedback-schema.js)
-- [Phase 05-rlaif-and-dpo-optimization]: saveModel() added to thompson-sampling.js — was absent; required by dpo-optimizer for Thompson posterior persistence
-- [Phase 05-rlaif-and-dpo-optimization]: test:rlaif wired into test aggregate; 24 new tests bring total from 93 to 142 (+49 from Phase 4 baseline)
-- [Phase 05-rlaif-and-dpo-optimization]: prove-rlaif.js mirrors prove-lancedb.js — mkdtempSync / env override / execSync pattern; DPO-04 self-validates via execSync node:test
-- [v2.0 Roadmap]: Phase 6 CRITICAL — must execute before 7, 8, 9, 10; attribution fields required by all downstream phases
-- [v2.0 Roadmap]: Phases 7 and 8 are independent of each other — can run in parallel after Phase 6
-- [v2.0 Roadmap]: Phase 9 depends on Phase 6 only — can parallel with 7, 8
-- [v2.0 Roadmap]: Phase 10 depends on Phase 6 and Phase 7 (needs quality-validated data)
-- [v2.0 Roadmap]: Phase 11 (Subway Upgrades) is independent of all v2 rlhf phases — can parallel with 7-10
-- [v2.0 Roadmap]: Phase 12 is the final gate — depends on all prior phases; proof reports cover every v2 phase
-- [v2.0 Roadmap]: v1 final test count is 142 — Phase 12 success criterion requires strictly greater count
-- [Phase 06-feedback-attribution]: hybrid-feedback-context.js evaluatePretool: compiled artifact fast path trusts guard artifact, falls back to live state build — ATTR-03 no-false-positive via hasTwoKeywordHits + count>=2 filter
-- [Phase 06-feedback-attribution]: ROOT = path.join(__dirname, '..') in feedback-attribution.js — 1 level up from scripts/ to repo root (Subway used 2 levels from .claude/scripts/feedback/)
-- [Phase 06-feedback-attribution]: Attribution side-effects placed after RLAIF self-audit in captureFeedback() — fire-and-forget try/catch, feedbackEvent.signal already normalized to 'positive'/'negative'
-- [Phase 06]: Tests go GREEN immediately — modules fully implemented in 06-01/06-02; test:attribution wired into npm test chain
-- [Phase 06-feedback-attribution]: prove-attribution.js mirrors prove-rlaif.js — mkdtempSync/env override/execSync node --test; ATTR-03 self-validates via execSync; all 3 ATTR requirements pass (passed:3, failed:0)
-- [Phase 06-feedback-attribution]: Phase 6 total node-runner test count = 184 (v1 baseline was 142; test:api grew from 93 to 114 after attribution tests added)
-- [Phase 06-feedback-attribution]: test:api now includes tests/feedback-attribution.test.js + tests/hybrid-feedback-context.test.js (21 tests) alongside test:attribution — deliberate duplication for API-level visibility
-- [Phase 07-data-quality]: validate-feedback.js uses signal/id (not feedback/source) — rlhf schema; RLHF_FEEDBACK_DIR resolved at call time not module init
-- [Phase 07-data-quality]: after() hooks in validate-feedback.test.js use async + 200ms pause before rmSync — LanceDB fire-and-forget write races with cleanup
-- [Phase 07-data-quality]: inferOutcome + enrichFeedbackContext inline in feedback-loop.js (not separate module) — mirrors ML side-effects from Phase 2
-- [Phase 08-loop-closure]: feedback-to-rules.js classifySignal checks entry.signal first, then entry.feedback — backward compat with old Subway schema
-- [Phase 08-loop-closure]: feedback-inbox-read.js INBOX_PATH = .claude/feedback-loop/inbox.jsonl (not .claude/memory/feedback/) — dedicated inbox for reflexion-preflight
-- [Phase 08-loop-closure]: feedback-to-memory.js delegates to resolveFeedbackAction + prepareForStorage — reuses existing schema validation, no duplication
-- [Phase 11-subway-upgrades]: Subway vector-store tests require NODE_OPTIONS=--experimental-vm-modules — added to test:governance in Subway package.json
-- [Phase 11-subway-upgrades]: thompson-sampling.js in Subway has inline parseTimestamp — no shared feedback-schema.js in Subway
-- [Phase 11-subway-upgrades]: prove-subway-upgrades.js uses err.stdout + err.stderr pattern for Jest output capture (execSync throws on non-zero exit)
-- [Phase 09-intelligence]: context-engine PROJECT_ROOT = path.join(__dirname, '..') — 1 level from scripts/ to repo root
-- [Phase 09-intelligence]: skill-quality-tracker normalizes both 'up'/'down' (Subway) and 'positive'/'negative' (rlhf) feedback signals; CORRELATION_WINDOW_MS = 60_000
-- [Phase 09-intelligence]: routeQuery falls back to buildKnowledgeIndex() on-the-fly if index file is missing
-- [Phase 10-training-export]: buildPreferencePairs uses tag overlap scoring to match positive+negative pairs; falls back to any unused negative
-- [Phase 10-training-export]: validateMemoryStructure checks _dpoExport flag to conditionally enforce prompt/chosen/rejected fields
-- [Phase 12-proof-gate]: V1_BASELINE_TEST_COUNT = 142; v2 final = 314 (+172); prove-v2-milestone sums all ℹ pass N lines
+- [v3.0 Roadmap]: Railway over AWS/GCP — $5/mo starter, cheapest path to live HTTPS endpoint
+- [v3.0 Roadmap]: Stripe Token Billing — $0 until revenue; free tier until first customer
+- [v3.0 Roadmap]: npm package as universal install — `npx rlhf-feedback-loop init` works on any platform
+- [v3.0 Roadmap]: Phase 14 + 15 parallel after Phase 13 — plugins reference deployed API but don't require billing to be live
+- [v3.0 Roadmap]: Speed > perfection — first dollar is the success criterion, not architecture completeness
+- [Phase 13]: /health endpoint unauthenticated — Railway health probes must not require API key
+- [Phase 13]: Multi-stage Dockerfile — builder installs devDeps, runtime copies only prod; smaller image
+- [Phase 13]: DEPLOY-02 deferred — requires Railway account credentials; all config assets are ready
+- [Phase 14]: fetch + https fallback for Stripe REST API — zero new npm dependencies
+- [Phase 14]: Webhook route placed before auth middleware — Stripe doesn't send Bearer tokens, HMAC-verified instead
+- [Phase 14]: Local mode when STRIPE_SECRET_KEY absent — all Stripe calls gracefully no-op
+- [Phase 15]: bin/cli.js generates standalone capture-feedback.js inline — no runtime dep on repo scripts, works on any clean machine
+- [Phase 15]: plugins/amp-skill/ created as separate directory from adapters/amp/ to match install pattern parity with other platforms
+- [Phase 16]: Landing page is pure static HTML — no build step, deployable to GitHub Pages/Vercel as-is; Stripe checkout URL is a placeholder pending Railway live deployment
+- [Phase 16]: GPT Store submission includes both full openapi.yaml reference and inline minimal schema for quick copy-paste
+- [Phase 16]: MCP Hub submission targets both modelcontextprotocol/servers (official PR) and mcp.so (community form)
+- [Phase 17]: RLHF_ALLOW_INSECURE=true must not bleed into npm test env — disables auth middleware and breaks auth test suite
+- [Phase 17]: prove-v3-milestone.js sums all node:test ℹ pass N lines across all sub-scripts to get total count
 
 ### Pending Todos
 
-None — v2.0 milestone complete
+None.
 
 ### Blockers/Concerns
 
-- [Phase 4]: Lance file format version compatibility (Python 0.27.1 vs Node.js 0.26.2) not definitively resolved — verify before any Phase 11 LanceDB Subway work
-- [Phase 3]: Subway lint:fix behavior under auto-import-sort not confirmed — audit `.eslintrc.js` before enabling self-heal in Phase 11
+- [v3.0]: DEPLOY-02 requires Railway account credentials — run `railway login && railway up` when account is set up
+- [v3.0]: Stripe webhooks require a public HTTPS endpoint — Phase 14 cannot start until Phase 13 (Railway deploy) is live
+- [v3.0]: npm publish requires `npm login` with a valid account — confirm credentials before Phase 15
+- [v3.0]: ChatGPT GPT Store review process is manual and may have lead time — submit early in Phase 16
 
 ## Session Continuity
 
 Last session: 2026-03-04
-Stopped at: Completed Phases 9, 10, 12 — v2.0 milestone DONE; INTL-01..03, XPRT-01..05, PROOF-01..02 all satisfied; 314 tests, 0 failures
+Stopped at: Phase 17-01 complete — prove-v3-milestone.js 7/7 PASS; commit ab90e04
 Resume file: None
-Next action: v2.0 complete — consider v3 planning (ADV-01..05 requirements)
+Next action: v3.0 Commercialization milestone COMPLETE — deploy to Railway, submit to GPT Store + MCP Hub, publish npm package

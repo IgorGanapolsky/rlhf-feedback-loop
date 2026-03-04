@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RLHF Feedback Loop — Stop Repeating Mistakes</title>
+  <meta name="description" content="Production-grade RLHF operations for AI coding agents. Capture feedback, prevent repeated failures, and export DPO-ready training data. Works on ChatGPT, Claude, Gemini, Codex, and Amp." />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --black: #0a0a0a;
+      --white: #ffffff;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-400: #9ca3af;
+      --gray-600: #4b5563;
+      --gray-800: #1f2937;
+      --accent: #6366f1;
+      --accent-dark: #4f46e5;
+      --accent-light: #e0e7ff;
+      --green: #10b981;
+      --radius: 8px;
+      --shadow: 0 1px 3px rgba(0,0,0,.12), 0 4px 16px rgba(0,0,0,.06);
+      --shadow-lg: 0 10px 40px rgba(0,0,0,.12);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--white);
+      color: var(--gray-800);
+      line-height: 1.6;
+    }
+
+    /* ─── NAV ─── */
+    nav {
+      position: sticky;
+      top: 0;
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--gray-200);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 56px;
+      z-index: 100;
+    }
+    .nav-logo { font-weight: 700; font-size: 1rem; letter-spacing: -.5px; }
+    .nav-logo span { color: var(--accent); }
+    .nav-links { display: flex; gap: 28px; align-items: center; }
+    .nav-links a {
+      text-decoration: none;
+      color: var(--gray-600);
+      font-size: .9rem;
+      transition: color .15s;
+    }
+    .nav-links a:hover { color: var(--black); }
+    .btn-nav {
+      background: var(--accent);
+      color: var(--white) !important;
+      padding: 8px 18px;
+      border-radius: var(--radius);
+      font-weight: 600;
+      transition: background .15s !important;
+    }
+    .btn-nav:hover { background: var(--accent-dark) !important; }
+
+    /* ─── HERO ─── */
+    .hero {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 80px 24px 64px;
+      text-align: center;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--accent-light);
+      color: var(--accent-dark);
+      border-radius: 99px;
+      padding: 4px 14px;
+      font-size: .8rem;
+      font-weight: 600;
+      margin-bottom: 24px;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -.5px;
+      margin-bottom: 20px;
+    }
+    .hero h1 em { font-style: normal; color: var(--accent); }
+    .hero p {
+      font-size: 1.15rem;
+      color: var(--gray-600);
+      max-width: 620px;
+      margin: 0 auto 36px;
+    }
+    .hero-cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--accent);
+      color: var(--white);
+      padding: 14px 28px;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 700;
+      text-decoration: none;
+      transition: background .15s, transform .1s;
+      box-shadow: 0 4px 14px rgba(99,102,241,.35);
+    }
+    .btn-primary:hover { background: var(--accent-dark); transform: translateY(-1px); }
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--white);
+      color: var(--gray-800);
+      padding: 14px 28px;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 600;
+      text-decoration: none;
+      border: 1.5px solid var(--gray-200);
+      transition: border-color .15s;
+    }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ─── PLATFORM LOGOS ─── */
+    .platforms {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 48px;
+      padding: 16px 24px;
+      background: var(--gray-50);
+      border-top: 1px solid var(--gray-200);
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .platforms p { font-size: .8rem; color: var(--gray-400); margin-right: 8px; text-transform: uppercase; letter-spacing: 1px; }
+    .platform-pill {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: 99px;
+      padding: 6px 16px;
+      font-size: .85rem;
+      font-weight: 600;
+      color: var(--gray-600);
+    }
+
+    /* ─── VALUE PROPS ─── */
+    .section { max-width: 1100px; margin: 0 auto; padding: 72px 24px; }
+    .section-label {
+      font-size: .8rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      font-weight: 800;
+      letter-spacing: -.4px;
+      margin-bottom: 48px;
+    }
+    .props-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 24px;
+    }
+    .prop-card {
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: 12px;
+      padding: 28px 24px;
+      transition: box-shadow .2s;
+    }
+    .prop-card:hover { box-shadow: var(--shadow-lg); }
+    .prop-icon { font-size: 1.8rem; margin-bottom: 12px; }
+    .prop-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; }
+    .prop-card p { font-size: .9rem; color: var(--gray-600); }
+    .stat-row {
+      display: flex;
+      gap: 40px;
+      flex-wrap: wrap;
+      margin-top: 48px;
+    }
+    .stat { display: flex; flex-direction: column; }
+    .stat-num { font-size: 2.4rem; font-weight: 800; color: var(--accent); line-height: 1; }
+    .stat-label { font-size: .85rem; color: var(--gray-600); margin-top: 4px; }
+
+    /* ─── DEMO ─── */
+    .demo-section {
+      background: var(--black);
+      color: var(--white);
+      padding: 72px 24px;
+    }
+    .demo-inner { max-width: 900px; margin: 0 auto; }
+    .demo-section .section-label { color: #818cf8; }
+    .demo-section .section-title { color: var(--white); margin-bottom: 32px; }
+    .terminal {
+      background: #111827;
+      border: 1px solid #374151;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+    }
+    .terminal-bar {
+      background: #1f2937;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .dot-red { background: #ef4444; }
+    .dot-yellow { background: #f59e0b; }
+    .dot-green { background: #10b981; }
+    .terminal-title { font-size: .75rem; color: #6b7280; margin-left: 8px; }
+    .terminal-body { padding: 24px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: .85rem; line-height: 1.8; overflow-x: auto; }
+    .terminal-body .prompt { color: #6b7280; }
+    .terminal-body .cmd { color: #a5f3fc; }
+    .terminal-body .comment { color: #4b5563; }
+    .terminal-body .out { color: #d1d5db; }
+    .terminal-body .key { color: #86efac; }
+    .terminal-body .val { color: #fde68a; }
+
+    /* ─── PRICING ─── */
+    .pricing-section { background: var(--gray-50); }
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 24px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .price-card {
+      background: var(--white);
+      border: 1.5px solid var(--gray-200);
+      border-radius: 16px;
+      padding: 32px;
+      position: relative;
+    }
+    .price-card.featured {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px var(--accent-light);
+    }
+    .featured-badge {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--accent);
+      color: var(--white);
+      font-size: .75rem;
+      font-weight: 700;
+      padding: 4px 16px;
+      border-radius: 99px;
+      white-space: nowrap;
+    }
+    .plan-name { font-size: .85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--gray-600); margin-bottom: 12px; }
+    .price-amount { font-size: 2.6rem; font-weight: 800; letter-spacing: -1px; }
+    .price-period { font-size: .9rem; color: var(--gray-600); margin-bottom: 20px; }
+    .price-desc { font-size: .9rem; color: var(--gray-600); margin-bottom: 24px; border-bottom: 1px solid var(--gray-200); padding-bottom: 24px; }
+    .feature-list { list-style: none; margin-bottom: 32px; }
+    .feature-list li {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      font-size: .9rem;
+      margin-bottom: 10px;
+      color: var(--gray-600);
+    }
+    .feature-list li::before { content: "✓"; color: var(--green); font-weight: 700; flex-shrink: 0; }
+    .btn-checkout {
+      display: block;
+      width: 100%;
+      background: var(--accent);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius);
+      padding: 14px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+      transition: background .15s;
+    }
+    .btn-checkout:hover { background: var(--accent-dark); }
+    .btn-outline {
+      display: block;
+      width: 100%;
+      background: var(--white);
+      color: var(--gray-800);
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 14px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+      transition: border-color .15s;
+    }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ─── FOOTER ─── */
+    footer {
+      background: var(--black);
+      color: var(--gray-400);
+      text-align: center;
+      padding: 32px 24px;
+      font-size: .85rem;
+    }
+    footer a { color: var(--gray-400); text-decoration: none; }
+    footer a:hover { color: var(--white); }
+    .footer-links { display: flex; gap: 24px; justify-content: center; margin-bottom: 12px; flex-wrap: wrap; }
+
+    @media (max-width: 640px) {
+      .nav-links .btn-nav { display: none; }
+      .stat-row { gap: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">rlhf<span>.</span>loop</div>
+  <div class="nav-links">
+    <a href="#value">Features</a>
+    <a href="#demo">Demo</a>
+    <a href="#pricing">Pricing</a>
+    <a href="https://github.com/IgorGanapolsky/rlhf-feedback-loop" target="_blank">GitHub</a>
+    <a href="#pricing" class="btn-nav">Get Started</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">
+    <span>&#x1f4e6;</span> v3.0 — Now with hosted API + billing
+  </div>
+  <h1>RLHF for AI Coding Agents —<br /><em>Stop Repeating Mistakes</em></h1>
+  <p>
+    Capture thumbs-up/down signals, enforce schema quality, generate prevention rules,
+    and export DPO training pairs. Drop into any AI agent in under 5 minutes.
+  </p>
+  <div class="hero-cta">
+    <a href="#pricing" class="btn-primary">
+      Get Started — $0
+    </a>
+    <a href="https://github.com/IgorGanapolsky/rlhf-feedback-loop" target="_blank" class="btn-secondary">
+      &#x2605; Star on GitHub
+    </a>
+  </div>
+
+  <div style="margin-top:40px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+    <span class="platform-pill">ChatGPT</span>
+    <span class="platform-pill">Claude</span>
+    <span class="platform-pill">Gemini</span>
+    <span class="platform-pill">Codex</span>
+    <span class="platform-pill">Amp</span>
+  </div>
+</section>
+
+<!-- VALUE PROPS -->
+<section class="section" id="value">
+  <div class="section-label">Why it exists</div>
+  <h2 class="section-title">Everything you need for a production feedback loop</h2>
+
+  <div class="props-grid">
+    <div class="prop-card">
+      <div class="prop-icon">&#x1f9e0;</div>
+      <h3>Capture &amp; Score</h3>
+      <p>Thumbs up/down with rubric scores, guardrails, and rich context — not just a raw sentiment bit.</p>
+    </div>
+    <div class="prop-card">
+      <div class="prop-icon">&#x1f6e1;&#xfe0f;</div>
+      <h3>Prevent Regressions</h3>
+      <p>Repeated failures auto-generate prevention rules in CLAUDE.md format. The loop closes itself.</p>
+    </div>
+    <div class="prop-card">
+      <div class="prop-icon">&#x1f4ca;</div>
+      <h3>Thompson Sampling</h3>
+      <p>Per-category alpha/beta posteriors with exponential time-decay. Smarter than raw counts.</p>
+    </div>
+    <div class="prop-card">
+      <div class="prop-icon">&#x1f4e4;</div>
+      <h3>DPO Export</h3>
+      <p>One command produces PyTorch-ready preference pairs for offline fine-tuning.</p>
+    </div>
+    <div class="prop-card">
+      <div class="prop-icon">&#x1f50c;</div>
+      <h3>5 Platforms</h3>
+      <p>Native plugins for ChatGPT, Claude Code, Gemini, Codex, and Amp — one codebase.</p>
+    </div>
+    <div class="prop-card">
+      <div class="prop-icon">&#x1f9ea;</div>
+      <h3>314+ Tests</h3>
+      <p>Every feature is proven. CI green before shipping. No placeholder results.</p>
+    </div>
+  </div>
+
+  <div class="stat-row">
+    <div class="stat">
+      <span class="stat-num">5</span>
+      <span class="stat-label">AI platforms supported</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num">314+</span>
+      <span class="stat-label">tests in CI</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num">$0</span>
+      <span class="stat-label">to start (OSS)</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num">&lt;5min</span>
+      <span class="stat-label">time-to-first-signal</span>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO -->
+<section class="demo-section" id="demo">
+  <div class="demo-inner">
+    <div class="section-label">Quick start</div>
+    <h2 class="section-title">From zero to feedback in one command</h2>
+
+    <div class="terminal">
+      <div class="terminal-bar">
+        <div class="dot dot-red"></div>
+        <div class="dot dot-yellow"></div>
+        <div class="dot dot-green"></div>
+        <span class="terminal-title">bash — your machine</span>
+      </div>
+      <div class="terminal-body">
+        <div><span class="comment"># 1. Scaffold local config (no account needed)</span></div>
+        <div><span class="prompt">$ </span><span class="cmd">npx rlhf-feedback-loop init</span></div>
+        <div><span class="out">Created .rlhf/</span></div>
+        <div><span class="out">Created .rlhf/config.json</span></div>
+        <div><span class="out">Created .rlhf/capture-feedback.js</span></div>
+        <div>&nbsp;</div>
+        <div><span class="comment"># 2. Capture feedback from your agent</span></div>
+        <div><span class="prompt">$ </span><span class="cmd">node .rlhf/capture-feedback.js \</span></div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">--feedback=up \</span></div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">--context="refactored auth middleware" \</span></div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">--what-worked="extracted token validation into pure fn"</span></div>
+        <div><span class="out">Feedback captured — id: fb_1772663401_up</span></div>
+        <div>&nbsp;</div>
+        <div><span class="comment"># 3. Or hit the Cloud API with your key</span></div>
+        <div><span class="prompt">$ </span><span class="cmd">curl -X POST https://rlhf-api.up.railway.app/v1/feedback \</span></div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">-H "Authorization: Bearer rlhf_YOUR_KEY" \</span></div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">-H "Content-Type: application/json" \</span></div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">-d '{"feedback":"up","context":"auth refactor","tags":["auth"]}'</span></div>
+        <div><span class="out">{</span></div>
+        <div>&nbsp;&nbsp;<span class="key">"id"</span><span class="out">: </span><span class="val">"fb_1772663401_up"</span><span class="out">,</span></div>
+        <div>&nbsp;&nbsp;<span class="key">"status"</span><span class="out">: </span><span class="val">"captured"</span><span class="out">,</span></div>
+        <div>&nbsp;&nbsp;<span class="key">"version"</span><span class="out">: </span><span class="val">"0.5.0"</span></div>
+        <div><span class="out">}</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="section pricing-section" id="pricing">
+  <div style="max-width:900px;margin:0 auto;">
+    <div class="section-label">Pricing</div>
+    <h2 class="section-title" style="margin-bottom:12px;">Start free. Scale when you need it.</h2>
+    <p style="color:var(--gray-600);margin-bottom:48px;">The OSS core is always free. Cloud Pro gives you a hosted API, usage metering, and priority support.</p>
+
+    <div class="pricing-grid">
+      <!-- OSS -->
+      <div class="price-card">
+        <div class="plan-name">Open Source</div>
+        <div class="price-amount">$0</div>
+        <div class="price-period">forever</div>
+        <div class="price-desc">Self-hosted. Full source code. No rate limits on your own machine.</div>
+        <ul class="feature-list">
+          <li>Capture feedback locally</li>
+          <li>Thompson Sampling posteriors</li>
+          <li>DPO export</li>
+          <li>5-platform plugins</li>
+          <li>314+ tests included</li>
+          <li>MIT license</li>
+        </ul>
+        <a href="https://github.com/IgorGanapolsky/rlhf-feedback-loop" target="_blank" class="btn-outline">
+          View on GitHub
+        </a>
+      </div>
+
+      <!-- Cloud Pro -->
+      <div class="price-card featured">
+        <div class="featured-badge">Most Popular</div>
+        <div class="plan-name">Cloud Pro</div>
+        <div class="price-amount">$49</div>
+        <div class="price-period">/month</div>
+        <div class="price-desc">Hosted API on Railway with HTTPS, metering, and managed key rotation.</div>
+        <ul class="feature-list">
+          <li>Everything in Open Source</li>
+          <li>Hosted HTTPS API endpoint</li>
+          <li>Provisioned API key on payment</li>
+          <li>Usage metering per key</li>
+          <li>Webhook-driven key lifecycle</li>
+          <li>Email support</li>
+        </ul>
+        <!-- Replace STRIPE_CHECKOUT_URL with your actual Stripe Checkout link -->
+        <a href="https://buy.stripe.com/STRIPE_CHECKOUT_URL" class="btn-checkout" id="checkout-btn">
+          Get Started — $49/mo
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-links">
+    <a href="https://github.com/IgorGanapolsky/rlhf-feedback-loop" target="_blank">GitHub</a>
+    <a href="https://github.com/IgorGanapolsky/rlhf-feedback-loop/blob/main/LICENSE">MIT License</a>
+    <a href="https://github.com/IgorGanapolsky/rlhf-feedback-loop/blob/main/CONTRIBUTING.md">Contributing</a>
+    <a href="https://github.com/IgorGanapolsky/rlhf-feedback-loop/blob/main/SECURITY.md">Security</a>
+  </div>
+  <div>
+    &copy; 2026 RLHF Feedback Loop. MIT License.
+    Built with no VC funding and 314+ passing tests.
+  </div>
+</footer>
+
+<script>
+  // Smooth scroll for anchor links
+  document.querySelectorAll('a[href^="#"]').forEach(function(a) {
+    a.addEventListener('click', function(e) {
+      var target = document.querySelector(this.getAttribute('href'));
+      if (target) {
+        e.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
+</script>
+
+</body>
+</html>

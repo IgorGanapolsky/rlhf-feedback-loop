@@ -1,5 +1,25 @@
 # Milestones
 
+## v2.0 — Production Readiness (Complete)
+
+**Shipped:** 2026-03-04
+**Phases:** 6-12 (7 phases, 27 requirements)
+**Tests:** 142 → 314 (+172)
+
+### What Shipped
+- Phase 6: Feedback Attribution (CRITICAL — trace feedback to agent actions + pre-tool guard)
+- Phase 7: Data Quality (validate-feedback, richContext, inferOutcome)
+- Phase 8: Loop Closure (feedback-to-rules, plan-gate, inbox reader, memory bridge)
+- Phase 9: Intelligence (context engine, skill quality tracker)
+- Phase 10: Training Export (PyTorch, CSV, action analysis, DPO gate)
+- Phase 11: Subway Upgrades (LanceDB, DPO, Thompson JS, self-healing)
+- Phase 12: Proof Gate (all phases verified, 314 tests)
+
+### Key Decisions
+- CRITICAL gaps first — attribution before everything else
+- Zero new npm deps for Subway governance ports
+- Skills best practices: negative triggers added to SKILL.md
+
 ## v1.0 — Bidirectional Feature Sync (Complete)
 
 **Shipped:** 2026-03-04
