@@ -47,6 +47,7 @@ Progress: [████░░░░░░] 36%
 | Phase 02-ml-into-rlhf-feedback-loop P02-05 | 10min | 2 tasks | 2 files |
 | Phase 03-governance-into-subway P3-03 | 25min | 2 tasks | 6 files |
 | Phase 04-lancedb-vector-storage P4-01 | 1m 2s | 2 tasks | 3 files |
+| Phase 04-lancedb-vector-storage P4-02 | 54s | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -79,6 +80,7 @@ Progress: [████░░░░░░] 36%
 - [Phase 04-lancedb-vector-storage]: Dynamic import() pattern is the only CJS-compatible approach for ESM-only @lancedb/lancedb
 - [Phase 04-lancedb-vector-storage]: apache-arrow pinned to 18.1.0 — LanceDB 0.26.2 peer dep >=15.0.0 <=18.1.0; arrow 19+ breaks
 - [Phase 04-lancedb-vector-storage]: TABLE_NAME = rlhf_memories — JS-only table, never shared with Python Subway tables
+- [Phase 04-lancedb-vector-storage]: upsertFeedback() placed after primary JSONL write and all ML side-effects — fire-and-forget .catch() pattern, no await, vector index is optional enhancement
 
 ### Pending Todos
 
@@ -92,5 +94,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-04
-Stopped at: Completed 03-governance-into-subway/3-04-PLAN.md — Phase 3 complete; gov-sync-report.md created; GOV-01..GOV-06 all marked complete
+Stopped at: Completed 04-lancedb-vector-storage/4-02-PLAN.md — vector store wired into captureFeedback(); getVectorStoreModule() + non-blocking upsertFeedback().catch(); 89 tests pass
 Resume file: None
