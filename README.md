@@ -142,9 +142,55 @@ Sync helper:
 bash scripts/sync-gh-secrets-from-env.sh IgorGanapolsky/rlhf-feedback-loop
 ```
 
-## PaperBanana Diagrams
+## Architecture
 
-Generate architecture visuals with a budget guard:
+### RLHF Feedback Loop
+
+```mermaid
+flowchart TD
+    A["👍/👎 User Feedback"] --> B["Capture Layer\n(context + tags)"]
+    B --> C{"Action Resolver"}
+    C -->|store-learning| D["Schema Validator"]
+    C -->|store-mistake| D
+    C -->|no-action| X["Discard"]
+    D -->|valid| E["Memory Store\n(learning / error)"]
+    D -->|invalid| X
+    E --> F["Analytics\n(trends + recurrence)"]
+    F --> G["Prevention Rules Engine"]
+    F --> H["DPO Export\n(prompt/chosen/rejected)"]
+    E --> I["Rubric Engine\n(weighted scoring + guardrails)"]
+    I -->|promotion gate| E
+```
+
+### Plugin Topology
+
+```mermaid
+flowchart LR
+    subgraph Adapters
+        GPT["ChatGPT\n(GPT Actions)"]
+        CL["Claude\n(MCP Server)"]
+        CX["Codex\n(MCP Config)"]
+        GEM["Gemini\n(Function Calling)"]
+        AMP["Amp\n(Skills Template)"]
+    end
+
+    subgraph Core["RLHF Feedback API"]
+        SV["Schema Validation"]
+        PR["Prevention Rules"]
+        DPO["DPO Export"]
+        BG["Budget Guard\n($10/mo cap)"]
+    end
+
+    GPT <--> Core
+    CL <--> Core
+    CX <--> Core
+    GEM <--> Core
+    AMP <--> Core
+```
+
+### PaperBanana (high-fidelity PNG)
+
+Generate richer architecture visuals with a budget guard:
 
 ```bash
 npm run diagrams:paperbanana
