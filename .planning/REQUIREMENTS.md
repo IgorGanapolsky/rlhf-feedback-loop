@@ -34,8 +34,8 @@
 - [x] **VEC-01**: LanceDB embedded table stores feedback vectors in rlhf-feedback-loop
 - [x] **VEC-02**: ESM/CJS compatibility resolved via dynamic import pattern
 - [x] **VEC-03**: apache-arrow pinned to compatible version (<=18.1.0)
-- [ ] **VEC-04**: Semantic similarity search returns relevant historical feedback
-- [ ] **VEC-05**: LanceDB integration has tests and proof report
+- [x] **VEC-04**: Semantic similarity search returns relevant historical feedback
+- [x] **VEC-05**: LanceDB integration has tests and proof report
 
 ### RLAIF and DPO Optimization
 
@@ -90,8 +90,8 @@
 | VEC-01 | Phase 4: LanceDB Vector Storage | Complete |
 | VEC-02 | Phase 4: LanceDB Vector Storage | Complete |
 | VEC-03 | Phase 4: LanceDB Vector Storage | Complete |
-| VEC-04 | Phase 4: LanceDB Vector Storage | Pending |
-| VEC-05 | Phase 4: LanceDB Vector Storage | Pending |
+| VEC-04 | Phase 4: LanceDB Vector Storage | Complete |
+| VEC-05 | Phase 4: LanceDB Vector Storage | Complete |
 | DPO-01 | Phase 5: RLAIF and DPO Optimization | Pending |
 | DPO-02 | Phase 5: RLAIF and DPO Optimization | Pending |
 | DPO-03 | Phase 5: RLAIF and DPO Optimization | Pending |

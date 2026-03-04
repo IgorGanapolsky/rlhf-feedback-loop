@@ -48,6 +48,7 @@ Progress: [████░░░░░░] 36%
 | Phase 03-governance-into-subway P3-03 | 25min | 2 tasks | 6 files |
 | Phase 04-lancedb-vector-storage P4-01 | 1m 2s | 2 tasks | 3 files |
 | Phase 04-lancedb-vector-storage P4-02 | 54s | 1 tasks | 1 files |
+| Phase 04-lancedb-vector-storage P4-03 | 1m 23s | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -81,6 +82,8 @@ Progress: [████░░░░░░] 36%
 - [Phase 04-lancedb-vector-storage]: apache-arrow pinned to 18.1.0 — LanceDB 0.26.2 peer dep >=15.0.0 <=18.1.0; arrow 19+ breaks
 - [Phase 04-lancedb-vector-storage]: TABLE_NAME = rlhf_memories — JS-only table, never shared with Python Subway tables
 - [Phase 04-lancedb-vector-storage]: upsertFeedback() placed after primary JSONL write and all ML side-effects — fire-and-forget .catch() pattern, no await, vector index is optional enhancement
+- [Phase 04-lancedb-vector-storage]: RLHF_VECTOR_STUB_EMBED=true returns deterministic 384-dim unit vector in embed() to run vector-store tests fully offline without ONNX model
+- [Phase 04-lancedb-vector-storage]: Tests use it() (not test()) per node:test describe/it pattern matching thompson-sampling.test.js; require.cache invalidation isolates env per test
 
 ### Pending Todos
 
