@@ -268,8 +268,14 @@ describe('captureFeedback richContext enrichment (QUAL-02)', () => {
     ({ captureFeedback } = freshFeedbackLoop(tmpDir));
   });
 
-  after(() => {
-    fs.rmSync(tmpDir, { recursive: true, force: true });
+  after(async () => {
+    // Brief pause so LanceDB fire-and-forget async write can settle before rmSync
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    try {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    } catch {
+      // Non-critical — OS will clean up tmp dir eventually
+    }
     delete process.env.RLHF_FEEDBACK_DIR;
   });
 
