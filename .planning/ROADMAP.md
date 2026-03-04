@@ -99,7 +99,12 @@ Plans:
   2. DPO batch optimization reads existing positive/negative feedback pairs, produces a preference pair dataset, and updates Thompson posteriors — output observable in `feedback_model.json`
   3. Meta-policy rule extraction produces at least one actionable rule from feedback trends and writes it to the rules store
   4. All RLAIF/DPO features pass unit tests and `proof/rlaif-report.md` exists with evidence; total API cost for the phase stays under $1.00 as enforced by budget-guard
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 5-01-PLAN.md — rlaif-self-audit.js + dpo-optimizer.js + wire selfAudit into feedback-loop.js (DPO-01, DPO-02)
+- [ ] 5-02-PLAN.md — meta-policy.js rule extraction from memory-log.jsonl trends (DPO-03)
+- [ ] 5-03-PLAN.md — Test suites + prove-rlaif.js proof gate + package.json wiring (DPO-04)
 
 ## Progress
 
@@ -119,4 +124,4 @@ Phase 1 → Phase 2 and Phase 3 (parallel) → Phase 4 → Phase 5
 | 2. ML into rlhf-feedback-loop | 5/5 | Complete    | 2026-03-04 |
 | 3. Governance into Subway | 4/4 | Complete    | 2026-03-04 |
 | 4. LanceDB Vector Storage | 4/4 | Complete    | 2026-03-04 |
-| 5. RLAIF and DPO Optimization | 0/TBD | Not started | - |
+| 5. RLAIF and DPO Optimization | 0/3 | Not started | - |
