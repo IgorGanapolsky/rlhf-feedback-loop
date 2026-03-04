@@ -1,115 +1,87 @@
-# Requirements: RLHF v2.0 Production Readiness
+# Requirements: RLHF v3.0 Commercialization
 
 **Defined:** 2026-03-04
-**Core Value:** Close all CRITICAL and IMPORTANT gaps — both systems production-ready with full feedback loop closure
+**Core Value:** Deploy, bill, distribute — first paying customer
 
-## v2 Requirements
+## v3 Requirements
 
-### Feedback Attribution (Subway → rlhf) — CRITICAL
+### Deployment
 
-- [x] **ATTR-01**: Feedback attribution traces each feedback signal back to the specific agent action that caused it
-- [x] **ATTR-02**: Hybrid feedback context guards pre-tool execution based on attributed feedback signals
-- [x] **ATTR-03**: Both modules have unit tests proving correct behavior
+- [ ] **DEPLOY-01**: Dockerfile builds and runs the API server with all dependencies
+- [ ] **DEPLOY-02**: API server deployed to Railway with HTTPS endpoint accessible from internet
+- [ ] **DEPLOY-03**: Health check endpoint returns 200 with version and uptime
+- [ ] **DEPLOY-04**: Environment variables configurable via Railway dashboard
 
-### Data Quality (Subway → rlhf)
+### Billing
 
-- [x] **QUAL-01**: Validate-feedback audits schema correctness, semantic quality, and anomaly detection on feedback entries
-- [x] **QUAL-02**: Rich context enrichment (domain, filePaths, errorType, outcomeCategory) added to capture pipeline
-- [x] **QUAL-03**: inferOutcome classifies feedback beyond binary into granular categories (quick-success, factual-error, etc.)
-- [x] **QUAL-04**: All data quality features have unit tests
+- [ ] **BILL-01**: Stripe Checkout creates a $49/mo Cloud Pro subscription
+- [ ] **BILL-02**: On successful payment, system provisions a unique API key and returns it
+- [ ] **BILL-03**: API validates incoming requests against provisioned keys (reject invalid/expired)
+- [ ] **BILL-04**: Usage metering tracks requests per API key per month
 
-### Loop Closure (Subway → rlhf)
+### Plugin Distribution
 
-- [x] **LOOP-01**: Feedback-to-rules distills feedback patterns into actionable CLAUDE.md behavior rules
-- [x] **LOOP-02**: Plan gate validates PRD markdown schema before execution
-- [x] **LOOP-03**: Feedback inbox reader provides cursor-based reading for reflexion-preflight
-- [x] **LOOP-04**: Feedback-to-memory bridge converts stdin JSON to MCP memory format
-- [x] **LOOP-05**: All loop closure features have unit tests
+- [ ] **PLUG-01**: npm package published — `npx rlhf-feedback-loop init` scaffolds local config
+- [ ] **PLUG-02**: Claude Code skill installable via one command
+- [ ] **PLUG-03**: Codex MCP plugin installable via config.toml one-liner
+- [ ] **PLUG-04**: Gemini extension installable via function declaration import
+- [ ] **PLUG-05**: Amp skill installable via skill template copy
+- [ ] **PLUG-06**: Each plugin has a README with 5-minute setup instructions
 
-### Intelligence (Subway → rlhf)
+### Discovery
 
-- [ ] **INTL-01**: Context engine routes queries to pre-computed knowledge bundles for low-latency retrieval
-- [ ] **INTL-02**: Skill quality tracker correlates tool call metrics to feedback signals by timestamp proximity
-- [ ] **INTL-03**: Both modules have unit tests
-
-### Training Export (Subway → rlhf)
-
-- [ ] **XPRT-01**: PyTorch JSON training export format supported alongside JSONL
-- [ ] **XPRT-02**: CSV summary export format supported
-- [ ] **XPRT-03**: Action analysis report generated from feedback data
-- [ ] **XPRT-04**: validateMemoryStructure() gates DPO export to prevent bad data in training pairs
-- [ ] **XPRT-05**: All export features have unit tests
-
-### Subway Upgrades (rlhf → Subway)
-
-- [x] **SUBW-01**: LanceDB vector store with HuggingFace embeddings ported to Subway
-- [x] **SUBW-02**: DPO optimizer (offline batch) ported to Subway
-- [x] **SUBW-03**: Thompson Sampling JS module ported to Subway
-- [x] **SUBW-04**: Self-healing GH Action workflows added to Subway
-- [x] **SUBW-05**: All Subway upgrades have tests and proof report
+- [ ] **DISC-01**: Landing page with pricing, demo, and Stripe checkout button
+- [ ] **DISC-02**: ChatGPT GPT Store listing submitted
+- [ ] **DISC-03**: Claude MCP Hub submission prepared
+- [ ] **DISC-04**: README updated with install commands for all 5 platforms
 
 ### Proof Gate
 
-- [ ] **PROOF-01**: Proof reports generated for all v2 features in proof/ directory
-- [ ] **PROOF-02**: npm test passes with increased test count, 0 failures
+- [ ] **PROOF-01**: Deployed API responds to curl from internet with valid JSON
+- [ ] **PROOF-02**: Stripe test-mode checkout flow completes end-to-end
+- [ ] **PROOF-03**: npm package installs and runs on clean machine
+- [ ] **PROOF-04**: All existing tests still pass (314+), 0 failures
 
-## Future Requirements (v3)
-
-- **ADV-01**: Hybrid semantic search (BM25 + vector fusion)
-- **ADV-02**: Model snapshot lift comparison (>=5% gate)
-- **ADV-03**: Agentic memory evolution (A-Mem Zettelkasten)
-- **ADV-04**: Autonomy decision engine
-- **ADV-05**: Agent-routing config (oracle/librarian/task/quick)
-
-## Out of Scope
+## Out of Scope (v3)
 
 | Feature | Reason |
 |---------|--------|
-| Multi-adapter pattern for Subway | Subway only uses Claude; dead code burden |
-| Python RAG scripts for rlhf | LanceDB + vector-store.js handles this natively |
-| Streak tracking | Nice-to-have, defer to v3 |
-| success-patterns.md distillation | Nice-to-have, defer to v3 |
-| decisionTrace fields | Nice-to-have, defer to v3 |
-| Memory maintenance GH Action | Nice-to-have, defer to v3 |
-| Any feature requiring paid API calls | $10/mo budget constraint |
+| Enterprise SSO/RBAC | v4 — need paying customers first |
+| Multi-tenant data isolation | v4 — single-tenant fine for first 62 customers |
+| Custom model fine-tuning service | v4 — OSS DPO export sufficient |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ATTR-01 | Phase 6 | Complete |
-| ATTR-02 | Phase 6 | Complete |
-| ATTR-03 | Phase 6 | Complete |
-| QUAL-01 | Phase 7 | Complete |
-| QUAL-02 | Phase 7 | Complete |
-| QUAL-03 | Phase 7 | Complete |
-| QUAL-04 | Phase 7 | Complete |
-| LOOP-01 | Phase 8 | Complete |
-| LOOP-02 | Phase 8 | Complete |
-| LOOP-03 | Phase 8 | Complete |
-| LOOP-04 | Phase 8 | Complete |
-| LOOP-05 | Phase 8 | Complete |
-| INTL-01 | Phase 9 | Pending |
-| INTL-02 | Phase 9 | Pending |
-| INTL-03 | Phase 9 | Pending |
-| XPRT-01 | Phase 10 | Pending |
-| XPRT-02 | Phase 10 | Pending |
-| XPRT-03 | Phase 10 | Pending |
-| XPRT-04 | Phase 10 | Pending |
-| XPRT-05 | Phase 10 | Pending |
-| SUBW-01 | Phase 11 | Complete |
-| SUBW-02 | Phase 11 | Complete |
-| SUBW-03 | Phase 11 | Complete |
-| SUBW-04 | Phase 11 | Complete |
-| SUBW-05 | Phase 11 | Complete |
-| PROOF-01 | Phase 12 | Pending |
-| PROOF-02 | Phase 12 | Pending |
+| DEPLOY-01 | Phase 13 | Pending |
+| DEPLOY-02 | Phase 13 | Pending |
+| DEPLOY-03 | Phase 13 | Pending |
+| DEPLOY-04 | Phase 13 | Pending |
+| BILL-01 | Phase 14 | Pending |
+| BILL-02 | Phase 14 | Pending |
+| BILL-03 | Phase 14 | Pending |
+| BILL-04 | Phase 14 | Pending |
+| PLUG-01 | Phase 15 | Pending |
+| PLUG-02 | Phase 15 | Pending |
+| PLUG-03 | Phase 15 | Pending |
+| PLUG-04 | Phase 15 | Pending |
+| PLUG-05 | Phase 15 | Pending |
+| PLUG-06 | Phase 15 | Pending |
+| DISC-01 | Phase 16 | Pending |
+| DISC-02 | Phase 16 | Pending |
+| DISC-03 | Phase 16 | Pending |
+| DISC-04 | Phase 16 | Pending |
+| PROOF-01 | Phase 17 | Pending |
+| PROOF-02 | Phase 17 | Pending |
+| PROOF-03 | Phase 17 | Pending |
+| PROOF-04 | Phase 17 | Pending |
 
 **Coverage:**
-- v2 requirements: 27 total
-- Mapped to phases: 27
+- v3 requirements: 22 total
+- Mapped to phases: 22
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-04*
-*Last updated: 2026-03-04 — traceability complete after v2.0 roadmap (Phases 6-12)*
+*Traceability updated: 2026-03-04 (v3.0 roadmap created)*
