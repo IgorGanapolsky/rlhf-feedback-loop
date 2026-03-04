@@ -1,0 +1,167 @@
+'use strict';
+
+const { describe, it } = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
+
+const {
+  timeDecayWeight,
+  loadModel,
+  createInitialModel,
+  updateModel,
+  getReliability,
+  samplePosteriors,
+  DECAY_FLOOR,
+  DEFAULT_CATEGORIES,
+} = require('../scripts/thompson-sampling');
+
+describe('timeDecayWeight', () => {
+  it('fresh timestamp returns ~1.0', () => {
+    const w = timeDecayWeight(new Date().toISOString());
+    assert.ok(w > 0.99, `expected > 0.99, got ${w}`);
+    assert.ok(w <= 1.0, `expected <= 1.0, got ${w}`);
+  });
+
+  it('7-day-old timestamp returns ~0.5', () => {
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const w = timeDecayWeight(sevenDaysAgo);
+    assert.ok(w > 0.48, `expected > 0.48, got ${w}`);
+    assert.ok(w < 0.52, `expected < 0.52, got ${w}`);
+  });
+
+  it('invalid string returns DECAY_FLOOR', () => {
+    const w = timeDecayWeight('not-a-date');
+    assert.strictEqual(w, DECAY_FLOOR);
+  });
+
+  it('null returns DECAY_FLOOR', () => {
+    const w = timeDecayWeight(null);
+    assert.strictEqual(w, DECAY_FLOOR);
+  });
+
+  it('365-day-old timestamp still >= DECAY_FLOOR', () => {
+    const oldDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString();
+    const w = timeDecayWeight(oldDate);
+    assert.ok(w >= DECAY_FLOOR, `expected >= ${DECAY_FLOOR}, got ${w}`);
+  });
+});
+
+describe('createInitialModel', () => {
+  it('has all DEFAULT_CATEGORIES with alpha=1.0 beta=1.0 samples=0', () => {
+    const model = createInitialModel();
+    assert.ok(model.categories, 'model should have categories');
+    assert.strictEqual(model.total_entries, 0);
+    for (const cat of DEFAULT_CATEGORIES) {
+      const entry = model.categories[cat];
+      assert.ok(entry, `category ${cat} should exist`);
+      assert.strictEqual(entry.alpha, 1.0, `${cat}.alpha should be 1.0`);
+      assert.strictEqual(entry.beta, 1.0, `${cat}.beta should be 1.0`);
+      assert.strictEqual(entry.samples, 0, `${cat}.samples should be 0`);
+    }
+  });
+});
+
+describe('updateModel', () => {
+  it('positive signal increments alpha', () => {
+    const model = createInitialModel();
+    const ts = new Date().toISOString();
+    updateModel(model, { signal: 'positive', timestamp: ts, categories: ['testing'] });
+    assert.ok(model.categories.testing.alpha > 1.0, `alpha should be > 1.0, got ${model.categories.testing.alpha}`);
+    assert.strictEqual(model.categories.testing.beta, 1.0, 'beta should be unchanged at 1.0');
+  });
+
+  it('negative signal increments beta', () => {
+    const model = createInitialModel();
+    const ts = new Date().toISOString();
+    updateModel(model, { signal: 'negative', timestamp: ts, categories: ['testing'] });
+    assert.ok(model.categories.testing.beta > 1.0, `beta should be > 1.0, got ${model.categories.testing.beta}`);
+    assert.strictEqual(model.categories.testing.alpha, 1.0, 'alpha should be unchanged at 1.0');
+  });
+
+  it('empty categories falls back to uncategorized', () => {
+    const model = createInitialModel();
+    const ts = new Date().toISOString();
+    updateModel(model, { signal: 'positive', timestamp: ts, categories: [] });
+    assert.ok(model.categories.uncategorized.alpha > 1.0, `uncategorized alpha should be > 1.0`);
+  });
+
+  it('unknown category auto-created', () => {
+    const model = createInitialModel();
+    const ts = new Date().toISOString();
+    updateModel(model, { signal: 'positive', timestamp: ts, categories: ['new_category'] });
+    assert.ok(model.categories.new_category, 'new_category should exist after update');
+    assert.ok(model.categories.new_category.alpha > 1.0, `new_category.alpha should be > 1.0`);
+  });
+
+  it('total_entries increments', () => {
+    const model = createInitialModel();
+    const ts = new Date().toISOString();
+    assert.strictEqual(model.total_entries, 0);
+    updateModel(model, { signal: 'positive', timestamp: ts, categories: ['testing'] });
+    assert.strictEqual(model.total_entries, 1);
+    updateModel(model, { signal: 'negative', timestamp: ts, categories: ['git'] });
+    assert.strictEqual(model.total_entries, 2);
+  });
+});
+
+describe('getReliability', () => {
+  it('reliability = alpha/(alpha+beta)', () => {
+    const model = createInitialModel();
+    // Manually set testing to alpha=3.0, beta=1.0 for deterministic check
+    model.categories.testing.alpha = 3.0;
+    model.categories.testing.beta = 1.0;
+    const rel = getReliability(model);
+    assert.ok(rel.testing, 'testing reliability entry should exist');
+    assert.strictEqual(rel.testing.reliability, 0.75, `expected 0.75, got ${rel.testing.reliability}`);
+    assert.strictEqual(rel.testing.alpha, 3.0);
+    assert.strictEqual(rel.testing.beta, 1.0);
+  });
+});
+
+describe('samplePosteriors', () => {
+  it('each posterior in [0,1]', () => {
+    const model = createInitialModel();
+    const ts = new Date().toISOString();
+    // Run 5 updates to build up posterior
+    for (let i = 0; i < 5; i++) {
+      updateModel(model, {
+        signal: i % 2 === 0 ? 'positive' : 'negative',
+        timestamp: ts,
+        categories: ['testing'],
+      });
+    }
+    const posteriors = samplePosteriors(model);
+    for (const [cat, val] of Object.entries(posteriors)) {
+      assert.ok(typeof val === 'number', `${cat} posterior should be a number`);
+      assert.ok(val >= 0, `${cat} posterior should be >= 0, got ${val}`);
+      assert.ok(val <= 1, `${cat} posterior should be <= 1, got ${val}`);
+    }
+  });
+});
+
+describe('loadModel', () => {
+  it('missing file returns initial model', () => {
+    const nonExistentPath = path.join(os.tmpdir(), `ts-test-missing-${Date.now()}.json`);
+    const model = loadModel(nonExistentPath);
+    assert.strictEqual(model.total_entries, 0, 'missing file should return initial model with total_entries=0');
+    assert.ok(model.categories, 'should have categories');
+  });
+
+  it('reads existing file', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ts-test-'));
+    const tmpFile = path.join(tmpDir, 'feedback_model.json');
+    try {
+      // Write a model with specific total_entries
+      const savedModel = createInitialModel();
+      savedModel.total_entries = 42;
+      fs.writeFileSync(tmpFile, JSON.stringify(savedModel, null, 2), 'utf-8');
+
+      const loaded = loadModel(tmpFile);
+      assert.strictEqual(loaded.total_entries, 42, `expected total_entries=42, got ${loaded.total_entries}`);
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+});
