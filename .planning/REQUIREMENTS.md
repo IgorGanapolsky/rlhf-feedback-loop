@@ -7,10 +7,10 @@
 
 ### Deployment
 
-- [ ] **DEPLOY-01**: Dockerfile builds and runs the API server with all dependencies
-- [ ] **DEPLOY-02**: API server deployed to Railway with HTTPS endpoint accessible from internet
-- [ ] **DEPLOY-03**: Health check endpoint returns 200 with version and uptime
-- [ ] **DEPLOY-04**: Environment variables configurable via Railway dashboard
+- [x] **DEPLOY-01**: Dockerfile builds and runs the API server with all dependencies
+- [ ] **DEPLOY-02**: API server deployed to Railway with HTTPS endpoint accessible from internet — deployment-ready, pending Railway account setup
+- [x] **DEPLOY-03**: Health check endpoint returns 200 with version and uptime
+- [x] **DEPLOY-04**: Environment variables configurable via Railway dashboard
 
 ### Billing
 
@@ -54,10 +54,10 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DEPLOY-01 | Phase 13 | Pending |
-| DEPLOY-02 | Phase 13 | Pending |
-| DEPLOY-03 | Phase 13 | Pending |
-| DEPLOY-04 | Phase 13 | Pending |
+| DEPLOY-01 | Phase 13 | Complete (2026-03-04) |
+| DEPLOY-02 | Phase 13 | Deployment-ready, pending Railway credentials |
+| DEPLOY-03 | Phase 13 | Complete (2026-03-04) |
+| DEPLOY-04 | Phase 13 | Complete (2026-03-04) |
 | BILL-01 | Phase 14 | Pending |
 | BILL-02 | Phase 14 | Pending |
 | BILL-03 | Phase 14 | Pending |
