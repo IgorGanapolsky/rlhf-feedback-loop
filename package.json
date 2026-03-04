@@ -44,5 +44,10 @@
     "agent-evaluation",
     "prompt-engineering"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "@huggingface/transformers": "^3.8.1",
+    "@lancedb/lancedb": "^0.26.2",
+    "apache-arrow": "^18.1.0"
+  }
 }
