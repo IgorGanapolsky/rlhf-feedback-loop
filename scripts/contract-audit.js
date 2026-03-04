@@ -147,9 +147,19 @@ function buildMarkdownReport(results) {
   lines.push('| Memory validation | absent | `validateMemoryStructure` | Subway-only — flag for Phase 2 planner |');
   lines.push('| Rubric evaluation | `resolveFeedbackAction` accepts `rubricEvaluation` | `resolveFeedbackAction` silently ignores `rubricEvaluation` | Behavior diverges — CNTR-02 fix required |');
   lines.push('');
+  lines.push('## Discrepancies vs Research Notes');
+  lines.push('');
+  lines.push('The following discrepancies were found between the 1-RESEARCH.md predictions and actual runtime output:');
+  lines.push('');
+  lines.push('| Prediction (1-RESEARCH.md) | Actual (Runtime) | Notes |');
+  lines.push('|---|---|---|');
+  lines.push('| feedback-schema.js: 7 shared exports | 8 shared exports | `parseTimestamp` was added in plan 1-03 before this audit ran. Runtime is authoritative. |');
+  lines.push('| Baseline: 54 node-runner tests | 60 node-runner tests | 6 `parseTimestamp` tests added in tests/api-server.test.js (from contextfs.test.js) when plan 1-03 was executed. |');
+  lines.push('| Total: 77 tests (54+23) | 83 tests (60+23) | Same delta: parseTimestamp tests added to node-runner suite. |');
+  lines.push('');
   lines.push('## Baseline CI');
   lines.push('');
-  lines.push('All 3 scripts audited. Baseline CI: 54 node-runner tests + 23 script-runner tests = 77 total passing.');
+  lines.push('All 3 scripts audited. Baseline CI: 60 node-runner tests + 23 script-runner tests = 83 total passing.');
   lines.push('');
 
   return lines.join('\n');

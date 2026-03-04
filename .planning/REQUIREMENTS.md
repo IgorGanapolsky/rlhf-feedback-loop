@@ -9,7 +9,7 @@
 
 - [ ] **CNTR-01**: Export mapping audit confirms all shared function names are compatible between repos
 - [ ] **CNTR-02**: Schema divergence resolved — rubricEvaluation parameter handled consistently
-- [ ] **CNTR-03**: Timestamp format normalized (ISO 8601 with Z suffix) across both repos
+- [x] **CNTR-03**: Timestamp format normalized (ISO 8601 with Z suffix) across both repos
 
 ### ML into rlhf-feedback-loop
 
@@ -74,7 +74,7 @@
 |-------------|-------|--------|
 | CNTR-01 | Phase 1: Contract Alignment | Pending |
 | CNTR-02 | Phase 1: Contract Alignment | Pending |
-| CNTR-03 | Phase 1: Contract Alignment | Pending |
+| CNTR-03 | Phase 1: Contract Alignment | Complete |
 | ML-01 | Phase 2: ML into rlhf-feedback-loop | Pending |
 | ML-02 | Phase 2: ML into rlhf-feedback-loop | Pending |
 | ML-03 | Phase 2: ML into rlhf-feedback-loop | Pending |

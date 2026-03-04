@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-04)
 ## Current Position
 
 Phase: 1 of 5 (Contract Alignment)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-03-04 — Roadmap created, all 5 phases defined, 24/24 v1 requirements mapped
+Plan: 3 of 3 in current phase
+Status: Phase 1 complete — ready for Phase 2 and Phase 3 (parallel)
+Last activity: 2026-03-04 — Plan 1-03 complete: parseTimestamp rlhf-side + baseline test count; Phase 1 all done
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██░░░░░░░░] 20%
 
 ## Performance Metrics
 
@@ -35,6 +35,10 @@ Progress: [░░░░░░░░░░] 0%
 
 *Updated after each plan completion*
 
+| Phase | Plans | Total | Avg/Plan |
+|-------|-------|-------|----------|
+| 01-contract-alignment P03 | 15min | 2 tasks | 3 files |
+
 ## Accumulated Context
 
 ### Decisions
@@ -43,6 +47,8 @@ Progress: [░░░░░░░░░░] 0%
 - [Init]: Both sync directions run simultaneously — ML into rlhf-feedback-loop, governance into Subway
 - [Init]: Phases 2 and 3 are independent and can run in parallel after Phase 1 clears
 - [Init]: $10/month budget cap enforced by budget-guard.js on all API calls
+- [Phase 01-contract-alignment]: parseTimestamp() uses new Date(String(ts).trim()) returning null for invalid input — CNTR-03 rlhf side complete
+- [Phase 01-contract-alignment]: Baseline node-runner count is 60 (58 test:api + 2 test:proof) — authoritative Phase 2 and Phase 3 start gate in proof/baseline-test-count.md
 
 ### Pending Todos
 

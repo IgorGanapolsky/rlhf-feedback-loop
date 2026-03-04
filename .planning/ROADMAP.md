@@ -12,7 +12,7 @@ Two live production systems — `rlhf-feedback-loop` (Node.js RLHF product libra
 - Phase 4 depends on Phase 2 (LanceDB needs ML baseline)
 - Phase 5 depends on Phases 2 and 3
 
-- [ ] **Phase 1: Contract Alignment** - Audit exports and resolve schema divergence before any code movement
+- [x] **Phase 1: Contract Alignment** - Audit exports and resolve schema divergence before any code movement
 - [ ] **Phase 2: ML into rlhf-feedback-loop** - Port Thompson Sampling, sequence tracking, and diversity from Subway
 - [ ] **Phase 3: Governance into Subway** - Port budget guard, intent router, ContextFS, and self-healing from rlhf-feedback-loop
 - [ ] **Phase 4: LanceDB Vector Storage** - Integrate LanceDB into rlhf-feedback-loop with cross-language verification
@@ -32,9 +32,9 @@ Two live production systems — `rlhf-feedback-loop` (Node.js RLHF product libra
 **Plans**: 3 plans
 
 Plans:
-- [ ] 1-01-PLAN.md — Runtime export audit script + proof/contract-audit-report.md (CNTR-01)
-- [ ] 1-02-PLAN.md — rubricEvaluation gate + parseTimestamp() in Subway's feedback-schema.js (CNTR-02, CNTR-03 Subway)
-- [ ] 1-03-PLAN.md — parseTimestamp() in rlhf's feedback-schema.js + test suite + baseline count record (CNTR-03 rlhf)
+- [x] 1-01-PLAN.md — Runtime export audit script + proof/contract-audit-report.md (CNTR-01)
+- [x] 1-02-PLAN.md — rubricEvaluation gate + parseTimestamp() in Subway's feedback-schema.js (CNTR-02, CNTR-03 Subway)
+- [x] 1-03-PLAN.md — parseTimestamp() in rlhf's feedback-schema.js + test suite + baseline count record (CNTR-03 rlhf)
 
 ### Phase 2: ML into rlhf-feedback-loop
 **Goal**: rlhf-feedback-loop gains Thompson Sampling posteriors, exponential time-decay, LSTM/Transformer sequence tracking, and diversity tracking — all tested and verified against Subway's implementation
@@ -96,7 +96,7 @@ Phase 1 → Phase 2 and Phase 3 (parallel) → Phase 4 → Phase 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Contract Alignment | 0/3 | Not started | - |
+| 1. Contract Alignment | 3/3 | Complete | 2026-03-04 |
 | 2. ML into rlhf-feedback-loop | 0/TBD | Not started | - |
 | 3. Governance into Subway | 0/TBD | Not started | - |
 | 4. LanceDB Vector Storage | 0/TBD | Not started | - |
