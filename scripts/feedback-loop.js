@@ -17,6 +17,7 @@ const {
 const {
   buildRubricEvaluation,
 } = require('./rubric-engine');
+const { recordAction, attributeFeedback } = require('./feedback-attribution');
 
 const PROJECT_ROOT = path.join(__dirname, '..');
 const DEFAULT_FEEDBACK_DIR = path.join(PROJECT_ROOT, '.claude', 'memory', 'feedback');
@@ -399,6 +400,20 @@ function captureFeedback(params) {
     const sam = getSelfAuditModule();
     if (sam) sam.selfAuditAndLog(feedbackEvent, mlPaths);
   } catch (_err) { /* non-critical */ }
+
+  // Attribution side-effects — fire-and-forget, never throw
+  try {
+    const toolName = feedbackEvent.toolName || feedbackEvent.tool_name || 'unknown';
+    const toolInput = feedbackEvent.context || feedbackEvent.input || '';
+    recordAction(toolName, toolInput);
+    if (feedbackEvent.signal === 'negative') {
+      attributeFeedback('negative', feedbackEvent.context || '');
+    } else if (feedbackEvent.signal === 'positive') {
+      attributeFeedback('positive', feedbackEvent.context || '');
+    }
+  } catch (e) {
+    // attribution is non-blocking
+  }
 
   summary.accepted += 1;
   summary.lastUpdated = now;
