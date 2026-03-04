@@ -193,6 +193,24 @@ function prepareForStorage(memory) {
   return { ok: true, memory };
 }
 
+/**
+ * parseTimestamp — Parse any ISO 8601 timestamp string into a Date object.
+ * Handles: Z-suffix ("2026-03-04T12:00:00.000Z"), no-suffix ("2026-03-04T12:00:00"),
+ * and UTC offset ("2026-03-04T12:00:00+05:00").
+ * Returns null (not NaN) for null, undefined, or unparseable input.
+ * NOTE: Do NOT change how timestamps are WRITTEN — new Date().toISOString() already
+ * produces correct ISO 8601+Z format. This helper is for READING only.
+ * Python's train_from_feedback.py strips Z with .replace("Z","") before fromisoformat().
+ * That pattern is safe because Node always writes Z-suffix. Do not alter write behavior.
+ * @param {string|null|undefined} ts - Timestamp string to parse
+ * @returns {Date|null}
+ */
+function parseTimestamp(ts) {
+  if (ts == null) return null;
+  const d = new Date(String(ts).trim());
+  return isNaN(d.getTime()) ? null : d;
+}
+
 function runTests() {
   let passed = 0;
   let failed = 0;
@@ -270,6 +288,7 @@ module.exports = {
   validateFeedbackMemory,
   resolveFeedbackAction,
   prepareForStorage,
+  parseTimestamp,
   GENERIC_TAGS,
   MIN_CONTENT_LENGTH,
   VALID_TITLE_PREFIXES,
