@@ -30,7 +30,8 @@
     "ml:train": "python3 scripts/train_from_feedback.py --train",
     "ml:incremental": "python3 scripts/train_from_feedback.py --incremental",
     "ml:reliability": "python3 scripts/train_from_feedback.py --reliability",
-    "ml:sample": "python3 scripts/train_from_feedback.py --sample"
+    "ml:sample": "python3 scripts/train_from_feedback.py --sample",
+    "ml:meta-policy": "node scripts/meta-policy.js --extract"
   },
   "keywords": [
     "rlhf",

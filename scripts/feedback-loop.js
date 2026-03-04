@@ -55,6 +55,14 @@ function getVectorStoreModule() {
   }
 }
 
+function getSelfAuditModule() {
+  try {
+    return require('./rlaif-self-audit');
+  } catch (_) {
+    return null;
+  }
+}
+
 function ensureDir(dirPath) {
   if (!fs.existsSync(dirPath)) {
     fs.mkdirSync(dirPath, { recursive: true });
@@ -385,6 +393,12 @@ function captureFeedback(params) {
       // Non-critical; primary feedback log is the source of truth
     });
   }
+
+  // RLAIF self-audit side-effect (non-blocking — 4th enrichment layer)
+  try {
+    const sam = getSelfAuditModule();
+    if (sam) sam.selfAuditAndLog(feedbackEvent, mlPaths);
+  } catch (_err) { /* non-critical */ }
 
   summary.accepted += 1;
   summary.lastUpdated = now;
@@ -726,6 +740,7 @@ module.exports = {
   feedbackSummary,
   readJSONL,
   getFeedbackPaths,
+  inferDomain,
   get FEEDBACK_LOG_PATH() {
     return getFeedbackPaths().FEEDBACK_LOG_PATH;
   },
