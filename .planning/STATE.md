@@ -69,6 +69,8 @@ Progress: [████░░░░░░] 36%
 - [Phase 02-ml-into-rlhf-feedback-loop]: ML-05 test coverage for ML-03 and ML-04 implemented as integration-style tmpdir tests in 02-04
 - [Phase 03-governance-into-subway]: budget-guard.js lock timeout: timeoutMs=30000/staleMs=60000 for concurrent GSD agent load (4+ parallel callers)
 - [Phase 03-governance-into-subway]: contextfs.js Jaccard threshold=0.7, TTL clamped to Math.max(60, raw) — TTL test uses Date.now monkeypatch (no jest.useFakeTimers)
+- [Phase 02-ml-into-rlhf-feedback-loop]: ml:* scripts invoke python3 scripts/train_from_feedback.py — no new binary dependencies
+- [Phase 02-ml-into-rlhf-feedback-loop]: SC-5 delta confirmed: Phase 2 total 89 node-runner tests vs 60 Phase 1 baseline (+29 ML tests)
 
 ### Pending Todos
 

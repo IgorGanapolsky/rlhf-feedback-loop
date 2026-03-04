@@ -13,7 +13,7 @@ Two live production systems — `rlhf-feedback-loop` (Node.js RLHF product libra
 - Phase 5 depends on Phases 2 and 3
 
 - [x] **Phase 1: Contract Alignment** - Audit exports and resolve schema divergence before any code movement
-- [ ] **Phase 2: ML into rlhf-feedback-loop** - Port Thompson Sampling, sequence tracking, and diversity from Subway
+- [x] **Phase 2: ML into rlhf-feedback-loop** - Port Thompson Sampling, sequence tracking, and diversity from Subway (completed 2026-03-04)
 - [ ] **Phase 3: Governance into Subway** - Port budget guard, intent router, ContextFS, and self-healing from rlhf-feedback-loop
 - [ ] **Phase 4: LanceDB Vector Storage** - Integrate LanceDB into rlhf-feedback-loop with cross-language verification
 - [ ] **Phase 5: RLAIF and DPO Optimization** - Self-scoring and preference pair optimization atop stable ML infrastructure
@@ -110,7 +110,7 @@ Phase 1 → Phase 2 and Phase 3 (parallel) → Phase 4 → Phase 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Contract Alignment | 3/3 | Complete    | 2026-03-04 |
-| 2. ML into rlhf-feedback-loop | 4/5 | In Progress|  |
+| 2. ML into rlhf-feedback-loop | 5/5 | Complete   | 2026-03-04 |
 | 3. Governance into Subway | 2/4 | In Progress|  |
 | 4. LanceDB Vector Storage | 0/TBD | Not started | - |
 | 5. RLAIF and DPO Optimization | 0/TBD | Not started | - |
