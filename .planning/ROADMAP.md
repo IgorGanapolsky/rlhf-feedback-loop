@@ -29,7 +29,12 @@ Two live production systems — `rlhf-feedback-loop` (Node.js RLHF product libra
   2. `rubricEvaluation` parameter is handled identically in both `feedback-schema.js` files with a documented diff resolution
   3. All timestamp fields in both repos produce valid `Date` objects when parsed through a shared `parseTimestamp()` helper — no `NaN` values
   4. A baseline test count is recorded for both repos (54 for rlhf-feedback-loop) and CI passes green before any ports begin
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 1-01-PLAN.md — Runtime export audit script + proof/contract-audit-report.md (CNTR-01)
+- [ ] 1-02-PLAN.md — rubricEvaluation gate + parseTimestamp() in Subway's feedback-schema.js (CNTR-02, CNTR-03 Subway)
+- [ ] 1-03-PLAN.md — parseTimestamp() in rlhf's feedback-schema.js + test suite + baseline count record (CNTR-03 rlhf)
 
 ### Phase 2: ML into rlhf-feedback-loop
 **Goal**: rlhf-feedback-loop gains Thompson Sampling posteriors, exponential time-decay, LSTM/Transformer sequence tracking, and diversity tracking — all tested and verified against Subway's implementation
@@ -91,7 +96,7 @@ Phase 1 → Phase 2 and Phase 3 (parallel) → Phase 4 → Phase 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Contract Alignment | 0/TBD | Not started | - |
+| 1. Contract Alignment | 0/3 | Not started | - |
 | 2. ML into rlhf-feedback-loop | 0/TBD | Not started | - |
 | 3. Governance into Subway | 0/TBD | Not started | - |
 | 4. LanceDB Vector Storage | 0/TBD | Not started | - |
