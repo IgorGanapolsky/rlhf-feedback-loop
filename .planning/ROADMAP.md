@@ -139,7 +139,12 @@ Plans:
   2. A newly captured feedback entry includes `domain`, `filePaths`, `errorType`, and `outcomeCategory` fields populated by the enrichment pipeline — observable in the JSONL log
   3. `inferOutcome` classifies a feedback entry into a granular category (`quick-success`, `factual-error`, `partial-success`, etc.) beyond the binary up/down signal — verifiable by inspecting the entry's `outcomeCategory` field
   4. All data quality features have unit tests covering happy path, validation failures, and enrichment edge cases; all pass with 0 failures
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 07-01-PLAN.md — Port validate-feedback.js to scripts/ with RLHF schema adaptations (QUAL-01)
+- [ ] 07-02-PLAN.md — Add inferOutcome() + richContext enrichment to captureFeedback() (QUAL-02, QUAL-03)
+- [ ] 07-03-PLAN.md — Test suite + prove-data-quality.js + npm scripts wiring (QUAL-04)
 
 ### Phase 8: Loop Closure
 **Goal**: Feedback patterns automatically distill into actionable behavior rules, plans are gated before execution, and feedback flows bidirectionally through inbox and memory bridge — closing the full RLHF loop
