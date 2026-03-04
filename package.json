@@ -22,6 +22,7 @@
     "diagrams:paperbanana": "bash scripts/generate-paperbanana-diagrams.sh",
     "prove:adapters": "node scripts/prove-adapters.js",
     "prove:automation": "node scripts/prove-automation.js",
+    "prove:lancedb": "node scripts/prove-lancedb.js",
     "self-heal:check": "node scripts/self-healing-check.js",
     "self-heal:run": "node scripts/self-heal.js --reason=manual",
     "intents:list": "node scripts/intent-router.js",
