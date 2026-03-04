@@ -8,6 +8,57 @@
 
 Production-grade RLHF operations for AI agents across ChatGPT, Claude, Gemini, Codex, and Amp.
 
+## Quick Install
+
+Install on any platform with a single command. Be capturing feedback in under 5 minutes.
+
+### Universal (any platform)
+
+```bash
+npx rlhf-feedback-loop init
+node .rlhf/capture-feedback.js --feedback=up --context="test"
+```
+
+### Claude Code
+
+```bash
+cp plugins/claude-skill/SKILL.md .claude/skills/rlhf-feedback.md
+```
+
+Full guide: [plugins/claude-skill/INSTALL.md](plugins/claude-skill/INSTALL.md)
+
+### Codex
+
+```bash
+cat adapters/codex/config.toml >> ~/.codex/config.toml
+```
+
+Full guide: [plugins/codex-profile/INSTALL.md](plugins/codex-profile/INSTALL.md)
+
+### Gemini
+
+```bash
+cp adapters/gemini/function-declarations.json .gemini/rlhf-tools.json
+```
+
+Full guide: [plugins/gemini-extension/INSTALL.md](plugins/gemini-extension/INSTALL.md)
+
+### Amp
+
+```bash
+cp plugins/amp-skill/SKILL.md .amp/skills/rlhf-feedback.md
+```
+
+Full guide: [plugins/amp-skill/INSTALL.md](plugins/amp-skill/INSTALL.md)
+
+### ChatGPT (GPT Actions)
+
+Import `adapters/chatgpt/openapi.yaml` in the GPT Builder Actions editor.
+
+Full guide: [adapters/chatgpt/INSTALL.md](adapters/chatgpt/INSTALL.md)
+
+---
+
 ## Value Proposition
 
 Most teams collect feedback but do not convert it into reliable behavior change.
