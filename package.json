@@ -25,7 +25,11 @@
     "self-heal:check": "node scripts/self-healing-check.js",
     "self-heal:run": "node scripts/self-heal.js --reason=manual",
     "intents:list": "node scripts/intent-router.js",
-    "intents:plan": "node scripts/intent-router.js --intent=publish_dpo_training_data"
+    "intents:plan": "node scripts/intent-router.js --intent=publish_dpo_training_data",
+    "ml:train": "python3 scripts/train_from_feedback.py --train",
+    "ml:incremental": "python3 scripts/train_from_feedback.py --incremental",
+    "ml:reliability": "python3 scripts/train_from_feedback.py --reliability",
+    "ml:sample": "python3 scripts/train_from_feedback.py --sample"
   },
   "keywords": [
     "rlhf",
