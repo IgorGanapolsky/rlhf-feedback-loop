@@ -28,7 +28,17 @@ async function getEmbeddingPipeline() {
   return _pipeline;
 }
 
+// Stub embed support for unit tests — avoids HuggingFace ONNX model download.
+// Set RLHF_VECTOR_STUB_EMBED=true to get a deterministic 384-dim unit vector.
+// The real embed() is used in production and integration tests
+// (gated by absence of this env var).
 async function embed(text) {
+  if (process.env.RLHF_VECTOR_STUB_EMBED === 'true') {
+    // Deterministic 384-dim unit vector: first element = 1.0, rest = 0.0
+    const stub = Array(384).fill(0);
+    stub[0] = 1.0;
+    return stub;
+  }
   const pipe = await getEmbeddingPipeline();
   const output = await pipe(text, { pooling: 'mean', normalize: true });
   return Array.from(output.data); // Float32Array -> plain number[] for LanceDB Arrow serialization
