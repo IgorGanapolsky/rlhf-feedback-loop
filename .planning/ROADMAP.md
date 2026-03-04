@@ -308,7 +308,7 @@ Phase 13 → Phase 14 + Phase 15 (parallel after 13) → Phase 16 (after 14 + 15
 | 11. Subway Upgrades | v2.0 | 4/4 | Complete | 2026-03-04 |
 | 12. Proof Gate | v2.0 | 1/1 | Complete | 2026-03-04 |
 | 13. Deployment | v3.0 | Complete    | 2026-03-04 | 2026-03-04 |
-| 14. Billing | v3.0 | 0/TBD | Not started | - |
-| 15. Plugin Distribution | v3.0 | 0/TBD | Not started | - |
+| 14. Billing | v3.0 | 1/1 | Complete | 2026-03-04 |
+| 15. Plugin Distribution | v3.0 | 1/1 | Complete | 2026-03-04 |
 | 16. Discovery | v3.0 | 0/TBD | Not started | - |
 | 17. Proof Gate | v3.0 | 0/TBD | Not started | - |

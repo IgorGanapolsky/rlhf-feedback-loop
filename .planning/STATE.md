@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-03-04)
 
 **Core value:** Deploy, bill, distribute — first paying customer ($100/day north star)
-**Current focus:** v3.0 Commercialization — Phase 13: Deployment (plan 1 complete)
+**Current focus:** v3.0 Commercialization — Phase 15: Plugin Distribution (plan 1 complete)
 
 ## Current Position
 
-Phase: 13 of 17 (Deployment)
-Plan: 1/1 complete — ready for Phase 14 (Billing) after Railway account setup
-Status: Phase 13 execution complete — Dockerfile builds, /health works, Railway config ready; DEPLOY-02 pending Railway account credentials
-Last activity: 2026-03-04 — Phase 13 plan executed; 322 tests pass; Docker build verified; /health endpoint live
+Phase: 15 of 17 (Plugin Distribution)
+Plan: 1/1 complete — Phase 15 Plugin Distribution complete; PLUG-01 through PLUG-06 fulfilled
+Status: Phase 15 execution complete — npx CLI scaffolds .rlhf/, 5-platform INSTALL.md guides live, README Quick Install section added, 362 tests pass (13 new CLI tests)
+Last activity: 2026-03-04 — Phase 15 plan executed; 362 tests pass (13 new CLI tests); bin/cli.js + 5 plugin install guides
 
-Progress: [███████████░░░░░░░░░] ~55% (Phase 13 infra complete; Railway deploy pending credentials)
+Progress: [█████████████░░░░░░░] ~65% (Phase 15 Plugin Distribution complete; Phase 16 Discovery next)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed (all milestones): 32
+- Total plans completed (all milestones): 33
 - Average duration: ~10 min/plan
-- Total execution time: ~5.25 hours (v1+v2+v3.0 Phase 13)
+- Total execution time: ~5.5 hours (v1+v2+v3.0 Phases 13-15)
 
 **By Milestone:**
 
@@ -29,10 +29,10 @@ Progress: [███████████░░░░░░░░░] ~55% (P
 |-----------|--------|-------|---------------|
 | v1.0 | 1-5 | 19 | 54 → 142 |
 | v2.0 | 6-12 | 12 | 142 → 314 |
-| v3.0 | 13-17 | 1 so far | 314 → 322 |
+| v3.0 | 13-17 | 3 so far | 314 → 362 |
 
 **Recent Trend:**
-- Last plan: Phase 13-01 Deployment (2026-03-04, ~15 min)
+- Last plan: Phase 15-01 Plugin Distribution (2026-03-04, ~10 min)
 - Trend: Stable
 
 ## Accumulated Context
@@ -47,6 +47,11 @@ Progress: [███████████░░░░░░░░░] ~55% (P
 - [Phase 13]: /health endpoint unauthenticated — Railway health probes must not require API key
 - [Phase 13]: Multi-stage Dockerfile — builder installs devDeps, runtime copies only prod; smaller image
 - [Phase 13]: DEPLOY-02 deferred — requires Railway account credentials; all config assets are ready
+- [Phase 14]: fetch + https fallback for Stripe REST API — zero new npm dependencies
+- [Phase 14]: Webhook route placed before auth middleware — Stripe doesn't send Bearer tokens, HMAC-verified instead
+- [Phase 14]: Local mode when STRIPE_SECRET_KEY absent — all Stripe calls gracefully no-op
+- [Phase 15]: bin/cli.js generates standalone capture-feedback.js inline — no runtime dep on repo scripts, works on any clean machine
+- [Phase 15]: plugins/amp-skill/ created as separate directory from adapters/amp/ to match install pattern parity with other platforms
 
 ### Pending Todos
 
@@ -62,6 +67,6 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-04
-Stopped at: Phase 13-01 complete — Dockerfile, .dockerignore, railway.json, /health endpoint, 8 deployment tests; commit e86f931
+Stopped at: Phase 15-01 complete — bin/cli.js, 5-platform INSTALL.md, README Quick Install, 13 CLI tests; commit 53f98dc
 Resume file: None
-Next action: Set up Railway account, run `railway login && railway up`, then proceed to Phase 14 (Billing)
+Next action: Phase 16 (Discovery) — landing page, ChatGPT GPT Store listing, Claude MCP Hub submission
