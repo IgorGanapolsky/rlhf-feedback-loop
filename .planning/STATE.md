@@ -62,5 +62,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-04
-Stopped at: Roadmap written to .planning/ROADMAP.md — ready to run /gsd:plan-phase 1
+Stopped at: Completed 01-contract-alignment/1-01-PLAN.md — 1-01-SUMMARY.md created (retroactive close-out; code was committed in prior run)
 Resume file: None
