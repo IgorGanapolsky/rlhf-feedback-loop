@@ -38,19 +38,35 @@ Works with **ChatGPT**, **Claude**, **Codex**, **Gemini**, and **Amp** — same 
 ## Install in 60 Seconds
 
 ```bash
+npm install rlhf-feedback-loop
 npx rlhf-feedback-loop init
-node .rlhf/capture-feedback.js --feedback=up --context="tests pass"
 ```
 
-That's it. You're capturing feedback. Now plug it into your agent:
+That's it. You get the full engine — feedback capture, DPO export, prevention rules, LanceDB vectors, rubric scoring, and an MCP server — all running from `node_modules`. No files copied into your project.
+
+```bash
+# Capture feedback
+npx rlhf-feedback-loop capture --feedback=up --context="tests pass"
+
+# Export training pairs
+npx rlhf-feedback-loop export-dpo
+
+# View analytics
+npx rlhf-feedback-loop stats
+
+# Stay up to date
+npm update rlhf-feedback-loop
+```
+
+Platform-specific adapter setup (optional):
 
 | Platform | One-liner |
 |----------|-----------|
-| **Claude Code** | `cp plugins/claude-skill/SKILL.md .claude/skills/rlhf-feedback.md` |
-| **Codex** | `cat adapters/codex/config.toml >> ~/.codex/config.toml` |
-| **Gemini** | `cp adapters/gemini/function-declarations.json .gemini/rlhf-tools.json` |
-| **Amp** | `cp plugins/amp-skill/SKILL.md .amp/skills/rlhf-feedback.md` |
-| **ChatGPT** | Import `adapters/chatgpt/openapi.yaml` in GPT Builder |
+| **Claude Code** | `init` auto-configures `.mcp.json` |
+| **Codex** | `cat node_modules/rlhf-feedback-loop/adapters/codex/config.toml >> ~/.codex/config.toml` |
+| **Gemini** | `cp node_modules/rlhf-feedback-loop/adapters/gemini/function-declarations.json .gemini/rlhf-tools.json` |
+| **Amp** | `cp node_modules/rlhf-feedback-loop/plugins/amp-skill/SKILL.md .amp/skills/rlhf-feedback.md` |
+| **ChatGPT** | Import `node_modules/rlhf-feedback-loop/adapters/chatgpt/openapi.yaml` in GPT Builder |
 
 Detailed guides: [Claude](plugins/claude-skill/INSTALL.md) | [Codex](plugins/codex-profile/INSTALL.md) | [Gemini](plugins/gemini-extension/INSTALL.md) | [Amp](plugins/amp-skill/INSTALL.md) | [ChatGPT](adapters/chatgpt/INSTALL.md)
 
@@ -93,51 +109,19 @@ Get Cloud Pro: see the [landing page](docs/landing-page.html) or go straight to 
 
 ---
 
-## Quick Start
+## API
 
-```bash
-cp .env.example .env
-npm test
-npm run prove:adapters
-npm run prove:automation
-npm run start:api
-```
+Full REST API available via `npx rlhf-feedback-loop start-api`:
 
-Set `RLHF_API_KEY` before running the API (or explicitly set `RLHF_ALLOW_INSECURE=true` for isolated local testing only).
+| Endpoint | Purpose |
+|----------|---------|
+| `POST /v1/feedback/capture` | Capture up/down feedback |
+| `GET /v1/feedback/stats` | Analytics dashboard |
+| `POST /v1/dpo/export` | Export DPO training pairs |
+| `POST /v1/feedback/rules` | Generate prevention rules |
+| `GET /v1/feedback/summary` | Human-readable summary |
 
-Capture feedback:
-
-```bash
-node .claude/scripts/feedback/capture-feedback.js \
-  --feedback=down \
-  --context="Claimed done without test evidence" \
-  --what-went-wrong="No proof attached" \
-  --what-to-change="Always run tests and include output" \
-  --tags="verification,testing"
-```
-
-## Integration Adapters
-
-- ChatGPT Actions: `adapters/chatgpt/openapi.yaml`
-- Claude MCP: `adapters/claude/.mcp.json`
-- Codex MCP: `adapters/codex/config.toml`
-- Gemini tools: `adapters/gemini/function-declarations.json`
-- Amp skill: `adapters/amp/skills/rlhf-feedback/SKILL.md`
-
-## API Surface
-
-- `POST /v1/feedback/capture`
-- `GET /v1/feedback/stats`
-- `GET /v1/intents/catalog`
-- `POST /v1/intents/plan`
-- `GET /v1/feedback/summary`
-- `POST /v1/feedback/rules`
-- `POST /v1/dpo/export`
-- `POST /v1/context/construct`
-- `POST /v1/context/evaluate`
-- `GET /v1/context/provenance`
-
-Spec: `openapi/openapi.yaml`
+Full spec: `openapi/openapi.yaml`
 
 ## Deep Dive
 

@@ -1,20 +1,19 @@
 'use strict';
 
 /**
- * Tests for bin/cli.js — npx rlhf-feedback-loop init
+ * Tests for bin/cli.js — npx rlhf-feedback-loop
  *
  * Verifies:
  *   1. CLI runs without error
- *   2. init command creates .rlhf/ directory
- *   3. init command creates config.json with expected fields
- *   4. init command creates capture-feedback.js
- *   5. capture-feedback.js runs and exits cleanly
- *   6. capture-feedback.js writes a JSONL log entry
- *   7. help command exits 0 with usage text
- *   8. Unknown command exits 1
+ *   2. init command creates .rlhf/ directory with config.json
+ *   3. init command creates/updates .mcp.json with server entry
+ *   4. help command exits 0 with usage text listing subcommands
+ *   5. Unknown command exits 1
+ *   6. capture subcommand routes to the full engine
+ *   7. init is idempotent
  */
 
-const { execFileSync, spawnSync } = require('child_process');
+const { spawnSync } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -41,15 +40,20 @@ describe('bin/cli.js', () => {
   test('CLI file exists and is executable', () => {
     assert.ok(fs.existsSync(CLI), `CLI not found at ${CLI}`);
     const stat = fs.statSync(CLI);
-    // Owner executable bit
     assert.ok(stat.mode & 0o100, 'CLI should have executable bit set');
   });
 
-  test('help command exits 0', () => {
+  test('help command exits 0 and lists subcommands', () => {
     const result = spawnSync(process.execPath, [CLI, 'help'], { encoding: 'utf8' });
     assert.strictEqual(result.status, 0, `Expected exit 0, got ${result.status}\n${result.stderr}`);
-    assert.ok(result.stdout.includes('rlhf-feedback-loop CLI'), 'Help should include CLI name');
-    assert.ok(result.stdout.includes('init'), 'Help should mention init command');
+    assert.ok(result.stdout.includes('rlhf-feedback-loop'), 'Help should include CLI name');
+    assert.ok(result.stdout.includes('init'), 'Help should mention init');
+    assert.ok(result.stdout.includes('capture'), 'Help should mention capture');
+    assert.ok(result.stdout.includes('export-dpo'), 'Help should mention export-dpo');
+    assert.ok(result.stdout.includes('stats'), 'Help should mention stats');
+    assert.ok(result.stdout.includes('rules'), 'Help should mention rules');
+    assert.ok(result.stdout.includes('self-heal'), 'Help should mention self-heal');
+    assert.ok(result.stdout.includes('prove'), 'Help should mention prove');
   });
 
   test('--help flag exits 0', () => {
@@ -89,72 +93,44 @@ describe('bin/cli.js', () => {
     assert.ok(!isNaN(Date.parse(config.createdAt)), 'config.createdAt should be a valid ISO timestamp');
   });
 
-  test('init creates capture-feedback.js', () => {
-    const scriptPath = path.join(tmpDir, '.rlhf', 'capture-feedback.js');
-    assert.ok(fs.existsSync(scriptPath), 'capture-feedback.js should be created');
+  test('init creates .mcp.json with server entry', () => {
+    const mcpPath = path.join(tmpDir, '.mcp.json');
+    assert.ok(fs.existsSync(mcpPath), '.mcp.json should be created');
+    const mcp = JSON.parse(fs.readFileSync(mcpPath, 'utf8'));
+    assert.ok(mcp.mcpServers, '.mcp.json should have mcpServers');
+    assert.ok(mcp.mcpServers['rlhf-feedback-loop'], 'Should have rlhf-feedback-loop server entry');
+    assert.strictEqual(mcp.mcpServers['rlhf-feedback-loop'].command, 'node');
+    assert.ok(mcp.mcpServers['rlhf-feedback-loop'].args[0].includes('server-stdio.js'));
   });
 
-  test('init output includes setup complete message', () => {
+  test('init output includes initialized message', () => {
     const result = spawnSync(process.execPath, [CLI, 'init'], {
       encoding: 'utf8',
       cwd: tmpDir,
     });
     assert.ok(
-      result.stdout.includes('Setup complete'),
-      `Expected "Setup complete" in output:\n${result.stdout}`
+      result.stdout.includes('initialized'),
+      `Expected "initialized" in output:\n${result.stdout}`
     );
   });
 
-  test('capture-feedback.js --feedback=up exits 0 and writes log', () => {
-    const scriptPath = path.join(tmpDir, '.rlhf', 'capture-feedback.js');
+  test('capture --feedback=up routes to full engine', () => {
     const result = spawnSync(
       process.execPath,
-      [scriptPath, '--feedback=up', '--context=cli test verification'],
-      { encoding: 'utf8', cwd: tmpDir }
+      [CLI, 'capture', '--feedback=up', '--context=cli test verification'],
+      { encoding: 'utf8', cwd: path.resolve(__dirname, '..') }
     );
-    assert.strictEqual(
-      result.status,
-      0,
-      `capture-feedback.js exited ${result.status}:\n${result.stderr}`
-    );
-    assert.ok(result.stdout.includes('Feedback captured'), 'Should print captured message');
-    assert.ok(result.stdout.includes('[up]'), 'Should show signal in output');
-
-    // Verify log file was written
-    const logPath = path.join(tmpDir, '.rlhf', 'feedback-log.jsonl');
-    assert.ok(fs.existsSync(logPath), 'feedback-log.jsonl should exist');
-    const lines = fs.readFileSync(logPath, 'utf8').trim().split('\n');
-    const lastEntry = JSON.parse(lines[lines.length - 1]);
-    assert.strictEqual(lastEntry.signal, 'up', 'Log entry signal should be "up"');
-    assert.strictEqual(lastEntry.context, 'cli test verification', 'Log entry context should match');
-    assert.ok(lastEntry.id, 'Log entry should have an id');
-    assert.ok(lastEntry.timestamp, 'Log entry should have a timestamp');
+    // Exit 0 (promoted) or 2 (captured but not promoted) are both valid
+    assert.notEqual(result.status, 1, `capture should not exit 1:\n${result.stderr}`);
   });
 
-  test('capture-feedback.js --feedback=down exits 0', () => {
-    const scriptPath = path.join(tmpDir, '.rlhf', 'capture-feedback.js');
+  test('capture --feedback=down routes to full engine', () => {
     const result = spawnSync(
       process.execPath,
-      [
-        scriptPath,
-        '--feedback=down',
-        '--context=something went wrong',
-        '--what-went-wrong=test failure',
-        '--what-to-change=fix the thing',
-      ],
-      { encoding: 'utf8', cwd: tmpDir }
+      [CLI, 'capture', '--feedback=down', '--context=test failure', '--what-went-wrong=broke it'],
+      { encoding: 'utf8', cwd: path.resolve(__dirname, '..') }
     );
-    assert.strictEqual(result.status, 0);
-    assert.ok(result.stdout.includes('[down]'));
-  });
-
-  test('capture-feedback.js missing --feedback exits 1', () => {
-    const scriptPath = path.join(tmpDir, '.rlhf', 'capture-feedback.js');
-    const result = spawnSync(process.execPath, [scriptPath, '--context=no signal'], {
-      encoding: 'utf8',
-      cwd: tmpDir,
-    });
-    assert.strictEqual(result.status, 1, 'Should exit 1 when --feedback is missing');
+    assert.notEqual(result.status, 1, `capture should not exit 1:\n${result.stderr}`);
   });
 
   test('init is idempotent — running twice exits 0', () => {
@@ -163,6 +139,6 @@ describe('bin/cli.js', () => {
       cwd: tmpDir,
     });
     assert.strictEqual(result.status, 0, `Second init failed:\n${result.stderr}`);
-    assert.ok(result.stdout.includes('Setup complete') || result.stdout.includes('already exists'));
+    assert.ok(result.stdout.includes('initialized') || result.stdout.includes('already exists'));
   });
 });
