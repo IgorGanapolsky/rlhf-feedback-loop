@@ -208,61 +208,15 @@ bash scripts/sync-gh-secrets-from-env.sh IgorGanapolsky/rlhf-feedback-loop
 
 ### RLHF Feedback Loop
 
-```mermaid
-flowchart TD
-    A["👍/👎 User Feedback"] --> B["Capture Layer\n(context + tags)"]
-    B --> C{"Action Resolver"}
-    C -->|store-learning| D["Schema Validator"]
-    C -->|store-mistake| D
-    C -->|no-action| X["Discard"]
-    D -->|valid| E["Memory Store\n(learning / error)"]
-    D -->|invalid| X
-    E --> F["Analytics\n(trends + recurrence)"]
-    F --> G["Prevention Rules Engine"]
-    F --> H["DPO Export\n(prompt/chosen/rejected)"]
-    E --> I["Rubric Engine\n(weighted scoring + guardrails)"]
-    I -->|promotion gate| E
-```
+![RLHF Architecture](docs/diagrams/rlhf-architecture.png)
 
 ### Plugin Topology
 
-```mermaid
-flowchart LR
-    subgraph Adapters
-        GPT["ChatGPT\n(GPT Actions)"]
-        CL["Claude\n(MCP Server)"]
-        CX["Codex\n(MCP Config)"]
-        GEM["Gemini\n(Function Calling)"]
-        AMP["Amp\n(Skills Template)"]
-    end
+![Plugin Topology](docs/diagrams/plugin-topology.png)
 
-    subgraph Core["RLHF Feedback API"]
-        SV["Schema Validation"]
-        PR["Prevention Rules"]
-        DPO["DPO Export"]
-        BG["Budget Guard\n($10/mo cap)"]
-    end
-
-    GPT <--> Core
-    CL <--> Core
-    CX <--> Core
-    GEM <--> Core
-    AMP <--> Core
-```
-
-### PaperBanana (high-fidelity PNG)
-
-Generate richer architecture visuals with a budget guard:
-
-```bash
-npm run diagrams:paperbanana
-npm run budget:status
-```
-
-Docs: [docs/PAPERBANANA.md](docs/PAPERBANANA.md)
 Verification evidence: [docs/VERIFICATION_EVIDENCE.md](docs/VERIFICATION_EVIDENCE.md)
-Compatibility proof artifacts: [proof/compatibility/report.md](proof/compatibility/report.md), [proof/compatibility/report.json](proof/compatibility/report.json)
-Automation proof artifacts: [proof/automation/report.md](proof/automation/report.md), [proof/automation/report.json](proof/automation/report.json)
+Compatibility proof: [proof/compatibility/report.md](proof/compatibility/report.md)
+Automation proof: [proof/automation/report.md](proof/automation/report.md)
 
 ## Budget Guardrail
 
