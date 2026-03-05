@@ -146,13 +146,15 @@ function init() {
   fs.writeFileSync(path.join(rlhfDir, 'config.json'), JSON.stringify(config, null, 2) + '\n');
   console.log('Wrote .rlhf/config.json');
 
-  // Auto-detect and configure all platforms
+  // Always create .mcp.json (project-level MCP config used by Claude, Codex, Cursor)
+  mergeMcpJson(path.join(CWD, '.mcp.json'), 'MCP');
+
+  // Auto-detect and configure platform-specific locations
   console.log('');
   console.log('Detecting platforms...');
   let configured = 0;
 
   const platforms = [
-    { name: 'Claude Code', detect: [() => whichExists('claude'), () => fs.existsSync(path.join(HOME, '.claude'))], setup: setupClaude },
     { name: 'Codex', detect: [() => whichExists('codex'), () => fs.existsSync(path.join(HOME, '.codex'))], setup: setupCodex },
     { name: 'Gemini', detect: [() => whichExists('gemini'), () => fs.existsSync(path.join(HOME, '.gemini'))], setup: setupGemini },
     { name: 'Amp', detect: [() => whichExists('amp'), () => fs.existsSync(path.join(HOME, '.amp'))], setup: setupAmp },
