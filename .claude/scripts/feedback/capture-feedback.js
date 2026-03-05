@@ -24,10 +24,33 @@ function parseArgs(argv) {
   return args;
 }
 
+function levenshtein(a, b) {
+  const m = a.length, n = b.length;
+  const dp = Array.from({ length: m + 1 }, (_, i) => {
+    const row = new Array(n + 1);
+    row[0] = i;
+    return row;
+  });
+  for (let j = 1; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      dp[i][j] = Math.min(
+        dp[i - 1][j] + 1,
+        dp[i][j - 1] + 1,
+        dp[i - 1][j - 1] + (a[i - 1] !== b[j - 1] ? 1 : 0)
+      );
+  return dp[m][n];
+}
+
 function normalize(feedback) {
-  const raw = String(feedback || '').toLowerCase();
-  if (['up', 'thumbs_up', 'thumbsup', 'positive'].includes(raw)) return 'up';
-  if (['down', 'thumbs_down', 'thumbsdown', 'negative'].includes(raw)) return 'down';
+  const raw = String(feedback || '').toLowerCase().replace(/[^a-z]/g, '');
+  const UP_VARIANTS = ['up', 'thumbsup', 'thumbs_up', 'positive', 'thumbup', 'thumbsu'];
+  const DOWN_VARIANTS = ['down', 'thumbsdown', 'thumbs_down', 'negative', 'thumbdown'];
+  if (UP_VARIANTS.includes(raw)) return 'up';
+  if (DOWN_VARIANTS.includes(raw)) return 'down';
+  // Fuzzy match: accept if edit distance <= 2 from any known variant
+  for (const v of UP_VARIANTS) if (levenshtein(raw, v) <= 2) return 'up';
+  for (const v of DOWN_VARIANTS) if (levenshtein(raw, v) <= 2) return 'down';
   return feedback;
 }
 
@@ -52,8 +75,8 @@ function main() {
   }
 
   const feedback = normalize(args.feedback);
-  if (!feedback) {
-    console.error('Missing --feedback=up|down');
+  if (!feedback || (feedback !== 'up' && feedback !== 'down')) {
+    console.error('Missing or unrecognized --feedback=up|down');
     process.exit(1);
   }
 
