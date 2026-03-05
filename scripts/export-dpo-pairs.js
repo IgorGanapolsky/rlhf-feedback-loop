@@ -7,6 +7,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { traceForDpoPair, aggregateTraces } = require('./code-reasoning');
 
 const PROJECT_ROOT = path.join(__dirname, '..');
 const FEEDBACK_DIR = process.env.RLHF_FEEDBACK_DIR || path.join(PROJECT_ROOT, '.claude', 'memory', 'feedback');
@@ -155,11 +156,33 @@ function exportDpoFromMemories(memories) {
   const errors = memories.filter((m) => m.category === 'error');
   const learnings = memories.filter((m) => m.category === 'learning');
   const result = buildDpoPairs(errors, learnings);
+
+  const traces = result.pairs.map((pair) => traceForDpoPair(pair));
+  const reasoning = aggregateTraces(traces);
+
+  const pairsWithTraces = result.pairs.map((pair, i) => ({
+    ...pair,
+    metadata: {
+      ...pair.metadata,
+      reasoningTrace: {
+        traceId: traces[i].traceId,
+        confidence: traces[i].summary.confidence,
+        passed: traces[i].summary.passed,
+        verified: traces[i].summary.verified,
+        refuted: traces[i].summary.refuted,
+        edgeCases: traces[i].edgeCases,
+      },
+    },
+  }));
+
   return {
-    ...result,
+    pairs: pairsWithTraces,
+    unpairedErrors: result.unpairedErrors,
+    unpairedLearnings: result.unpairedLearnings,
     errors,
     learnings,
-    jsonl: toJSONL(result.pairs),
+    reasoning,
+    jsonl: toJSONL(pairsWithTraces),
   };
 }
 

@@ -16,6 +16,7 @@ const { handleRequest } = require('../adapters/mcp/server-stdio');
 const { collectHealthReport } = require('./self-healing-check');
 const { runSelfHeal } = require('./self-heal');
 const { CONTEXTFS_ROOT, NAMESPACES } = require('./contextfs');
+const { traceForProofCheck, aggregateTraces } = require('./code-reasoning');
 
 const ROOT = path.join(__dirname, '..');
 const DEFAULT_PROOF_DIR = path.join(ROOT, 'proof', 'automation');
@@ -308,9 +309,49 @@ async function runAutomationProof(options = {}) {
 
       const heal = runSelfHeal({ reason: 'automation-proof', cwd: ROOT });
       check(heal.healthy === true, 'self-heal expected healthy execution');
+      check(Boolean(heal.reasoning), 'self-heal must include reasoning traces');
+      check(heal.traces.length === heal.plan.length, 'self-heal traces count must match plan length');
       addResult('self_healing.helpers', true, {
         healthStatus: health.overall_status,
         changed: heal.changed,
+        reasoning: heal.reasoning,
+      });
+    }
+
+    // 13) code reasoning traces verify DPO pair quality
+    {
+      const { MEMORY_LOG_PATH } = getFeedbackPaths();
+      const memories = readJSONL(MEMORY_LOG_PATH);
+      const result = exportDpoFromMemories(memories);
+      if (result.pairs.length >= 1) {
+        const first = result.pairs[0];
+        check(Boolean(first.metadata.reasoningTrace), 'DPO pair must include reasoningTrace metadata');
+        check(typeof first.metadata.reasoningTrace.confidence === 'number', 'reasoningTrace must have confidence score');
+        check(typeof first.metadata.reasoningTrace.traceId === 'string', 'reasoningTrace must have traceId');
+        check(Boolean(result.reasoning), 'DPO export must include aggregate reasoning summary');
+        addResult('code_reasoning.dpo_traces', true, {
+          traceId: first.metadata.reasoningTrace.traceId,
+          confidence: first.metadata.reasoningTrace.confidence,
+          aggregateConfidence: result.reasoning.averageConfidence,
+        });
+      } else {
+        addResult('code_reasoning.dpo_traces', true, { skipped: true, reason: 'no DPO pairs to trace' });
+      }
+    }
+
+    // 14) code reasoning traces attached to proof checks
+    {
+      const proofTraces = report.checks.map((chk) => traceForProofCheck(chk));
+      const aggregate = aggregateTraces(proofTraces);
+      check(aggregate.totalTraces === report.checks.length, 'proof trace count must match check count');
+      check(aggregate.refuted === 0, 'no proof check should have refuted steps');
+      check(aggregate.averageConfidence > 0, 'proof traces must have positive confidence');
+      report.reasoning = aggregate;
+      report.proofTraces = proofTraces;
+      addResult('code_reasoning.proof_gate', true, {
+        totalTraces: aggregate.totalTraces,
+        averageConfidence: aggregate.averageConfidence,
+        allPassed: aggregate.allPassed,
       });
     }
   } catch (err) {

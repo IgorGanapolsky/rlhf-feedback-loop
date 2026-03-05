@@ -1,8 +1,8 @@
 # Automation Proof
 
-Generated: 2026-03-03T20:25:11.760Z
+Generated: 2026-03-05T14:05:18.822Z
 
-Passed: 12
+Passed: 14
 Failed: 0
 
 ## Checks
@@ -18,4 +18,6 @@ Failed: 0
 - PASS context.evaluate.rubric
 - PASS context.semantic_cache.hit
 - PASS self_healing.helpers
+- PASS code_reasoning.dpo_traces
+- PASS code_reasoning.proof_gate
 

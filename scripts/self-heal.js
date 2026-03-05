@@ -3,6 +3,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
+const { traceForSelfHealFix, aggregateTraces } = require('./code-reasoning');
+
 const PROJECT_ROOT = path.join(__dirname, '..');
 const PACKAGE_JSON_PATH = path.join(PROJECT_ROOT, 'package.json');
 const KNOWN_FIX_SCRIPTS = ['lint:fix', 'format', 'fix', 'feedback:rules'];
@@ -49,7 +51,10 @@ function listChangedFiles({ cwd = PROJECT_ROOT } = {}) {
 function runFixPlan({ plan, runner = runCommand, cwd = PROJECT_ROOT } = {}) {
   const results = [];
   plan.forEach((scriptName) => {
+    const filesBefore = new Set(listChangedFiles({ cwd }));
     const run = runner(['npm', 'run', scriptName], { cwd, timeoutMs: 10 * 60_000 });
+    const filesAfter = listChangedFiles({ cwd });
+    const scriptChangedFiles = filesAfter.filter((f) => !filesBefore.has(f));
     results.push({
       script: scriptName,
       status: run.exitCode === 0 ? 'success' : 'failed',
@@ -57,6 +62,7 @@ function runFixPlan({ plan, runner = runCommand, cwd = PROJECT_ROOT } = {}) {
       durationMs: run.durationMs,
       error: run.error,
       outputTail: `${run.stdout}\n${run.stderr}`.trim().slice(-2000),
+      changedFiles: scriptChangedFiles,
     });
   });
 
@@ -78,6 +84,11 @@ function runSelfHeal({ reason = 'unknown', cwd = PROJECT_ROOT } = {}) {
   const afterChanges = listChangedFiles({ cwd });
   const changedFiles = afterChanges.filter((filePath) => !beforeSet.has(filePath));
 
+  const traces = execution.results.map((fixResult) => {
+    return traceForSelfHealFix(fixResult, fixResult.changedFiles || []);
+  });
+  const reasoning = aggregateTraces(traces);
+
   return {
     timestamp: new Date().toISOString(),
     reason,
@@ -87,6 +98,8 @@ function runSelfHeal({ reason = 'unknown', cwd = PROJECT_ROOT } = {}) {
     changedFiles,
     changed: changedFiles.length > 0,
     healthy: execution.failed === 0,
+    reasoning,
+    traces,
   };
 }
 

@@ -45,6 +45,66 @@ test('collectHealthReport marks overall unhealthy when one check fails', () => {
   assert.equal(report.checks[1].status, 'unhealthy');
 });
 
+test('collectHealthReport records duration for each check', () => {
+  let callCount = 0;
+  const report = collectHealthReport({
+    checks: [{ name: 'slow', command: ['mock'] }],
+    runner: () => {
+      callCount++;
+      return { exitCode: 0, durationMs: 500, stdout: '', stderr: '', error: null };
+    },
+  });
+
+  assert.equal(callCount, 1);
+  assert.ok(report.checks[0].durationMs >= 0);
+});
+
+test('collectHealthReport captures output tail on failure', () => {
+  const report = collectHealthReport({
+    checks: [{ name: 'failing', command: ['mock'] }],
+    runner: () => ({
+      exitCode: 1,
+      durationMs: 10,
+      stdout: 'some stdout\nmore output',
+      stderr: 'error details here',
+      error: 'timeout',
+    }),
+  });
+
+  assert.equal(report.checks[0].status, 'unhealthy');
+  assert.ok(report.checks[0].outputTail.includes('error details'));
+});
+
+test('collectHealthReport handles empty checks array', () => {
+  const report = collectHealthReport({
+    checks: [],
+    runner: () => ({ exitCode: 0, durationMs: 0, stdout: '', stderr: '', error: null }),
+  });
+
+  assert.equal(report.overall_status, 'healthy');
+  assert.equal(report.summary.total, 0);
+});
+
+test('collectHealthReport has timestamp', () => {
+  const report = collectHealthReport({
+    checks: [{ name: 'x', command: ['mock'] }],
+    runner: () => ({ exitCode: 0, durationMs: 1, stdout: '', stderr: '', error: null }),
+  });
+
+  assert.ok(report.generatedAt);
+  assert.ok(new Date(report.generatedAt).getTime() > 0);
+});
+
+test('collectHealthReport includes total duration', () => {
+  const report = collectHealthReport({
+    checks: [{ name: 'x', command: ['mock'] }],
+    runner: () => ({ exitCode: 0, durationMs: 1, stdout: '', stderr: '', error: null }),
+  });
+
+  assert.ok(typeof report.durationMs === 'number');
+  assert.ok(report.durationMs >= 0);
+});
+
 test('reportToText includes overall status and check names', () => {
   const text = reportToText({
     generatedAt: '2026-03-03T00:00:00.000Z',
@@ -54,5 +114,32 @@ test('reportToText includes overall status and check names', () => {
   });
 
   assert.match(text, /Overall: HEALTHY/);
+  assert.match(text, /tests/);
+});
+
+test('reportToText shows unhealthy status', () => {
+  const text = reportToText({
+    generatedAt: '2026-03-03T00:00:00.000Z',
+    overall_status: 'unhealthy',
+    summary: { healthy: 0, total: 1, unhealthy: 1 },
+    checks: [{ name: 'broken', status: 'unhealthy', durationMs: 5 }],
+  });
+
+  assert.match(text, /UNHEALTHY/i);
+  assert.match(text, /broken/);
+});
+
+test('reportToText includes multiple checks', () => {
+  const text = reportToText({
+    generatedAt: '2026-03-03T00:00:00.000Z',
+    overall_status: 'unhealthy',
+    summary: { healthy: 1, total: 2, unhealthy: 1 },
+    checks: [
+      { name: 'budget', status: 'healthy', durationMs: 10 },
+      { name: 'tests', status: 'unhealthy', durationMs: 5000 },
+    ],
+  });
+
+  assert.match(text, /budget/);
   assert.match(text, /tests/);
 });
