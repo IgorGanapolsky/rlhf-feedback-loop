@@ -36,3 +36,36 @@ test('chatgpt openapi includes all core API routes', () => {
 
   assert.ok(normalize(adapter).length > 50);
 });
+
+test('canonical openapi.yaml exists and has more than 50 lines', () => {
+  const filePath = path.join(root, 'openapi/openapi.yaml');
+  assert.ok(fs.existsSync(filePath), 'canonical openapi.yaml must exist');
+  const lines = fs.readFileSync(filePath, 'utf-8').split('\n');
+  assert.ok(lines.length > 50, `expected >50 lines, got ${lines.length}`);
+});
+
+test('all core routes present in canonical openapi', () => {
+  const content = fs.readFileSync(path.join(root, 'openapi/openapi.yaml'), 'utf-8');
+  const coreRoutes = [
+    '/v1/feedback/capture',
+    '/v1/dpo/export',
+    '/v1/context/construct',
+    '/v1/intents/plan',
+  ];
+  for (const route of coreRoutes) {
+    assert.match(content, new RegExp(route.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
+      `canonical openapi must contain ${route}`);
+  }
+});
+
+test('chatgpt adapter is byte-identical to canonical openapi', () => {
+  const canonical = fs.readFileSync(path.join(root, 'openapi/openapi.yaml'), 'utf-8');
+  const adapter = fs.readFileSync(path.join(root, 'adapters/chatgpt/openapi.yaml'), 'utf-8');
+  assert.equal(normalize(canonical), normalize(adapter),
+    'chatgpt adapter should be identical to canonical (after trimming)');
+});
+
+test('openapi file contains version header', () => {
+  const content = fs.readFileSync(path.join(root, 'openapi/openapi.yaml'), 'utf-8');
+  assert.match(content, /^openapi:\s/, 'openapi.yaml must start with openapi: version header');
+});

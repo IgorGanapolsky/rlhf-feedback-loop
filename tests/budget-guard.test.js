@@ -38,3 +38,44 @@ test('budget guard blocks overspend', () => {
 test('invalid budget env value is rejected', () => {
   assert.throws(() => parseMonthlyBudget('NaN'), /Invalid RLHF_MONTHLY_BUDGET_USD/);
 });
+
+test('parseMonthlyBudget returns default (10) for undefined', () => {
+  const { getMonthlyBudget } = require('../scripts/budget-guard');
+  const prevBudget = process.env.RLHF_MONTHLY_BUDGET_USD;
+  delete process.env.RLHF_MONTHLY_BUDGET_USD;
+  const result = getMonthlyBudget();
+  assert.equal(result, 10, 'default monthly budget should be 10');
+  process.env.RLHF_MONTHLY_BUDGET_USD = prevBudget || '1';
+});
+
+test('parseMonthlyBudget parses valid number string', () => {
+  const result = parseMonthlyBudget('25.5');
+  assert.equal(result, 25.5);
+});
+
+test('getMonthlyBudget returns number greater than 0', () => {
+  const { getMonthlyBudget } = require('../scripts/budget-guard');
+  const budget = getMonthlyBudget();
+  assert.equal(typeof budget, 'number');
+  assert.ok(budget > 0, 'monthly budget must be > 0');
+});
+
+test('getBudgetStatus on fresh ledger shows full remaining budget', () => {
+  const freshTmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rlhf-budget-fresh-'));
+  const prevDir = process.env.RLHF_FEEDBACK_DIR;
+  const prevBudget = process.env.RLHF_MONTHLY_BUDGET_USD;
+  process.env.RLHF_FEEDBACK_DIR = freshTmpDir;
+  process.env.RLHF_MONTHLY_BUDGET_USD = '5';
+
+  // Re-require to pick up new env
+  delete require.cache[require.resolve('../scripts/budget-guard')];
+  const fresh = require('../scripts/budget-guard');
+  const status = fresh.getBudgetStatus();
+  assert.equal(status.totalUsd, 0, 'fresh ledger should have 0 spend');
+  assert.equal(status.remainingUsd, 5, 'remaining should equal full budget');
+
+  fs.rmSync(freshTmpDir, { recursive: true, force: true });
+  process.env.RLHF_FEEDBACK_DIR = prevDir;
+  process.env.RLHF_MONTHLY_BUDGET_USD = prevBudget || '1';
+  delete require.cache[require.resolve('../scripts/budget-guard')];
+});

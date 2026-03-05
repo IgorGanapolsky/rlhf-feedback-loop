@@ -27,3 +27,28 @@ test('gemini tool declarations are valid JSON with tools array', () => {
   assert.ok(payload.tools.length >= 3);
   assert.ok(payload.tools.some((tool) => tool.name === 'plan_intent'));
 });
+
+test('claude .mcp.json is valid JSON with mcpServers key', () => {
+  const filePath = path.join(root, 'adapters/claude/.mcp.json');
+  const payload = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+  assert.ok(payload.mcpServers, '.mcp.json must have mcpServers key');
+  assert.equal(typeof payload.mcpServers, 'object');
+});
+
+test('codex config.toml contains mcp_servers section', () => {
+  const filePath = path.join(root, 'adapters/codex/config.toml');
+  const content = fs.readFileSync(filePath, 'utf-8');
+  assert.match(content, /\[mcp_servers/, 'config.toml must contain [mcp_servers section');
+});
+
+test('amp SKILL.md contains capture-feedback reference', () => {
+  const filePath = path.join(root, 'adapters/amp/skills/rlhf-feedback/SKILL.md');
+  const content = fs.readFileSync(filePath, 'utf-8');
+  assert.match(content, /capture-feedback/, 'SKILL.md must reference capture-feedback');
+});
+
+test('chatgpt openapi.yaml contains /v1/feedback/capture path', () => {
+  const filePath = path.join(root, 'adapters/chatgpt/openapi.yaml');
+  const content = fs.readFileSync(filePath, 'utf-8');
+  assert.match(content, /\/v1\/feedback\/capture/, 'openapi.yaml must contain /v1/feedback/capture');
+});

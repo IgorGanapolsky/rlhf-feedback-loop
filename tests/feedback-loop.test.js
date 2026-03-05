@@ -1,0 +1,177 @@
+// tests/feedback-loop.test.js
+'use strict';
+
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
+
+const {
+  captureFeedback,
+  analyzeFeedback,
+  buildPreventionRules,
+  feedbackSummary,
+  readJSONL,
+  getFeedbackPaths,
+  inferDomain,
+  inferOutcome,
+  enrichFeedbackContext,
+} = require('../scripts/feedback-loop');
+
+function makeTmpDir() {
+  return fs.mkdtempSync(path.join(os.tmpdir(), 'rlhf-loop-test-'));
+}
+
+function appendJSONL(filePath, record) {
+  const dir = path.dirname(filePath);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  fs.appendFileSync(filePath, `${JSON.stringify(record)}\n`);
+}
+
+// -- inferDomain --
+
+test('inferDomain: tags=["testing"] returns "testing"', () => {
+  assert.strictEqual(inferDomain(['testing'], ''), 'testing');
+});
+
+test('inferDomain: tags=["security"] returns "security"', () => {
+  assert.strictEqual(inferDomain(['security'], ''), 'security');
+});
+
+test('inferDomain: empty tags, context mentions performance returns "performance"', () => {
+  assert.strictEqual(inferDomain([], 'performance optimization'), 'performance');
+});
+
+// -- inferOutcome --
+
+test('inferOutcome: positive signal with "quick fix" includes "success"', () => {
+  const result = inferOutcome('positive', 'quick fix');
+  assert.ok(result.includes('success'), `expected "success" in "${result}"`);
+});
+
+test('inferOutcome: negative signal with "wrong assumption" returns a string', () => {
+  const result = inferOutcome('negative', 'wrong assumption');
+  assert.strictEqual(typeof result, 'string');
+  assert.ok(result.length > 0);
+});
+
+// -- enrichFeedbackContext --
+
+test('enrichFeedbackContext: returns object with richContext', () => {
+  const event = { signal: 'positive', tags: ['testing'], context: 'ran tests' };
+  const params = { context: 'ran tests' };
+  const enriched = enrichFeedbackContext(event, params);
+  assert.ok(enriched.richContext, 'should have richContext');
+  assert.strictEqual(enriched.richContext.domain, 'testing');
+  assert.strictEqual(typeof enriched.richContext.outcomeCategory, 'string');
+});
+
+// -- captureFeedback --
+
+test('captureFeedback: valid negative feedback returns accepted=true', (t) => {
+  const tmpDir = makeTmpDir();
+  process.env.RLHF_FEEDBACK_DIR = tmpDir;
+  t.after(() => {
+    delete process.env.RLHF_FEEDBACK_DIR;
+    try { fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 }); } catch {}
+  });
+
+  const result = captureFeedback({
+    signal: 'down',
+    context: 'Agent skipped tests before claiming done',
+    whatWentWrong: 'No tests were run',
+    whatToChange: 'Always run tests first',
+    tags: ['verification', 'testing'],
+  });
+  assert.strictEqual(result.accepted, true);
+});
+
+test('captureFeedback: valid positive feedback returns accepted=true', (t) => {
+  const tmpDir = makeTmpDir();
+  process.env.RLHF_FEEDBACK_DIR = tmpDir;
+  t.after(() => {
+    delete process.env.RLHF_FEEDBACK_DIR;
+    try { fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 }); } catch {}
+  });
+
+  const result = captureFeedback({
+    signal: 'up',
+    context: 'Ran tests and included output',
+    whatWorked: 'Evidence-first flow',
+    tags: ['verification', 'testing'],
+  });
+  assert.strictEqual(result.accepted, true);
+});
+
+test('captureFeedback: rejects vague negative (no context/whatWentWrong/whatToChange)', (t) => {
+  const tmpDir = makeTmpDir();
+  process.env.RLHF_FEEDBACK_DIR = tmpDir;
+  t.after(() => {
+    delete process.env.RLHF_FEEDBACK_DIR;
+    try { fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 }); } catch {}
+  });
+
+  const result = captureFeedback({ signal: 'down' });
+  assert.strictEqual(result.accepted, false);
+});
+
+// -- analyzeFeedback --
+
+test('analyzeFeedback: returns correct counts on populated log', (t) => {
+  const tmpDir = makeTmpDir();
+  process.env.RLHF_FEEDBACK_DIR = tmpDir;
+  t.after(() => {
+    delete process.env.RLHF_FEEDBACK_DIR;
+    try { fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 }); } catch {}
+  });
+
+  const logPath = path.join(tmpDir, 'feedback-log.jsonl');
+  appendJSONL(logPath, { signal: 'positive', tags: ['testing'], skill: 'verify' });
+  appendJSONL(logPath, { signal: 'negative', tags: ['testing'], skill: 'verify' });
+  appendJSONL(logPath, { signal: 'positive', tags: ['testing'], skill: 'verify' });
+
+  const stats = analyzeFeedback(logPath);
+  assert.strictEqual(stats.total, 3);
+  assert.strictEqual(stats.totalPositive, 2);
+  assert.strictEqual(stats.totalNegative, 1);
+  assert.strictEqual(stats.tags.testing.total, 3);
+});
+
+// -- buildPreventionRules --
+
+test('buildPreventionRules: returns markdown string with header', (t) => {
+  const tmpDir = makeTmpDir();
+  process.env.RLHF_FEEDBACK_DIR = tmpDir;
+  t.after(() => {
+    delete process.env.RLHF_FEEDBACK_DIR;
+    try { fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 }); } catch {}
+  });
+
+  const rules = buildPreventionRules();
+  assert.strictEqual(typeof rules, 'string');
+  assert.ok(rules.includes('# Prevention Rules'), 'should contain header');
+});
+
+// -- feedbackSummary --
+
+test('feedbackSummary: returns string with "Positive:"', (t) => {
+  const tmpDir = makeTmpDir();
+  process.env.RLHF_FEEDBACK_DIR = tmpDir;
+  t.after(() => {
+    delete process.env.RLHF_FEEDBACK_DIR;
+    try { fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 }); } catch {}
+  });
+
+  // Seed some feedback so summary has data
+  const result = captureFeedback({
+    signal: 'up',
+    context: 'Ran full test suite',
+    whatWorked: 'Evidence-first approach',
+    tags: ['testing'],
+  });
+
+  const summary = feedbackSummary();
+  assert.strictEqual(typeof summary, 'string');
+  assert.ok(summary.includes('Positive:'), `expected "Positive:" in summary, got: ${summary}`);
+});

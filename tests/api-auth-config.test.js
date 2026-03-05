@@ -19,3 +19,65 @@ test('createApiServer requires RLHF_API_KEY unless insecure mode is enabled', ()
   if (typeof previousInsecure === 'string') process.env.RLHF_ALLOW_INSECURE = previousInsecure;
   else delete process.env.RLHF_ALLOW_INSECURE;
 });
+
+test('missing RLHF_API_KEY with RLHF_ALLOW_INSECURE unset throws', () => {
+  const prevKey = process.env.RLHF_API_KEY;
+  const prevInsecure = process.env.RLHF_ALLOW_INSECURE;
+  delete process.env.RLHF_API_KEY;
+  delete process.env.RLHF_ALLOW_INSECURE;
+
+  const { createApiServer } = require('../src/api/server');
+  assert.throws(() => createApiServer(), /RLHF_API_KEY is required/);
+
+  if (typeof prevKey === 'string') process.env.RLHF_API_KEY = prevKey;
+  else delete process.env.RLHF_API_KEY;
+  if (typeof prevInsecure === 'string') process.env.RLHF_ALLOW_INSECURE = prevInsecure;
+  else delete process.env.RLHF_ALLOW_INSECURE;
+});
+
+test('RLHF_ALLOW_INSECURE=true allows creation without key', () => {
+  const prevKey = process.env.RLHF_API_KEY;
+  const prevInsecure = process.env.RLHF_ALLOW_INSECURE;
+  delete process.env.RLHF_API_KEY;
+  process.env.RLHF_ALLOW_INSECURE = 'true';
+
+  const { createApiServer } = require('../src/api/server');
+  assert.doesNotThrow(() => createApiServer());
+
+  if (typeof prevKey === 'string') process.env.RLHF_API_KEY = prevKey;
+  else delete process.env.RLHF_API_KEY;
+  if (typeof prevInsecure === 'string') process.env.RLHF_ALLOW_INSECURE = prevInsecure;
+  else delete process.env.RLHF_ALLOW_INSECURE;
+});
+
+test('setting RLHF_API_KEY allows creation', () => {
+  const prevKey = process.env.RLHF_API_KEY;
+  const prevInsecure = process.env.RLHF_ALLOW_INSECURE;
+  process.env.RLHF_API_KEY = 'test-key-12345';
+  delete process.env.RLHF_ALLOW_INSECURE;
+
+  const { createApiServer } = require('../src/api/server');
+  assert.doesNotThrow(() => createApiServer());
+
+  if (typeof prevKey === 'string') process.env.RLHF_API_KEY = prevKey;
+  else delete process.env.RLHF_API_KEY;
+  if (typeof prevInsecure === 'string') process.env.RLHF_ALLOW_INSECURE = prevInsecure;
+  else delete process.env.RLHF_ALLOW_INSECURE;
+});
+
+test('server created with key returns http.Server with listen method', () => {
+  const prevKey = process.env.RLHF_API_KEY;
+  const prevInsecure = process.env.RLHF_ALLOW_INSECURE;
+  process.env.RLHF_API_KEY = 'test-key-12345';
+  delete process.env.RLHF_ALLOW_INSECURE;
+
+  const { createApiServer } = require('../src/api/server');
+  const server = createApiServer();
+  assert.equal(typeof server.listen, 'function', 'server should have listen method');
+  assert.equal(typeof server.close, 'function', 'server should have close method');
+
+  if (typeof prevKey === 'string') process.env.RLHF_API_KEY = prevKey;
+  else delete process.env.RLHF_API_KEY;
+  if (typeof prevInsecure === 'string') process.env.RLHF_ALLOW_INSECURE = prevInsecure;
+  else delete process.env.RLHF_ALLOW_INSECURE;
+});
