@@ -87,6 +87,23 @@ test('runFixPlan captures error messages', () => {
   assert.ok(report.results[0].outputTail.includes('lint error'));
 });
 
+test('runFixPlan tracks per-script changed files', () => {
+  const report = runFixPlan({
+    plan: ['lint:fix', 'format'],
+    runner: () => ({
+      exitCode: 0,
+      durationMs: 1,
+      stdout: '',
+      stderr: '',
+      error: null,
+    }),
+  });
+
+  report.results.forEach((r) => {
+    assert.ok(Array.isArray(r.changedFiles), `${r.script} should have changedFiles array`);
+  });
+});
+
 test('runFixPlan records timing per script', () => {
   const report = runFixPlan({
     plan: ['format'],
