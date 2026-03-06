@@ -611,18 +611,23 @@ async function onData(chunk) {
   }
 }
 
+function startStdioServer() {
+  process.stdin.on('data', (chunk) => {
+    onData(chunk).catch((err) => {
+      writeMessage({ jsonrpc: '2.0', id: null, error: { code: -32603, message: err.message } });
+    });
+  });
+}
+
 module.exports = {
   TOOLS,
   handleRequest,
   callTool,
   resolveSafePath,
   SAFE_DATA_DIR,
+  startStdioServer,
 };
 
 if (require.main === module) {
-  process.stdin.on('data', (chunk) => {
-    onData(chunk).catch((err) => {
-      writeMessage({ jsonrpc: '2.0', id: null, error: { code: -32603, message: err.message } });
-    });
-  });
+  startStdioServer();
 }
