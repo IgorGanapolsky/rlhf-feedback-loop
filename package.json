@@ -1,7 +1,7 @@
 {
   "name": "rlhf-feedback-loop",
   "version": "0.6.6",
-  "description": "Make your AI agent learn from mistakes. Capture thumbs up/down feedback, block repeated failures, export DPO training data. Works with ChatGPT, Claude, Codex, Gemini, Amp.",
+  "description": "Production RLHF & DPO data pipeline for AI agents. Optimize agentic reliability with Feedback-Driven Development (FDD). Capture human preference signals, generate automated guardrails, and export DPO training pairs. Compatible with Claude, GPT-4, Gemini, and multi-agent systems.",
   "homepage": "https://github.com/IgorGanapolsky/rlhf-feedback-loop#readme",
   "repository": {
     "type": "git",
@@ -91,6 +91,13 @@
     "amp",
     "mcp",
     "model-context-protocol",
+    "agentic-reliability",
+    "feedback-driven-development",
+    "agentic-workflows",
+    "ai-search-optimization",
+    "generative-engine-optimization",
+    "fdd",
+    "geo",
     "agent-evaluation",
     "prompt-engineering",
     "context-engineering",
