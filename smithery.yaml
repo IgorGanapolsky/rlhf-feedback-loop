@@ -1,0 +1,16 @@
+startCommand:
+  type: "stdio"
+  configSchema:
+    type: "object"
+    properties:
+      mcpProfile:
+        type: "string"
+        description: "MCP profile to use (default, readonly, locked)"
+        default: "default"
+    required: []
+  commandFunction:
+    command: "npx"
+    args:
+      - "-y"
+      - "rlhf-feedback-loop"
+      - "serve"
