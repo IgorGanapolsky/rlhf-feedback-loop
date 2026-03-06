@@ -267,19 +267,52 @@ function formatStats() {
   const pos = entries.filter(e => e.signal === 'positive').length;
   const neg = entries.filter(e => e.signal === 'negative').length;
   const memCount = fs.existsSync(memPath) ? fs.readFileSync(memPath, 'utf8').trim().split('\n').filter(Boolean).length : 0;
-  return [
-    '## Storage Proof',
-    `  Feedback log : ${logPath} (${entries.length} entries)`,
-    `  Memory log   : ${memPath} (${memCount} entries)`,
+
+  // HBR: "Which cases consume disproportionate time?" — top error domains
+  const negEntries = entries.filter(e => e.signal === 'negative');
+  const domainCounts = {};
+  negEntries.forEach(e => {
+    const domain = (e.richContext && e.richContext.domain) || 'general';
+    domainCounts[domain] = (domainCounts[domain] || 0) + 1;
+  });
+  const topDomains = Object.entries(domainCounts).sort((a, b) => b[1] - a[1]).slice(0, 3);
+
+  // HBR: "Glass box" — audit trail of recent decisions
+  const recent = entries.slice(-5).reverse();
+  const auditTrail = recent.map(e => {
+    const sig = e.signal === 'positive' ? 'UP' : 'DN';
+    const ts = (e.timestamp || '').slice(11, 19);
+    const ctx = (e.context || '').slice(0, 60);
+    return `  [${sig}] ${ts} ${ctx}`;
+  });
+
+  const parts = [
+    '## Storage',
+    `  Feedback log : ${entries.length} entries`,
+    `  Memory log   : ${memCount} memories`,
     `  LanceDB      : ${path.join(SAFE_DATA_DIR, 'lancedb/')}`,
     '',
-    '## Cumulative Stats',
-    `  Total feedback  : ${entries.length}`,
-    `  Positive (up)   : ${pos}`,
-    `  Negative (down) : ${neg}`,
-    `  Promoted to mem : ${memCount}`,
-    `  Ratio           : ${pos > 0 ? (pos / (pos + neg) * 100).toFixed(0) + '% positive' : 'n/a'}`,
-  ].join('\n');
+    '## Stats',
+    `  Total     : ${entries.length}`,
+    `  Positive  : ${pos}`,
+    `  Negative  : ${neg}`,
+    `  Promoted  : ${memCount}`,
+    `  Ratio     : ${pos > 0 ? (pos / (pos + neg) * 100).toFixed(0) + '% positive' : 'n/a'}`,
+  ];
+
+  if (topDomains.length > 0) {
+    parts.push('', '## Top Error Domains (where mistakes cluster)');
+    topDomains.forEach(([domain, count]) => {
+      parts.push(`  ${domain}: ${count} failures`);
+    });
+  }
+
+  if (auditTrail.length > 0) {
+    parts.push('', '## Audit Trail (last 5 decisions)');
+    parts.push(...auditTrail);
+  }
+
+  return parts.join('\n');
 }
 
 async function callTool(name, args = {}) {
@@ -321,15 +354,18 @@ async function callToolInner(name, args = {}) {
     const limit = Number(args.limit || 5);
     const parts = [];
 
-    // 1. Vector search for similar past feedback
+    // 1. Vector search for similar past feedback with confidence scores
     try {
       const similar = await searchSimilar(query, limit);
       if (similar.length > 0) {
         parts.push('## Relevant Past Feedback\n');
-        for (const mem of similar) {
+        for (let i = 0; i < similar.length; i++) {
+          const mem = similar[i];
           const signal = mem.signal === 'positive' ? 'GOOD' : 'BAD';
-          parts.push(`**[${signal}]** ${mem.context}`);
+          const confidence = mem._distance != null ? Math.max(0, (1 - mem._distance) * 100).toFixed(0) : '?';
+          parts.push(`**[${signal}]** (${confidence}% match) ${mem.context}`);
           if (mem.tags) parts.push(`  Tags: ${mem.tags}`);
+          if (mem.timestamp) parts.push(`  When: ${mem.timestamp}`);
           parts.push('');
         }
       }
@@ -359,9 +395,13 @@ async function callToolInner(name, args = {}) {
       }
     } catch (_) {}
 
-    const text = parts.length > 0
+    // 4. Append stats + audit trail (glass box)
+    parts.push('');
+    parts.push(formatStats());
+
+    const text = parts.length > 1
       ? parts.join('\n')
-      : 'No past feedback found. This appears to be a fresh start.';
+      : 'No past feedback found. This appears to be a fresh start.\n\n' + formatStats();
 
     return { content: [{ type: 'text', text }] };
   }
