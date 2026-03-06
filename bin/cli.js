@@ -324,7 +324,13 @@ function serve() {
 
 function install() {
   console.log('Installing RLHF Feedback Loop as a global MCP skill...');
-  const success = setupClaude() || setupCodex() || setupGemini() || setupCursor();
+  const results = [
+    setupClaude(),
+    setupCodex(),
+    setupGemini(),
+    setupCursor()
+  ];
+  const success = results.some(r => r === true);
   if (success) {
     console.log('\nSuccess! RLHF Feedback Loop is now available to your agents.');
     console.log('Try asking your agent: "Capture positive feedback for this task"');
