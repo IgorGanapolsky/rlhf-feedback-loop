@@ -1,5 +1,32 @@
 # Packaging and Sales Plan
 
+## GSD Index (High-ROI Execution)
+
+1. Trust artifact pack:
+   [trust/TRUST_CENTER_PACKET.md](trust/TRUST_CENTER_PACKET.md),
+   [trust/SECURITY_CONTROLS_MATRIX.md](trust/SECURITY_CONTROLS_MATRIX.md),
+   [trust/DATA_FLOW_AND_RETENTION.md](trust/DATA_FLOW_AND_RETENTION.md)
+2. Vertical solution packs:
+   [solutions/legal-solution-pack.md](solutions/legal-solution-pack.md),
+   [solutions/finance-solution-pack.md](solutions/finance-solution-pack.md),
+   [solutions/engineering-solution-pack.md](solutions/engineering-solution-pack.md)
+3. Commitment-compatible pricing:
+   [pricing/COMMITMENT_COMPATIBLE_PRICING.md](pricing/COMMITMENT_COMPATIBLE_PRICING.md),
+   [pricing/ORDER_FORM_TEMPLATE.md](pricing/ORDER_FORM_TEMPLATE.md)
+4. Marketplace integration surface:
+   [marketplace/MARKETPLACE_INTEGRATION_SURFACE.md](marketplace/MARKETPLACE_INTEGRATION_SURFACE.md),
+   [marketplace/LISTING_READINESS_CHECKLIST.md](marketplace/LISTING_READINESS_CHECKLIST.md),
+   [marketplace/PARTNER_INTEGRATION_GUIDE.md](marketplace/PARTNER_INTEGRATION_GUIDE.md)
+5. Pilot and proof-driven sales assets:
+   [sales/PILOT_30_DAY_ROI_PLAYBOOK.md](sales/PILOT_30_DAY_ROI_PLAYBOOK.md),
+   [sales/PILOT_SCORECARD_TEMPLATE.md](sales/PILOT_SCORECARD_TEMPLATE.md),
+   [sales/PROOF_DRIVEN_GTM_ASSETS.md](sales/PROOF_DRIVEN_GTM_ASSETS.md),
+   [sales/CASE_STUDY_TEMPLATE.md](sales/CASE_STUDY_TEMPLATE.md),
+   [sales/EXECUTIVE_ONE_PAGER.md](sales/EXECUTIVE_ONE_PAGER.md)
+6. GPT monetization execution:
+   [monetization/GPT_MONETIZATION_EXECUTION_PLAN.md](monetization/GPT_MONETIZATION_EXECUTION_PLAN.md),
+   [monetization/GPT_OFFER_STACK.md](monetization/GPT_OFFER_STACK.md)
+
 ## Product Tiers
 
 ### Tier 1: Open Source Core (Free)

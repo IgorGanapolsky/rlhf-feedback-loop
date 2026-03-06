@@ -22,7 +22,21 @@ const PROOF_DIR = path.join(__dirname, '..', 'proof', 'subway-upgrades');
 const REPORT_JSON = path.join(PROOF_DIR, 'subway-upgrades-report.json');
 const REPORT_MD = path.join(PROOF_DIR, 'subway-upgrades-report.md');
 
-const SUBWAY_ROOT = path.join(__dirname, '..', '..', '..', 'Subway_RN_Demo');
+function resolveSubwayRoot() {
+  const candidates = [
+    process.env.SUBWAY_ROOT,
+    path.join(__dirname, '..', '..', '..', 'Subway_RN_Demo'),
+    path.join(__dirname, '..', '..', '..', '..', 'Subway_RN_Demo'),
+  ].filter(Boolean);
+
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) return candidate;
+  }
+
+  return candidates[0] || path.join(__dirname, '..', '..', '..', 'Subway_RN_Demo');
+}
+
+const SUBWAY_ROOT = resolveSubwayRoot();
 
 function run() {
   const results = { passed: 0, failed: 0, requirements: {} };

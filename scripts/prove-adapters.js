@@ -22,6 +22,22 @@ function check(condition, message) {
   }
 }
 
+async function safeRmDir(dirPath, maxAttempts = 6) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      fs.rmSync(dirPath, { recursive: true, force: true });
+      return;
+    } catch (err) {
+      if (err.code === 'ENOENT') return;
+      const retryable = err.code === 'ENOTEMPTY' || err.code === 'EBUSY' || err.code === 'EPERM';
+      if (!retryable || attempt === maxAttempts) {
+        throw err;
+      }
+      await new Promise((resolve) => setTimeout(resolve, attempt * 50));
+    }
+  }
+}
+
 function escapeRegExp(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -324,7 +340,7 @@ async function runProof(options = {}) {
     addResult('fatal', false, { error: err.message });
   } finally {
     await new Promise((resolve) => server.close(resolve));
-    fs.rmSync(tmpFeedbackDir, { recursive: true, force: true });
+    await safeRmDir(tmpFeedbackDir);
   }
 
   if (writeArtifacts) {

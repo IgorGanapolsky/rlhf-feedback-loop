@@ -13,7 +13,7 @@
  *   7. init is idempotent
  */
 
-const { spawnSync } = require('child_process');
+const { spawnSync, spawn } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -24,6 +24,20 @@ const CLI = path.resolve(__dirname, '../bin/cli.js');
 
 function makeTmpDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'rlhf-cli-test-'));
+}
+
+function frameMcpMessage(payload) {
+  const body = JSON.stringify(payload);
+  return `Content-Length: ${Buffer.byteLength(body, 'utf8')}\r\n\r\n${body}`;
+}
+
+function findHeaderBoundary(text) {
+  const crlf = text.indexOf('\r\n\r\n');
+  const lf = text.indexOf('\n\n');
+  if (crlf === -1 && lf === -1) return null;
+  if (crlf === -1) return { index: lf, separatorLen: 2 };
+  if (lf === -1) return { index: crlf, separatorLen: 4 };
+  return crlf < lf ? { index: crlf, separatorLen: 4 } : { index: lf, separatorLen: 2 };
 }
 
 describe('bin/cli.js', () => {
@@ -135,6 +149,70 @@ describe('bin/cli.js', () => {
       { encoding: 'utf8', cwd: path.resolve(__dirname, '..') }
     );
     assert.notEqual(result.status, 1, `capture should not exit 1:\n${result.stderr}`);
+  });
+
+  test('serve starts MCP stdio server and responds to initialize handshake', async () => {
+    const child = spawn(process.execPath, [CLI, 'serve'], {
+      cwd: tmpDir,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+
+    let stdoutBuffer = '';
+    let stderrBuffer = '';
+    let settled = false;
+
+    const finalize = (resolve, reject, value, isError = false) => {
+      if (settled) return;
+      settled = true;
+      try {
+        child.kill('SIGKILL');
+      } catch (_) {
+        // no-op
+      }
+      if (isError) reject(value);
+      else resolve(value);
+    };
+
+    const response = await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        finalize(resolve, reject, new Error(`MCP initialize timeout; stderr=${stderrBuffer}`), true);
+      }, 5000);
+
+      child.stderr.on('data', (chunk) => {
+        stderrBuffer += String(chunk || '');
+      });
+
+      child.stdout.on('data', (chunk) => {
+        stdoutBuffer += String(chunk || '');
+        const boundary = findHeaderBoundary(stdoutBuffer);
+        if (!boundary) return;
+        const header = stdoutBuffer.slice(0, boundary.index);
+        const match = header.match(/Content-Length:\s*(\d+)/i);
+        if (!match) return;
+        const length = Number(match[1]);
+        const bodyStart = boundary.index + boundary.separatorLen;
+        const body = stdoutBuffer.slice(bodyStart, bodyStart + length);
+        if (Buffer.byteLength(body, 'utf8') < length) return;
+
+        clearTimeout(timer);
+        try {
+          const parsed = JSON.parse(body);
+          finalize(resolve, reject, parsed, false);
+        } catch (err) {
+          finalize(resolve, reject, err, true);
+        }
+      });
+
+      child.stdin.write(frameMcpMessage({
+        jsonrpc: '2.0',
+        id: 99,
+        method: 'initialize',
+        params: {},
+      }));
+    });
+
+    assert.equal(response.id, 99);
+    assert.equal(response.result.serverInfo.name, 'rlhf-feedback-loop-mcp');
   });
 
   test('init is idempotent — running twice exits 0', () => {

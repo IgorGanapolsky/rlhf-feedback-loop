@@ -309,7 +309,10 @@ function prove() {
 function serve() {
   // Start MCP server over stdio — used by `claude mcp add`, `codex mcp add`, `gemini mcp add`
   const mcpServer = path.join(PKG_ROOT, 'adapters', 'mcp', 'server-stdio.js');
-  require(mcpServer);
+  const server = require(mcpServer);
+  if (server && typeof server.startStdioServer === 'function') {
+    server.startStdioServer();
+  }
 }
 
 function startApi() {
@@ -383,7 +386,6 @@ switch (COMMAND) {
     prove();
     break;
   case 'start-api':
-  case 'serve':
     startApi();
     break;
   case 'help':

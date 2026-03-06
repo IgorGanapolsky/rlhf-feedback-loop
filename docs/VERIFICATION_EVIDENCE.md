@@ -1,4 +1,59 @@
-# Verification Evidence (March 4, 2026)
+# Verification Evidence (March 6, 2026)
+
+## MCP Serve Startup Fix (CLI `serve` timeout regression)
+
+Root cause addressed:
+
+- `bin/cli.js` used `require(server-stdio.js)` without explicitly starting the stdin listener.
+- `adapters/mcp/server-stdio.js` only started listener when `require.main === module`.
+- When loaded via `require()` (published `serve` path), listener never started and MCP handshake timed out.
+
+Fix implemented:
+
+- Added exported bootstrap `startStdioServer()` in `adapters/mcp/server-stdio.js`.
+- Updated `bin/cli.js` `serve()` to call `startStdioServer()` after `require()`.
+- Removed duplicate CLI switch branch for `serve` to prevent dead routing.
+
+Proof commands and observed results:
+
+```bash
+node --test tests/cli.test.js tests/mcp-server.test.js
+```
+
+- Result: `21 passed`, `0 failed`
+- Includes: `serve starts MCP stdio server and responds to initialize handshake`
+
+```bash
+npm test
+```
+
+- Result: full suite passed (all script groups green, including `test:proof` and `test:cli`)
+
+```bash
+npm run prove:adapters
+npm run prove:automation
+npm run self-heal:check
+```
+
+- `prove:adapters`: `{ "passed": 19, "failed": 0 }`
+- `prove:automation`: `{ "passed": 14, "failed": 0 }`
+- `self-heal:check`: `Overall: HEALTHY` (`4/4` checks healthy)
+
+## Proof-Suite Reliability Hardening
+
+- Hardened cleanup in `scripts/prove-adapters.js` to retry transient `ENOTEMPTY/EBUSY/EPERM` directory removal.
+- Hardened Subway proof root resolution in `scripts/prove-subway-upgrades.js` for both standard and worktree layouts.
+- Updated `tests/prove-subway-upgrades.test.js` preconditions to skip only when required external Phase-11 artifacts are unavailable.
+
+## High-ROI GTM Artifact Pack (Implemented)
+
+- Trust package: `docs/trust/*`
+- Vertical packs: `docs/solutions/*`
+- Commitment pricing package: `docs/pricing/*`
+- Marketplace package: `docs/marketplace/*`
+- Pilot + proof-driven sales package: `docs/sales/*`
+- GPT monetization execution package: `docs/monetization/*`
+- Index updated: `docs/PACKAGING_AND_SALES_PLAN.md`
 
 ## Phase 6: Feedback Attribution
 

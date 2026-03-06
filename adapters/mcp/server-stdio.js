@@ -562,6 +562,7 @@ function writeMessage(payload) {
 }
 
 let buffer = Buffer.alloc(0);
+let stdioStarted = false;
 
 function tryReadMessage() {
   const headerEnd = buffer.indexOf('\r\n\r\n');
@@ -611,18 +612,25 @@ async function onData(chunk) {
   }
 }
 
+function startStdioServer() {
+  if (stdioStarted) return;
+  stdioStarted = true;
+  process.stdin.on('data', (chunk) => {
+    onData(chunk).catch((err) => {
+      writeMessage({ jsonrpc: '2.0', id: null, error: { code: -32603, message: err.message } });
+    });
+  });
+}
+
 module.exports = {
   TOOLS,
   handleRequest,
   callTool,
   resolveSafePath,
   SAFE_DATA_DIR,
+  startStdioServer,
 };
 
 if (require.main === module) {
-  process.stdin.on('data', (chunk) => {
-    onData(chunk).catch((err) => {
-      writeMessage({ jsonrpc: '2.0', id: null, error: { code: -32603, message: err.message } });
-    });
-  });
+  startStdioServer();
 }
