@@ -1,0 +1,24 @@
+{
+  "name": "rlhf-feedback-loop",
+  "version": "0.6.6",
+  "plugins": [
+    {
+      "name": "rlhf-feedback-loop",
+      "description": "RLHF feedback loop for AI agents — capture feedback, block mistakes, export DPO training pairs",
+      "type": "mcp",
+      "source": {
+        "type": "npm",
+        "package": "rlhf-feedback-loop",
+        "command": "npx",
+        "args": ["-y", "rlhf-feedback-loop", "serve"]
+      },
+      "metadata": {
+        "author": "Igor Ganapolsky",
+        "homepage": "https://github.com/IgorGanapolsky/rlhf-feedback-loop",
+        "license": "MIT",
+        "keywords": ["rlhf", "feedback", "dpo", "mcp", "prevention-rules", "memory"],
+        "category": "developer-tools"
+      }
+    }
+  ]
+}
