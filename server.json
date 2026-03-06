@@ -1,0 +1,22 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.IgorGanapolsky/rlhf-feedback-loop",
+  "description": "RLHF feedback loop for AI agents. Capture feedback, block mistakes, export DPO data.",
+  "repository": {
+    "url": "https://github.com/IgorGanapolsky/rlhf-feedback-loop",
+    "source": "github"
+  },
+  "version": "0.6.2",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "rlhf-feedback-loop",
+      "version": "0.6.2",
+      "transport": {
+        "type": "stdio"
+      },
+      "runtime": "node",
+      "runtimeArgs": ["bin/cli.js", "serve"]
+    }
+  ]
+}
