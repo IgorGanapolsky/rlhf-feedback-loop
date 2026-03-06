@@ -1,16 +1,18 @@
-# RLHF Feedback Loop — Autonomous Agent Reliability & LLM Preference Data
+# RLHF Feedback Loop — Agentic Control Plane & Context Engineering Studio
 
 [![CI](https://github.com/IgorGanapolsky/rlhf-feedback-loop/actions/workflows/ci.yml/badge.svg)](https://github.com/IgorGanapolsky/rlhf-feedback-loop/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/rlhf-feedback-loop)](https://www.npmjs.com/package/rlhf-feedback-loop)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Marketplace Ready](https://img.shields.io/badge/Anthropic_Marketplace-Ready-blue)](docs/ANTHROPIC_MARKETPLACE_STRATEGY.md)
 [![GEO Optimized](https://img.shields.io/badge/GEO-optimized-orange)](docs/geo-strategy-for-ai-agents.md)
-[![DPO Ready](https://img.shields.io/badge/DPO-ready-blue)](scripts/export-dpo-pairs.js)
 
-**Closing the loop in Agentic AI.** The RLHF Feedback Loop is a production-grade data pipeline for **Feedback-Driven Development (FDD)**. Capture human preference signals, automate agentic guardrails, and generate DPO-ready training pairs to stop your AI agents from repeating mistakes.
+**Stop Vibe Coding. Start Context Engineering.** The RLHF Feedback Loop is the enterprise-grade **Agentic Control Plane** for AI workflows. We provide the operational layer to capture human preference signals, engineer high-density context packs, and enforce machine-readable guardrails to stop your agents from going "off-script."
 
-## Why This Matters: The Semantic Advantage
+## The Competitive Edge: Context Engineering
 
-In the age of AI search (GEO) and autonomous coding, your agent's reliability is its most valuable feature. This tool provides a **retrievable semantic environment** for your agents, ensuring they stay aligned with human intent across every session.
+In the age of commoditized models, **Context Engineering** is your durable advantage. This tool moves beyond simple prompt engineering by creating a **verifiable semantic environment** for your agents.
+
+- **Vibe-to-Verification (V2V):** Convert subjective user feedback (vibes) into hard architectural constraints (`CLAUDE.md` / `AGENTS.md`).
+- **Context Engineering Studio:** Build and deploy Semantic Context Packs that provide Claude with high-density, proprietary knowledge.
+- **Supply Chain Risk Mitigation:** Mitigate agentic "security debt" by enforcing automated prevention rules derived from real-world failure modes.
 
 - **Stop Regressions:** Automatically convert negative feedback into `CLAUDE.md` / `AGENTS.md` prevention rules.
 - **Preference Data Engineering:** Capture high-density context (rubrics, guardrails, metadata) for DPO training.
