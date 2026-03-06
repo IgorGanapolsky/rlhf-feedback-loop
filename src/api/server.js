@@ -230,6 +230,16 @@ function createApiServer() {
       return;
     }
 
+    if (req.method === 'GET' && pathname === '/healthz') {
+      const { FEEDBACK_LOG_PATH, MEMORY_LOG_PATH } = getFeedbackPaths();
+      sendJson(res, 200, {
+        status: 'ok',
+        feedbackLogPath: FEEDBACK_LOG_PATH,
+        memoryLogPath: MEMORY_LOG_PATH,
+      });
+      return;
+    }
+
     // Stripe webhook is unauthenticated — uses HMAC signature verification instead
     if (req.method === 'POST' && pathname === '/v1/billing/webhook') {
       try {
@@ -314,16 +324,6 @@ function createApiServer() {
     }
 
     try {
-      if (req.method === 'GET' && pathname === '/healthz') {
-        const { FEEDBACK_LOG_PATH, MEMORY_LOG_PATH } = getFeedbackPaths();
-        sendJson(res, 200, {
-          status: 'ok',
-          feedbackLogPath: FEEDBACK_LOG_PATH,
-          memoryLogPath: MEMORY_LOG_PATH,
-        });
-        return;
-      }
-
       if (req.method === 'GET' && pathname === '/v1/feedback/stats') {
         sendJson(res, 200, analyzeFeedback());
         return;

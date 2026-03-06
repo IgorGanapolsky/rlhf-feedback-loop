@@ -436,6 +436,13 @@ function verifyWebhookSignature(rawBody, signature) {
     return false;
   }
 
+  // Timestamp tolerance: +/- 5 minutes (300 seconds)
+  const timestamp = parseInt(parts.t, 10);
+  const now = Math.floor(Date.now() / 1000);
+  if (isNaN(timestamp) || Math.abs(now - timestamp) > 300) {
+    return false;
+  }
+
   const payload = `${parts.t}.${typeof rawBody === 'string' ? rawBody : rawBody.toString('utf-8')}`;
   const expected = crypto
     .createHmac('sha256', STRIPE_WEBHOOK_SECRET)

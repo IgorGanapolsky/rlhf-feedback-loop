@@ -1,7 +1,7 @@
 # Phase 10: Training Export — Proof Report
 
 **Status:** PASSED
-**Generated:** 2026-03-06T22:14:48.897Z
+**Generated:** 2026-03-06T22:38:13.632Z
 **Requirements:** XPRT-01, XPRT-02, XPRT-03, XPRT-04, XPRT-05
 
 ## Test Results
