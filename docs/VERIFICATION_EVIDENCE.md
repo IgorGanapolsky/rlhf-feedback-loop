@@ -232,6 +232,53 @@ Artifacts updated:
 - `proof/automation/report.json`
 - `proof/automation/report.md`
 
+## 2026-03-09 Technical Debt Audit Cleanup Verification
+
+Scope:
+
+- Added a portable `npm run test:coverage` command using Node's built-in coverage for `tests/**/*.test.js`.
+- Removed the unused `stripe` SDK dependency; billing continues to use direct HTTPS calls in `scripts/billing.js`.
+- Synced published version metadata across MCP manifests and public docs to `0.6.10`.
+- Refreshed active proof artifacts and pruned stale milestone-era proof files that were no longer referenced.
+
+Commands run:
+
+```bash
+npm uninstall stripe
+npm test
+npm run test:coverage
+npm run prove:adapters
+npm run prove:automation
+node scripts/self-healing-check.js --json > proof/automation/self-healing-health.json
+node scripts/self-heal.js --reason=manual > proof/automation/self-heal-run.json
+```
+
+Observed results:
+
+- `npm test`: pass.
+- `npm run test:coverage`: pass with Node test runner coverage summary:
+  - line coverage: `81.57%`
+  - branch coverage: `67.00%`
+  - function coverage: `83.65%`
+- `npm run prove:adapters`: pass with `21 passed`, `0 failed`.
+- `npm run prove:automation`: pass with `14 passed`, `0 failed`.
+- `self-healing-check`: `Overall: HEALTHY` with `4/4` healthy checks.
+- `self-heal:run`: `healthy: true`, no failing fix steps.
+
+Coverage caveat:
+
+- `npm run test:coverage` measures `tests/**/*.test.js`.
+- The inline script phases in `test:schema`, `test:loop`, and `test:dpo` still run in CI via `npm test`, but they are not yet folded into the single coverage percentage.
+
+Artifacts updated:
+
+- `proof/compatibility/report.json`
+- `proof/compatibility/report.md`
+- `proof/automation/report.json`
+- `proof/automation/report.md`
+- `proof/automation/self-healing-health.json`
+- `proof/automation/self-heal-run.json`
+
 Cross-project Codex startup proof:
 
 ```bash

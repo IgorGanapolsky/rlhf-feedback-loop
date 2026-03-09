@@ -35,6 +35,7 @@ npm run intents:list
 npm run intents:plan
 npm run self-heal:check
 npm run self-heal:run
+npm run test:coverage
 
 # engineering proof gate
 npm test
@@ -52,6 +53,7 @@ npm run prove:automation
 ## Required Completion Evidence
 
 - Test output from `npm test`.
+- Coverage output from `npm run test:coverage` (Node test runner coverage for `tests/**/*.test.js`).
 - Adapter compatibility report in `proof/compatibility/report.json` and `proof/compatibility/report.md`.
 - Automation proof report in `proof/automation/report.json` and `proof/automation/report.md`.
 - Updated `docs/VERIFICATION_EVIDENCE.md` for any behavior change.
