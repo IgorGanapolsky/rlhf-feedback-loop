@@ -15,11 +15,9 @@ Keep Cloud Pro at the current live Stripe price of `$10/mo` for now, but positio
 
 - GitHub Copilot Pro: `$10/mo`
 - Cursor Pro: `$20/mo`
-- Windsurf Pro: `$15/mo`
-- ChatGPT Plus: `$20/mo`
-- Claude Team: `$25/user/mo` annual or `$30/user/mo` monthly
+- Claude Team standard seat: `$20/user/mo` annual or `$25/user/mo` monthly
 - Langfuse Cloud Pro: `$29/mo`
-- LangSmith Plus: `$39/developer/mo`
+- LangSmith Plus: `$39/seat/mo`
 - Portkey Production: `$49/mo`
 - Helicone Pro: `$79/mo`
 - Braintrust Pro: `$249/mo`
