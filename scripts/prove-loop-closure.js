@@ -18,13 +18,21 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const PROOF_DIR = path.join(__dirname, '..', 'proof');
-const REPORT_JSON = path.join(PROOF_DIR, 'loop-closure-report.json');
-const REPORT_MD = path.join(PROOF_DIR, 'loop-closure-report.md');
+const ROOT = path.join(__dirname, '..');
+
+function resolveProofPaths() {
+  const proofDir = process.env.RLHF_PROOF_DIR || path.join(ROOT, 'proof');
+  return {
+    proofDir,
+    reportJson: path.join(proofDir, 'loop-closure-report.json'),
+    reportMd: path.join(proofDir, 'loop-closure-report.md'),
+  };
+}
 
 function run() {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rlhf-loop-proof-'));
   const results = { passed: 0, failed: 0, requirements: {} };
+  const { proofDir, reportJson, reportMd } = resolveProofPaths();
 
   const checks = [
     {
@@ -168,7 +176,7 @@ function run() {
       desc: 'test:loop-closure (node --test tests/loop-closure.test.js) passes with 0 failures',
       fn: () => {
         const out = execSync('node --test tests/loop-closure.test.js', {
-          cwd: path.join(__dirname, '..'),
+          cwd: ROOT,
           env: { ...process.env, RLHF_FEEDBACK_DIR: tmpDir },
           encoding: 'utf8',
           stdio: 'pipe',
@@ -207,7 +215,7 @@ function run() {
   } catch {}
 
   // Write proof artifacts
-  fs.mkdirSync(PROOF_DIR, { recursive: true });
+  fs.mkdirSync(proofDir, { recursive: true });
 
   const report = {
     phase: '08-loop-closure',
@@ -218,7 +226,7 @@ function run() {
     requirements: results.requirements,
   };
 
-  fs.writeFileSync(REPORT_JSON, JSON.stringify(report, null, 2) + '\n');
+  fs.writeFileSync(reportJson, JSON.stringify(report, null, 2) + '\n');
 
   const md = [
     '# Phase 8: Loop Closure — Proof Report',
@@ -244,10 +252,10 @@ function run() {
     '',
   ].join('\n');
 
-  fs.writeFileSync(REPORT_MD, md);
+  fs.writeFileSync(reportMd, md);
 
   console.log(`\nPhase 8 proof: ${results.passed} passed, ${results.failed} failed`);
-  console.log(`Report: ${REPORT_JSON}`);
+  console.log(`Report: ${reportJson}`);
 
   if (results.failed > 0) process.exit(1);
 }

@@ -273,7 +273,7 @@ function routeQuery(query, indexPath, topN) {
     index = JSON.parse(fs.readFileSync(idxPath, 'utf-8'));
   } catch {
     // Index doesn't exist — build it on the fly
-    index = buildKnowledgeIndex();
+    index = buildKnowledgeIndex(undefined, idxPath);
   }
 
   const queryTokens = query
@@ -312,9 +312,10 @@ function routeQuery(query, indexPath, topN) {
  * @param {string} query - The original query
  * @param {string[]} retrievedDocs - Filenames of retrieved docs
  * @param {string[]} expectedTopics - Expected topic keywords to match against
+ * @param {string} [logPath] - Optional path for the quality log
  * @returns {{ precision: number, recall: number, f1: number, query: string, timestamp: string }}
  */
-function scoreRetrievalQuality(query, retrievedDocs, expectedTopics) {
+function scoreRetrievalQuality(query, retrievedDocs, expectedTopics, logPath) {
   if (!retrievedDocs.length || !expectedTopics.length) {
     const result = {
       query,
@@ -325,7 +326,7 @@ function scoreRetrievalQuality(query, retrievedDocs, expectedTopics) {
       expectedCount: expectedTopics.length,
       timestamp: new Date().toISOString(),
     };
-    logQualityResult(result);
+    logQualityResult(result, logPath);
     return result;
   }
 
@@ -369,7 +370,7 @@ function scoreRetrievalQuality(query, retrievedDocs, expectedTopics) {
     timestamp: new Date().toISOString(),
   };
 
-  logQualityResult(result);
+  logQualityResult(result, logPath);
   return result;
 }
 
