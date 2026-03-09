@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-03-03T20:24:50.450Z",
-  "durationMs": 2805,
+  "generatedAt": "2026-03-09T16:02:00.370Z",
+  "durationMs": 13472,
   "overall_status": "healthy",
   "summary": {
     "total": 4,
@@ -13,36 +13,36 @@
       "command": "npm run budget:status",
       "status": "healthy",
       "exitCode": 0,
-      "durationMs": 192,
+      "durationMs": 256,
       "error": null,
-      "outputTail": "> rlhf-feedback-loop@0.5.0 budget:status\n> node scripts/budget-guard.js --status\n\n{\n  \"month\": \"2026-03\",\n  \"totalUsd\": 0,\n  \"budgetUsd\": 10,\n  \"remainingUsd\": 10\n}"
+      "outputTail": "> rlhf-feedback-loop@0.6.10 budget:status\n> node scripts/budget-guard.js --status\n\n{\n  \"month\": \"2026-03\",\n  \"totalUsd\": 0,\n  \"budgetUsd\": 10,\n  \"remainingUsd\": 10\n}"
     },
     {
       "name": "tests",
       "command": "npm test",
       "status": "healthy",
       "exitCode": 0,
-      "durationMs": 1763,
+      "durationMs": 11600,
       "error": null,
-      "outputTail": "intent becomes ready (0.474125ms)\n✔ unknown intent throws (0.581667ms)\n✔ invalid mcp profile is rejected (0.434375ms)\n✔ loads mcp policy and profiles (1.201ms)\n✔ profile allowlists differentiate permissions (1.26925ms)\n✔ assertToolAllowed throws for denied tools (0.778041ms)\n✔ subagent profile resolves mcp profile and conflicts are rejected (0.573ms)\n✔ tools/list returns all configured tools (1.566916ms)\n✔ capture_feedback tool can be called (11.38975ms)\n✔ capture_feedback applies rubric anti-hacking gate (2.088042ms)\n✔ intent tools list and plan enforce checkpoint flow (1.540917ms)\n✔ prevention_rules blocks external output paths (0.36325ms)\n✔ construct/evaluate context pack tools work (8.998542ms)\n✔ construct_context_pack rejects invalid namespaces (1.976292ms)\n✔ safe data dir resolves inside test feedback root (0.066542ms)\n✔ chatgpt openapi includes all core API routes (1.233666ms)\n✔ loads rubric config with expected criteria (0.906709ms)\n✔ normalizes rubric scores and validates criterion names (0.893125ms)\n✔ buildRubricEvaluation flags disagreement and failed guardrails (0.683167ms)\n✔ buildFixPlan selects known fix scripts in priority order (1.150458ms)\n✔ runFixPlan tracks successful and failed runs (0.144625ms)\n✔ collectHealthReport marks overall healthy when all checks pass (2.140167ms)\n✔ collectHealthReport marks overall unhealthy when one check fails (0.098042ms)\n✔ reportToText includes overall status and check names (0.129625ms)\n✔ lists and loads subagent profiles (0.940542ms)\n✔ subagent profiles validate against mcp policy (0.218708ms)\nℹ tests 52\nℹ suites 0\nℹ pass 52\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 257.561292\n\n> rlhf-feedback-loop@0.5.0 test:proof\n> node --test tests/prove-adapters.test.js tests/prove-automation.test.js\n\n✔ adapter proof harness passes all checks (51.729459ms)\n✔ automation proof harness passes all checks (344.659625ms)\nℹ tests 2\nℹ suites 0\nℹ pass 2\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 421.549583"
+      "outputTail": "(1.051416ms)\n  ✔ POST /v1/billing/webhook handles customer.subscription.deleted (2.037625ms)\n  ✔ POST /v1/billing/provision without customerId returns 400 (0.424084ms)\n  ✔ invalid Bearer key returns 401 on protected route (0.529375ms)\n  ✔ usage metering increments after authenticated API call (2.58825ms)\n  ✔ GET /v1/analytics/funnel returns counts and conversion rates (0.445917ms)\n✔ API server — /v1/billing/* routes (26.284875ms)\n▶ API server — admin provision boundary\n  ✔ admin static token can call POST /v1/billing/provision (1.067458ms)\n  ✔ billing key is forbidden from POST /v1/billing/provision (0.806ms)\n✔ API server — admin provision boundary (3.458791ms)\nℹ tests 34\nℹ suites 10\nℹ pass 34\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 136.612833\n\n> rlhf-feedback-loop@0.6.10 test:cli\n> node --test tests/cli.test.js\n\n▶ bin/cli.js\n  ✔ CLI file exists and is executable (0.462583ms)\n  ✔ help command exits 0 and lists subcommands (61.564625ms)\n  ✔ --help flag exits 0 (64.841167ms)\n  ✔ no-arg invocation exits 0 with help (60.81925ms)\n  ✔ unknown command exits 1 (61.809625ms)\n  ✔ init creates .rlhf/ directory (127.850334ms)\n  ✔ init creates config.json with required fields (0.231167ms)\n  ✔ init emits acquisition funnel event correlated by installId (116.934625ms)\n  ✔ init creates .mcp.json with server entry (0.227083ms)\n  ✔ init output includes initialized message and platform detection (110.484667ms)\n  ✔ capture --feedback=up routes to full engine (56.83425ms)\n  ✔ capture --feedback=down routes to full engine (62.630791ms)\n  ✔ serve responds to initialize over Content-Length framed transport (66.405375ms)\n  ✔ serve responds to initialize over newline-delimited JSON transport (63.558958ms)\n  ✔ serve returns ndjson error envelope for malformed ndjson input (65.347458ms)\n  ✔ init is idempotent — running twice exits 0 (126.335084ms)\n✔ bin/cli.js (1048.889583ms)\nℹ tests 16\nℹ suites 1\nℹ pass 16\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 1132.718958"
     },
     {
       "name": "prove_adapters",
       "command": "npm run prove:adapters",
       "status": "healthy",
       "exitCode": 0,
-      "durationMs": 269,
+      "durationMs": 586,
       "error": null,
-      "outputTail": "> rlhf-feedback-loop@0.5.0 prove:adapters\n> node scripts/prove-adapters.js\n\n{\n  \"passed\": 19,\n  \"failed\": 0\n}"
+      "outputTail": "> rlhf-feedback-loop@0.6.10 prove:adapters\n> node scripts/prove-adapters.js\n\n{\n  \"passed\": 21,\n  \"failed\": 0\n}\n\ndtype not specified for \"model\". Using the default dtype (fp32) for this device (cpu)."
     },
     {
       "name": "prove_automation",
       "command": "npm run prove:automation",
       "status": "healthy",
       "exitCode": 0,
-      "durationMs": 578,
+      "durationMs": 1028,
       "error": null,
-      "outputTail": "> rlhf-feedback-loop@0.5.0 prove:automation\n> node scripts/prove-automation.js\n\n{\n  \"passed\": 12,\n  \"failed\": 0\n}"
+      "outputTail": "> rlhf-feedback-loop@0.6.10 prove:automation\n> node scripts/prove-automation.js\n\n{\n  \"passed\": 14,\n  \"failed\": 0\n}\n\ndtype not specified for \"model\". Using the default dtype (fp32) for this device (cpu).\ndtype not specified for \"model\". Using the default dtype (fp32) for this device (cpu)."
     }
   ]
 }
