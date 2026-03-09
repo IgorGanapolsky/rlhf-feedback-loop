@@ -18,13 +18,21 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const PROOF_DIR = path.join(__dirname, '..', 'proof');
-const REPORT_JSON = path.join(PROOF_DIR, 'data-quality-report.json');
-const REPORT_MD = path.join(PROOF_DIR, 'data-quality-report.md');
+const ROOT = path.join(__dirname, '..');
+
+function resolveProofPaths() {
+  const proofDir = process.env.RLHF_PROOF_DIR || path.join(ROOT, 'proof');
+  return {
+    proofDir,
+    reportJson: path.join(proofDir, 'data-quality-report.json'),
+    reportMd: path.join(proofDir, 'data-quality-report.md'),
+  };
+}
 
 function run() {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rlhf-qual-proof-'));
   const results = { passed: 0, failed: 0, requirements: {} };
+  const { proofDir, reportJson, reportMd } = resolveProofPaths();
 
   const checks = [
     {
@@ -132,7 +140,7 @@ function run() {
       desc: 'test:quality (node --test tests/validate-feedback.test.js) passes with 0 failures',
       fn: () => {
         const out = execSync('node --test tests/validate-feedback.test.js', {
-          cwd: path.join(__dirname, '..'),
+          cwd: ROOT,
           env: { ...process.env, RLHF_FEEDBACK_DIR: tmpDir },
           encoding: 'utf8',
           stdio: 'pipe',
@@ -173,7 +181,7 @@ function run() {
   delete process.env.RLHF_FEEDBACK_DIR;
 
   // Write proof artifacts
-  fs.mkdirSync(PROOF_DIR, { recursive: true });
+  fs.mkdirSync(proofDir, { recursive: true });
 
   const report = {
     phase: '07-data-quality',
@@ -184,7 +192,7 @@ function run() {
     requirements: results.requirements,
   };
 
-  fs.writeFileSync(REPORT_JSON, JSON.stringify(report, null, 2) + '\n');
+  fs.writeFileSync(reportJson, JSON.stringify(report, null, 2) + '\n');
 
   const md = [
     '# Phase 7: Data Quality — Proof Report',
@@ -208,10 +216,10 @@ function run() {
     '',
   ].join('\n');
 
-  fs.writeFileSync(REPORT_MD, md);
+  fs.writeFileSync(reportMd, md);
 
   console.log(`\nPhase 7 proof: ${results.passed} passed, ${results.failed} failed`);
-  console.log(`Report: ${REPORT_JSON}`);
+  console.log(`Report: ${reportJson}`);
 
   if (results.failed > 0) process.exit(1);
 }

@@ -15,7 +15,9 @@ const path = require('path');
 const { execSync } = require('child_process');
 
 const ROOT = path.join(__dirname, '..');
-const PROOF_DIR = path.join(ROOT, 'proof');
+function getProofDir() {
+  return process.env.RLHF_PROOF_DIR || path.join(ROOT, 'proof');
+}
 
 function ensureDir(d) {
   if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
@@ -185,9 +187,10 @@ async function main() {
     overallPassed: allPassed,
   };
 
-  ensureDir(PROOF_DIR);
-  const jsonPath = path.join(PROOF_DIR, 'intelligence-report.json');
-  const mdPath = path.join(PROOF_DIR, 'intelligence-report.md');
+  const proofDir = getProofDir();
+  ensureDir(proofDir);
+  const jsonPath = path.join(proofDir, 'intelligence-report.json');
+  const mdPath = path.join(proofDir, 'intelligence-report.md');
 
   fs.writeFileSync(jsonPath, JSON.stringify(report, null, 2));
 
