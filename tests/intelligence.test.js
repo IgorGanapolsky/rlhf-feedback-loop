@@ -243,17 +243,19 @@ describe('context-engine: scoreRetrievalQuality', () => {
   it('returns 0 precision/recall for empty inputs', () => {
     const logPath = path.join(tmpDir, 'qual.jsonl');
     // Temporarily override DEFAULT_QUALITY_LOG_PATH by passing logPath to logQualityResult
-    const result = m.scoreRetrievalQuality('query', [], ['topic']);
+    const result = m.scoreRetrievalQuality('query', [], ['topic'], logPath);
     assert.equal(result.precision, 0);
     assert.equal(result.recall, 0);
     assert.equal(result.f1, 0);
   });
 
   it('computes correct precision/recall for perfect match', () => {
+    const logPath = path.join(tmpDir, 'qual-perfect.jsonl');
     const result = m.scoreRetrievalQuality(
       'test query',
       ['CI_FIXES.md'],
-      ['ci']
+      ['ci'],
+      logPath
     );
     assert.equal(result.precision, 1);
     assert.equal(result.recall, 1);
@@ -261,10 +263,12 @@ describe('context-engine: scoreRetrievalQuality', () => {
   });
 
   it('computes partial recall when not all topics covered', () => {
+    const logPath = path.join(tmpDir, 'qual-partial.jsonl');
     const result = m.scoreRetrievalQuality(
       'test query',
       ['CI_FIXES.md'],
-      ['ci', 'security', 'testing']
+      ['ci', 'security', 'testing'],
+      logPath
     );
     // 1 doc covers 1 topic out of 3
     assert.equal(result.recall, Math.round((1 / 3) * 1000) / 1000);

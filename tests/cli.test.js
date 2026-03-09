@@ -248,21 +248,25 @@ describe('bin/cli.js', () => {
   });
 
   test('capture --feedback=up routes to full engine', () => {
+    const isolatedDir = makeTmpDir();
     const result = spawnSync(
       process.execPath,
       [CLI, 'capture', '--feedback=up', '--context=cli test verification'],
-      { encoding: 'utf8', cwd: path.resolve(__dirname, '..') }
+      { encoding: 'utf8', cwd: isolatedDir }
     );
+    fs.rmSync(isolatedDir, { recursive: true, force: true });
     // Exit 0 (promoted) or 2 (captured but not promoted) are both valid
     assert.notEqual(result.status, 1, `capture should not exit 1:\n${result.stderr}`);
   });
 
   test('capture --feedback=down routes to full engine', () => {
+    const isolatedDir = makeTmpDir();
     const result = spawnSync(
       process.execPath,
       [CLI, 'capture', '--feedback=down', '--context=test failure', '--what-went-wrong=broke it'],
-      { encoding: 'utf8', cwd: path.resolve(__dirname, '..') }
+      { encoding: 'utf8', cwd: isolatedDir }
     );
+    fs.rmSync(isolatedDir, { recursive: true, force: true });
     assert.notEqual(result.status, 1, `capture should not exit 1:\n${result.stderr}`);
   });
 

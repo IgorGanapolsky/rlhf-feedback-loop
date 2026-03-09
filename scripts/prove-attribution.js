@@ -19,7 +19,6 @@ const os = require('os');
 const { execSync } = require('child_process');
 
 const ROOT = path.join(__dirname, '..');
-const PROOF_DIR = path.join(ROOT, 'proof');
 
 // Phase 5 node-runner test baseline (before Phase 6 attribution tests)
 const PHASE5_BASELINE = 142;
@@ -30,7 +29,8 @@ function ensureDir(dirPath) {
   }
 }
 
-async function runProof() {
+async function runProof(options = {}) {
+  const proofDir = options.proofDir || process.env.RLHF_PROOF_DIR || path.join(ROOT, 'proof');
   const report = {
     phase: '06-feedback-attribution',
     generated: new Date().toISOString(),
@@ -285,9 +285,9 @@ async function runProof() {
   // ─────────────────────────────────────────────────────────────────────────
   // Write proof artifacts
   // ─────────────────────────────────────────────────────────────────────────
-  ensureDir(PROOF_DIR);
+  ensureDir(proofDir);
 
-  const jsonPath = path.join(PROOF_DIR, 'attribution-report.json');
+  const jsonPath = path.join(proofDir, 'attribution-report.json');
   fs.writeFileSync(jsonPath, `${JSON.stringify(report, null, 2)}\n`);
 
   const mdLines = [
@@ -335,7 +335,7 @@ async function runProof() {
   mdLines.push(`${report.summary.passed}/3 requirements passed.`);
   mdLines.push('');
 
-  const mdPath = path.join(PROOF_DIR, 'attribution-report.md');
+  const mdPath = path.join(proofDir, 'attribution-report.md');
   fs.writeFileSync(mdPath, `${mdLines.join('\n')}\n`);
 
   console.log(`Proof written to ${mdPath}`);
@@ -346,7 +346,7 @@ async function runProof() {
   const hasFail = report.summary.failed > 0;
   if (hasFail) {
     process.exitCode = 1;
-    console.error('\nFAIL — one or more requirements did not pass. See proof/attribution-report.md for details.');
+    console.error(`\nFAIL — one or more requirements did not pass. See ${mdPath} for details.`);
   } else {
     console.log('\nPASS — all requirements satisfied.');
   }

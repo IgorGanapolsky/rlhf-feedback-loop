@@ -18,7 +18,6 @@ const os = require('os');
 const { execSync } = require('child_process');
 
 const ROOT = path.join(__dirname, '..');
-const PROOF_DIR = path.join(ROOT, 'proof');
 const PKG = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf-8'));
 
 function ensureDir(dirPath) {
@@ -31,7 +30,8 @@ function status(condition) {
   return condition ? 'pass' : 'fail';
 }
 
-async function runProof() {
+async function runProof(options = {}) {
+  const proofDir = options.proofDir || process.env.RLHF_PROOF_DIR || path.join(ROOT, 'proof');
   const report = {
     phase: '04-lancedb-vector-storage',
     generated: new Date().toISOString(),
@@ -295,9 +295,9 @@ async function runProof() {
   // ─────────────────────────────────────────────────────────────────────────
   // Write proof artifacts
   // ─────────────────────────────────────────────────────────────────────────
-  ensureDir(PROOF_DIR);
+  ensureDir(proofDir);
 
-  const jsonPath = path.join(PROOF_DIR, 'lancedb-report.json');
+  const jsonPath = path.join(proofDir, 'lancedb-report.json');
   fs.writeFileSync(jsonPath, `${JSON.stringify(report, null, 2)}\n`);
 
   const mdLines = [
@@ -341,7 +341,7 @@ async function runProof() {
   mdLines.push('- multi-upsert top-k includes expected record');
   mdLines.push('');
 
-  const mdPath = path.join(PROOF_DIR, 'lancedb-report.md');
+  const mdPath = path.join(proofDir, 'lancedb-report.md');
   fs.writeFileSync(mdPath, `${mdLines.join('\n')}\n`);
 
   console.log(`Proof written to ${mdPath}`);
@@ -352,7 +352,7 @@ async function runProof() {
   const hasFail = report.summary.failed > 0;
   if (hasFail) {
     process.exitCode = 1;
-    console.error('\nFAIL — one or more requirements did not pass. See proof/lancedb-report.md for details.');
+    console.error(`\nFAIL — one or more requirements did not pass. See ${mdPath} for details.`);
   } else {
     console.log('\nPASS — all requirements satisfied (warns are acceptable).');
   }
