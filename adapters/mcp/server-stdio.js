@@ -655,11 +655,21 @@ async function onData(chunk) {
 function startStdioServer() {
   if (stdioStarted) return;
   stdioStarted = true;
+
+  // Keep the process alive even if stdin closes (prevents premature exit
+  // when launched by MCP clients like Claude Code, Codex, Gemini CLI).
+  const keepAlive = setInterval(() => {}, 60_000);
+
+  process.stdin.resume();
   process.stdin.on('data', (chunk) => {
     onData(chunk).catch((err) => {
       const transport = err && err.transport === 'ndjson' ? 'ndjson' : 'framed';
       writeMessage({ jsonrpc: '2.0', id: null, error: { code: -32603, message: err.message } }, transport);
     });
+  });
+  process.stdin.on('end', () => {
+    // stdin closed — clean up and exit gracefully
+    clearInterval(keepAlive);
   });
 }
 
