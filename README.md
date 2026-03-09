@@ -56,31 +56,15 @@ We are optimized for discovery by next-gen AI tools (Claude Code, Gemini CLI, Pe
 
 Run one `mcp add` command for your client. The server starts on each session and can capture feedback, recall past learnings, and block repeated mistakes.
 
-## How It Works
+## Architecture
 
-```
-Thumbs up/down
-      |
-      v
-  Capture → JSONL log
-      |
-      v
-  Rubric engine (block false positives)
-      |
-  +---+---+
-  |       |
- Good    Bad
-  |       |
-  v       v
-Learn   Prevention rule
-  |       |
-  v       v
-LanceDB   ShieldCortex
-vectors   context packs
-  |
-  v
-DPO export → fine-tune your model
-```
+![RLHF Feedback Loop Architecture](docs/diagrams/rlhf-architecture-pb.png)
+
+Five-phase pipeline: **Capture** human signals → **Validate** with rubric engine → **Learn** via LanceDB vector memory → **Prevent** repeated mistakes → **Export** DPO pairs for fine-tuning.
+
+![Plugin Topology](docs/diagrams/plugin-topology-pb.png)
+
+Three-tier stack: external integrations (Claude, Codex, Gemini, ChatGPT via MCP/OpenAPI) → plugin orchestration (schema validation, rubric scoring, DPO export) → data persistence (JSONL, LanceDB vectors, ShieldCortex context packs).
 
 All data stored locally as **JSONL** files — fully transparent, fully portable, no vendor lock-in. **LanceDB** indexes memories as vector embeddings for semantic search. **ShieldCortex** assembles context packs so your agent starts each task informed.
 
