@@ -36,6 +36,8 @@ Optional auto-installer:
 npx add-mcp rlhf-feedback-loop
 ```
 
+The MCP is intentionally strict: a bare `thumbs up` or `thumbs down` is logged as a signal, but reusable memory promotion requires one sentence explaining why. If feedback is vague, the server asks for clarification instead of pretending it learned something.
+
 ## OSS vs Cloud Pro
 
 The OSS package stays free. Cloud Pro remains a low-friction founding offer while the hosted workflow layer proves onboarding and retention.

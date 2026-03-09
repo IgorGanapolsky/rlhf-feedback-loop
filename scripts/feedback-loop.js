@@ -15,6 +15,9 @@ const {
   parseTimestamp,
 } = require('./feedback-schema');
 const {
+  buildClarificationMessage,
+} = require('./feedback-quality');
+const {
   buildRubricEvaluation,
 } = require('./rubric-engine');
 const { recordAction, attributeFeedback } = require('./feedback-attribution');
@@ -452,6 +455,13 @@ function captureFeedback(params) {
   summary[signal] += 1;
 
   if (action.type === 'no-action') {
+    const clarification = buildClarificationMessage({
+      signal,
+      context: params.context || '',
+      whatWentWrong: params.whatWentWrong,
+      whatToChange: params.whatToChange,
+      whatWorked: params.whatWorked,
+    });
     summary.rejected += 1;
     summary.lastUpdated = now;
     saveSummary(summary);
@@ -471,8 +481,11 @@ function captureFeedback(params) {
     }
     return {
       accepted: false,
+      status: clarification ? 'clarification_required' : 'rejected',
       reason: action.reason,
+      message: clarification ? clarification.message : 'Signal logged, but reusable memory was not created.',
       feedbackEvent,
+      ...(clarification || {}),
     };
   }
 
@@ -500,7 +513,9 @@ function captureFeedback(params) {
     }
     return {
       accepted: false,
+      status: 'rejected',
       reason: `Schema validation failed: ${prepared.issues.join('; ')}`,
+      message: 'Signal logged, but reusable memory was not created.',
       feedbackEvent,
       issues: prepared.issues,
     };
@@ -580,6 +595,8 @@ function captureFeedback(params) {
 
   return {
     accepted: true,
+    status: 'promoted',
+    message: 'Feedback promoted to reusable memory.',
     feedbackEvent,
     memoryRecord,
   };
@@ -920,6 +937,7 @@ function runTests() {
 
   const bad = captureFeedback({ signal: 'down' });
   assert(!bad.accepted, 'captureFeedback rejects vague negative feedback');
+  assert(bad.needsClarification === true, 'captureFeedback requests clarification for vague negative feedback');
 
   const summary = feedbackSummary(5);
   assert(summary.includes('Feedback Summary'), 'feedbackSummary returns text output');

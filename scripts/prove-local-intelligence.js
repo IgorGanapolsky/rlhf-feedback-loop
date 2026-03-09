@@ -152,10 +152,20 @@ async function main() {
       whatToChange: 'validate paths',
       tags: ['security'],
     });
+    const clarification = captureFeedback({
+      signal: 'up',
+      context: 'thumbs up',
+      tags: ['verification'],
+    });
+    addResult(
+      'VETO-01',
+      clarification.status === 'clarification_required' && clarification.needsClarification === true,
+      `vague feedback status=${clarification.status}; prompt=${clarification.prompt || 'n/a'}`
+    );
     captureFeedback({
       signal: 'positive',
       context: 'claimed success without logs',
-      whatWorked: 'looked good',
+      whatWorked: 'Reviewer approved despite missing logs',
       tags: ['verification'],
       rubricScores: [
         { criterion: 'verification_evidence', score: 5, judge: 'judge-a' },

@@ -181,7 +181,7 @@ describe('Sequence Tracking (ML-03)', () => {
     const result = captureFeedback({
       signal: 'positive',
       context: 'claimed success without logs',
-      whatWorked: 'looked good',
+      whatWorked: 'Reviewer approved despite missing logs',
       tags: ['verification'],
       rubricScores: [
         { criterion: 'verification_evidence', score: 5, judge: 'judge-a' },

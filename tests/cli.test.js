@@ -498,7 +498,7 @@ describe('bin/cli.js', () => {
       { encoding: 'utf8', cwd: isolatedDir }
     );
     fs.rmSync(isolatedDir, { recursive: true, force: true });
-    // Exit 0 (promoted) or 2 (captured but not promoted) are both valid
+    // Exit 0 (promoted) or 2 (signal logged only) are both valid
     assert.notEqual(result.status, 1, `capture should not exit 1:\n${result.stderr}`);
   });
 

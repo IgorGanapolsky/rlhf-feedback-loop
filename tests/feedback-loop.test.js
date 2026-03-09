@@ -114,6 +114,28 @@ test('captureFeedback: rejects vague negative (no context/whatWentWrong/whatToCh
 
   const result = captureFeedback({ signal: 'down' });
   assert.strictEqual(result.accepted, false);
+  assert.strictEqual(result.needsClarification, true);
+  assert.match(result.prompt, /What failed and what should change next time/i);
+});
+
+test('captureFeedback: rejects generic positive context and requests clarification', (t) => {
+  const tmpDir = makeTmpDir();
+  process.env.RLHF_FEEDBACK_DIR = tmpDir;
+  t.after(() => {
+    delete process.env.RLHF_FEEDBACK_DIR;
+    try { fs.rmSync(tmpDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 }); } catch {}
+  });
+
+  const result = captureFeedback({
+    signal: 'up',
+    context: 'thumbs up',
+    tags: ['verification'],
+  });
+  assert.strictEqual(result.accepted, false);
+  assert.strictEqual(result.status, 'clarification_required');
+  assert.strictEqual(result.needsClarification, true);
+  assert.match(result.reason, /too vague/i);
+  assert.match(result.prompt, /What specifically worked that should be repeated/i);
 });
 
 // -- analyzeFeedback --
