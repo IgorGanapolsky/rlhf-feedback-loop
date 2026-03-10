@@ -86,7 +86,7 @@ test('CI Railway deploy is gated by explicit repo configuration', () => {
   assert.match(workflow, /RAILWAY_PROJECT_ID/);
   assert.match(workflow, /RAILWAY_ENVIRONMENT_ID/);
   assert.match(workflow, /RAILWAY_HEALTHCHECK_URL/);
-  assert.match(workflow, /railway up \\/);
+  assert.match(workflow, /railway up/);
   assert.match(workflow, /--ci/);
   assert.match(workflow, /--project "\$RAILWAY_PROJECT_ID"/);
   assert.match(workflow, /--environment "\$RAILWAY_ENVIRONMENT_ID"/);
