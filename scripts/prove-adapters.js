@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const { spawn } = require('child_process');
+const { waitForBackgroundSideEffects } = require('./feedback-loop');
 const { startServer } = require('../src/api/server');
 const { handleRequest } = require('../adapters/mcp/server-stdio');
 const { validateSubagentProfiles, listSubagentProfiles } = require('./subagent-profiles');
@@ -35,10 +36,28 @@ function parseLeadingJson(text) {
   return JSON.parse(jsonSegment.trim());
 }
 
+async function fetchWithRetry(url, options, { retries = 5, delayMs = 100 } = {}) {
+  let lastError = null;
+
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    try {
+      return await fetch(url, options);
+    } catch (err) {
+      lastError = err;
+      if (attempt === retries) {
+        throw err;
+      }
+      await new Promise((resolve) => setTimeout(resolve, delayMs * (attempt + 1)));
+    }
+  }
+
+  throw lastError;
+}
+
 async function proveMcpStdioTransport({
   root,
   transport = 'ndjson',
-  timeoutMs = 5000,
+  timeoutMs = 10000,
   cwd = root,
   env = process.env,
 }) {
@@ -173,11 +192,14 @@ async function runProof(options = {}) {
   }
 
   const { server, port } = await startServer({ port: proofPort });
+  const baseUrl = `http://127.0.0.1:${port}`;
+  let currentCheck = 'bootstrap';
 
   try {
     // API checks
     {
-      const res = await fetch(`http://localhost:${port}/healthz`, {
+      currentCheck = 'api.healthz';
+      const res = await fetchWithRetry(`${baseUrl}/healthz`, {
         headers: { Authorization: 'Bearer proof-key' },
       });
       check(res.status === 200, `health expected 200, got ${res.status}`);
@@ -185,13 +207,15 @@ async function runProof(options = {}) {
     }
 
     {
-      const res = await fetch(`http://localhost:${port}/v1/feedback/stats`);
+      currentCheck = 'api.auth.required';
+      const res = await fetchWithRetry(`${baseUrl}/v1/feedback/stats`);
       check(res.status === 401, `stats unauthorized expected 401, got ${res.status}`);
       addResult('api.auth.required', true, { status: res.status });
     }
 
     {
-      const res = await fetch(`http://localhost:${port}/v1/intents/catalog?mcpProfile=locked`, {
+      currentCheck = 'api.intents.catalog';
+      const res = await fetchWithRetry(`${baseUrl}/v1/intents/catalog?mcpProfile=locked`, {
         headers: { Authorization: 'Bearer proof-key' },
       });
       check(res.status === 200, `intents catalog expected 200, got ${res.status}`);
@@ -201,7 +225,8 @@ async function runProof(options = {}) {
     }
 
     {
-      const res = await fetch(`http://localhost:${port}/v1/intents/plan`, {
+      currentCheck = 'api.intents.plan';
+      const res = await fetchWithRetry(`${baseUrl}/v1/intents/plan`, {
         method: 'POST',
         headers: {
           Authorization: 'Bearer proof-key',
@@ -220,7 +245,8 @@ async function runProof(options = {}) {
     }
 
     {
-      const res = await fetch(`http://localhost:${port}/v1/feedback/capture`, {
+      currentCheck = 'api.capture_feedback';
+      const res = await fetchWithRetry(`${baseUrl}/v1/feedback/capture`, {
         method: 'POST',
         headers: {
           Authorization: 'Bearer proof-key',
@@ -240,7 +266,8 @@ async function runProof(options = {}) {
     }
 
     {
-      const res = await fetch(`http://localhost:${port}/v1/feedback/capture`, {
+      currentCheck = 'api.capture_feedback.clarification';
+      const res = await fetchWithRetry(`${baseUrl}/v1/feedback/capture`, {
         method: 'POST',
         headers: {
           Authorization: 'Bearer proof-key',
@@ -260,7 +287,8 @@ async function runProof(options = {}) {
     }
 
     {
-      const res = await fetch(`http://localhost:${port}/v1/feedback/capture`, {
+      currentCheck = 'api.capture_feedback.rubric_gate';
+      const res = await fetchWithRetry(`${baseUrl}/v1/feedback/capture`, {
         method: 'POST',
         headers: {
           Authorization: 'Bearer proof-key',
@@ -285,7 +313,8 @@ async function runProof(options = {}) {
     }
 
     {
-      const construct = await fetch(`http://localhost:${port}/v1/context/construct`, {
+      currentCheck = 'api.context.construct';
+      const construct = await fetchWithRetry(`${baseUrl}/v1/context/construct`, {
         method: 'POST',
         headers: {
           Authorization: 'Bearer proof-key',
@@ -298,7 +327,8 @@ async function runProof(options = {}) {
       check(Boolean(pack.packId), 'context packId missing');
       addResult('api.context.construct', true, { packId: pack.packId, items: pack.items.length });
 
-      const evaluate = await fetch(`http://localhost:${port}/v1/context/evaluate`, {
+      currentCheck = 'api.context.evaluate';
+      const evaluate = await fetchWithRetry(`${baseUrl}/v1/context/evaluate`, {
         method: 'POST',
         headers: {
           Authorization: 'Bearer proof-key',
@@ -323,12 +353,14 @@ async function runProof(options = {}) {
 
     // MCP checks
     {
+      currentCheck = 'mcp.initialize';
       const init = await handleRequest({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} });
       check(Boolean(init.serverInfo && init.serverInfo.name), 'mcp initialize missing serverInfo');
       addResult('mcp.initialize', true, { server: init.serverInfo.name });
     }
 
     {
+      currentCheck = 'mcp.stdio.framed.initialize';
       const framedResponse = await proveMcpStdioTransport({ root: ROOT, transport: 'framed' });
       check(framedResponse.id === 777, 'stdio framed initialize returned wrong id');
       check(Boolean(framedResponse.result && framedResponse.result.serverInfo), 'stdio framed initialize missing serverInfo');
@@ -336,6 +368,7 @@ async function runProof(options = {}) {
     }
 
     {
+      currentCheck = 'mcp.stdio.ndjson.initialize';
       const ndjsonResponse = await proveMcpStdioTransport({ root: ROOT, transport: 'ndjson' });
       check(ndjsonResponse.id === 777, 'stdio ndjson initialize returned wrong id');
       check(Boolean(ndjsonResponse.result && ndjsonResponse.result.serverInfo), 'stdio ndjson initialize missing serverInfo');
@@ -343,6 +376,7 @@ async function runProof(options = {}) {
     }
 
     {
+      currentCheck = 'mcp.cli.serve.bad_home.initialize';
       const isolatedDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rlhf-proof-cli-serve-'));
       const badHomePath = path.join(isolatedDir, 'invalid-home');
       fs.writeFileSync(badHomePath, 'not-a-directory\n');
@@ -367,12 +401,14 @@ async function runProof(options = {}) {
     }
 
     {
+      currentCheck = 'mcp.tools.list';
       const list = await handleRequest({ jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} });
       check(Array.isArray(list.tools) && list.tools.length > 0, 'mcp tools/list empty');
       addResult('mcp.tools.list', true, { tools: list.tools.length });
     }
 
     {
+      currentCheck = 'mcp.tools.call.feedback_summary';
       const call = await handleRequest({
         jsonrpc: '2.0',
         id: 3,
@@ -387,6 +423,7 @@ async function runProof(options = {}) {
     }
 
     {
+      currentCheck = 'mcp.tools.call.plan_intent';
       const call = await handleRequest({
         jsonrpc: '2.0',
         id: 31,
@@ -405,6 +442,7 @@ async function runProof(options = {}) {
     }
 
     {
+      currentCheck = 'mcp.tools.call.capture_feedback.rubric_gate';
       const call = await handleRequest({
         jsonrpc: '2.0',
         id: 32,
@@ -429,6 +467,7 @@ async function runProof(options = {}) {
     }
 
     {
+      currentCheck = 'mcp.tools.call.capture_feedback.clarification';
       const call = await handleRequest({
         jsonrpc: '2.0',
         id: 33,
@@ -449,6 +488,7 @@ async function runProof(options = {}) {
     }
 
     {
+      currentCheck = 'mcp.policy.locked_profile_denies_write_tool';
       process.env.RLHF_MCP_PROFILE = 'locked';
       let denied = false;
       try {
@@ -471,6 +511,7 @@ async function runProof(options = {}) {
 
     // Spec and adapter files checks
     {
+      currentCheck = 'adapter.chatgpt.openapi.parity';
       const canonical = fs.readFileSync(path.join(ROOT, 'openapi/openapi.yaml'), 'utf-8');
       const chatgpt = fs.readFileSync(path.join(ROOT, 'adapters/chatgpt/openapi.yaml'), 'utf-8');
       check(canonical === chatgpt, 'chatgpt openapi not in sync with canonical openapi');
@@ -482,6 +523,7 @@ async function runProof(options = {}) {
     }
 
     {
+      currentCheck = 'adapter.gemini.declarations';
       const gemini = JSON.parse(fs.readFileSync(path.join(ROOT, 'adapters/gemini/function-declarations.json'), 'utf-8'));
       check(Array.isArray(gemini.tools), 'gemini tools missing');
       check(gemini.tools.length >= 3, 'gemini tools should have at least 3 entries');
@@ -489,6 +531,7 @@ async function runProof(options = {}) {
     }
 
     {
+      currentCheck = 'adapter.files.present';
       const mustExist = [
         'adapters/claude/.mcp.json',
         'adapters/codex/config.toml',
@@ -502,6 +545,7 @@ async function runProof(options = {}) {
 
     // Profiles and policy checks
     {
+      currentCheck = 'subagent.profiles.valid';
       const validation = validateSubagentProfiles();
       check(validation.valid, `subagent profiles invalid: ${validation.issues.join('; ')}`);
       const names = listSubagentProfiles();
@@ -510,6 +554,7 @@ async function runProof(options = {}) {
     }
 
     {
+      currentCheck = 'mcp.policy.profile_differentiation';
       const defaultTools = getAllowedTools('default');
       const lockedTools = getAllowedTools('locked');
       check(defaultTools.length > lockedTools.length, 'default profile should expose more tools than locked');
@@ -519,9 +564,14 @@ async function runProof(options = {}) {
       });
     }
   } catch (err) {
-    addResult('fatal', false, { error: err.message });
+    addResult('fatal', false, {
+      check: currentCheck,
+      error: err.message,
+      cause: err.cause && err.cause.message ? err.cause.message : null,
+    });
   } finally {
     await new Promise((resolve) => server.close(resolve));
+    await waitForBackgroundSideEffects();
     fs.rmSync(tmpFeedbackDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
     if (previousFeedbackDir === undefined) delete process.env.RLHF_FEEDBACK_DIR;
     else process.env.RLHF_FEEDBACK_DIR = previousFeedbackDir;

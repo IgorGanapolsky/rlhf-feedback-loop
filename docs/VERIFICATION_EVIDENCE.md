@@ -1,5 +1,43 @@
 # Verification Evidence (March 9, 2026)
 
+## March 10, 2026: CLI and adapter proof handshake hardening under full-suite load
+
+Commands:
+
+```bash
+node --test --experimental-test-coverage --test-concurrency=1 tests/cli.test.js
+node --test --test-concurrency=1 tests/prove-adapters.test.js
+npm test
+npm run test:coverage
+npm run prove:adapters
+env RLHF_PROOF_DIR="$(mktemp -d)" npm run prove:automation
+npm run self-heal:check
+```
+
+Observed result:
+
+- Targeted CLI coverage verification passed: `22` tests passed, `0` failed in `tests/cli.test.js`.
+- Targeted adapter proof verification passed: `38` tests passed, `0` failed in `tests/prove-adapters.test.js`.
+- `npm test` passed end-to-end after hardening the subprocess handshake budget used by the CLI and adapter proof harnesses.
+- `npm run test:coverage` passed with `720` tests passed, `0` failed, and `1` skipped.
+- Coverage summary: `83.17%` lines, `69.34%` branches, `86.86%` functions.
+- `npm run prove:adapters`: `24 passed`, `0 failed`.
+- `env RLHF_PROOF_DIR="$(mktemp -d)" npm run prove:automation`: `14 passed`, `0 failed`.
+- `npm run self-heal:check`: `HEALTHY` with `4/4` checks healthy.
+
+Evidence artifacts:
+
+- `proof/compatibility/report.json`
+- `proof/compatibility/report.md`
+- `proof/automation/report.json`
+- `proof/automation/report.md`
+
+Requirements verified:
+
+- The CLI `serve` handshake test no longer flakes under full-suite coverage because the helper tolerates realistic subprocess startup latency and surfaces child process spawn errors explicitly.
+- The adapter proof harness no longer times out its MCP stdio checks under heavy test load because its subprocess handshake budget matches observed startup behavior.
+- Fatal adapter-proof errors now identify the exact MCP or adapter stage that failed instead of attributing late-stage transport failures to the preceding API step.
+
 ## March 10, 2026: MCP launcher hardening and proof-cleanup reliability
 
 Commands:
