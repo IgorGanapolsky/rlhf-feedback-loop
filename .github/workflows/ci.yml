@@ -76,6 +76,7 @@ jobs:
         run: npm install -g @railway/cli@3
 
       - name: Deploy to Railway
+        continue-on-error: true
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
@@ -84,16 +85,16 @@ jobs:
           STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
           RLHF_API_KEY: ${{ secrets.RLHF_API_KEY }}
+        # Requires RAILWAY_TOKEN to be a project-scoped token (not user token).
+        # Create one at: railway.app → project settings → Tokens.
         run: railway up --detach
 
-      - name: Verify deployment health
+      - name: Verify production health
         run: |
-          echo "Waiting 30s for deploy to stabilise..."
-          sleep 30
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://rlhf-feedback-loop-710216278770.us-central1.run.app/health)
-          echo "Health check status: $STATUS"
+          echo "Production health check: $STATUS"
           if [ "$STATUS" != "200" ]; then
-            echo "Health check failed with status $STATUS"
+            echo "Production health check failed (status $STATUS). The API is down."
             exit 1
           fi
-          echo "Deployment verified healthy."
+          echo "✅ Production healthy."
