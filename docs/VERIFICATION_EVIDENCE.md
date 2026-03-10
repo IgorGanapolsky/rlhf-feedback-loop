@@ -101,8 +101,8 @@ Observed result:
 
 - Targeted CLI coverage verification passed: `22` tests passed, `0` failed.
 - Targeted adapter proof verification passed: `38` tests passed, `0` failed.
-- `npm test` passed end-to-end on the merged branch state after hardening the spawned stdio startup budget used by the CLI and adapter proof harness.
-- `npm run test:coverage` passed with `720` tests passed, `0` failed, `1` skipped and overall coverage at `83.03%` lines, `69.35%` branches, and `86.54%` functions.
+- `npm test` passed end-to-end on the merged branch state after hardening the spawned stdio startup budget used by the CLI and adapter proof harness and after merging the latest `main` revenue-gap changes.
+- `npm run test:coverage` passed with `723` tests passed, `0` failed, `1` skipped and overall coverage at `82.97%` lines, `69.36%` branches, and `86.59%` functions.
 - `npm run prove:adapters`: `24 passed`, `0 failed`.
 - `npm run prove:automation`: `14 passed`, `0 failed`.
 - `npm run self-heal:check`: `HEALTHY` with `4/4` checks healthy.
