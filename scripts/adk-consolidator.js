@@ -42,6 +42,8 @@ function saveState(state) {
   fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
 }
 
+const { createRuleProposal, createReasoningTrace } = require('./a2ui-engine');
+
 async function consolidateMemory() {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -67,11 +69,9 @@ async function consolidateMemory() {
     if (lastIdx !== -1) {
       newLogs = allLogs.slice(lastIdx + 1);
     } else {
-      // If we can't find it (log rotation?), just take the last 50
       newLogs = allLogs.slice(-50);
     }
   } else {
-    // First time running, process up to last 50 entries
     newLogs = allLogs.slice(-50);
   }
 
@@ -80,50 +80,57 @@ async function consolidateMemory() {
     return;
   }
 
-  console.log(`[ADK Consolidator] Found ${newLogs.length} new feedback events. Activating Gemini for semantic consolidation...`);
+  console.log(`[ADK Consolidator] Found ${newLogs.length} new feedback events. Activating Gemini for semantic A2UI synthesis...`);
 
   const prompt = `
 You are the Agent Development Kit (ADK) 'Always-On' Memory Consolidator.
-Your job is to read the raw, disparate feedback logs of an AI agent and synthesize them into high-level, generalized prevention rules and learned intuitions.
-Unlike standard systems that just count regex matches, you must semantically connect different failures (e.g., an API timeout and a missing import might both stem from 'rushing execution without verifying environment').
+Synthesize the latest feedback into generalized prevention rules AND dynamic A2UI components.
 
-Here are the latest feedback events (JSON):
-${JSON.stringify(newLogs.map(l => ({ signal: l.signal, context: l.context, tags: l.tags, whatWentWrong: l.whatWentWrong, whatWorked: l.whatWorked })), null, 2)}
+Feedback Events (JSON):
+${JSON.stringify(newLogs.map(l => ({ id: l.id, signal: l.signal, context: l.context, whatWentWrong: l.whatWentWrong })), null, 2)}
 
-Existing Prevention Rules (if any):
-${fs.existsSync(paths.PREVENTION_RULES_PATH) ? fs.readFileSync(paths.PREVENTION_RULES_PATH, 'utf-8').slice(0, 2000) : 'None yet.'}
-
-Output ONLY a valid JSON object with the following structure, representing the new synthesized insights:
+Output ONLY valid JSON:
 {
   "consolidatedInsights": [
     {
-      "pattern": "Description of the underlying behavioral flaw or success pattern you detected.",
-      "rule": "A clear, actionable directive starting with 'ALWAYS' or 'NEVER' that should be added to prevention rules.",
-      "severity": "critical|high|medium|low"
+      "pattern": "Underlying flaw",
+      "rule": "ALWAYS/NEVER directive",
+      "severity": "critical|high|medium|low",
+      "connectedLogIds": ["fb_1", "fb_2"]
     }
   ],
-  "reasoning": "A short summary of how you connected the dots between these logs."
+  "a2uiPayload": {
+    "reasoningGraph": {
+      "summary": "Synthesis summary",
+      "connections": [{"from": "fb_1", "to": "fb_2", "label": "Same environment issue"}]
+    }
+  }
 }
 `;
 
   try {
-    // We use gemini-2.5-flash as the proxy for Flash-Lite/Flash efficiency
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-      }
+      config: { responseMimeType: 'application/json' }
     });
 
     const result = JSON.parse(response.text);
-    console.log(`[ADK Consolidator] Consolidation complete. Reasoning: ${result.reasoning}`);
+    console.log('[ADK Consolidator] Consolidation complete.');
 
-    if (result.consolidatedInsights && result.consolidatedInsights.length > 0) {
+    if (result.consolidatedInsights) {
+      // Append to markdown (legacy fallback)
       appendRules(result.consolidatedInsights, paths.PREVENTION_RULES_PATH);
+      
+      // Emit A2UI components (New Model)
+      result.consolidatedInsights.forEach(insight => {
+        const proposal = createRuleProposal(insight.pattern, insight.rule, insight.severity);
+        const a2uiPath = path.join(PROJECT_ROOT, '.rlhf', `a2ui_proposal_${Date.now()}.json`);
+        fs.writeFileSync(a2uiPath, JSON.stringify(proposal, null, 2));
+        console.log(`[ADK Consolidator] Emitted A2UI Proposal: ${a2uiPath}`);
+      });
     }
 
-    // Update state
     state.lastProcessedFeedbackId = newLogs[newLogs.length - 1].id;
     saveState(state);
 
