@@ -10,6 +10,9 @@ const {
   detectHardware,
   resolveEmbeddingProfile,
   writeModelFitReport,
+  resolveModelRole,
+  MODEL_ROLES,
+  VALID_MODEL_ROLES,
 } = require('../scripts/local-model-profile');
 
 test('detectHardware respects env overrides', () => {
@@ -73,4 +76,30 @@ test('writeModelFitReport persists machine-readable evidence', () => {
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }
+});
+
+test('resolveModelRole returns correct model for each role', () => {
+  for (const role of VALID_MODEL_ROLES) {
+    const result = resolveModelRole(role, {});
+    assert.equal(result.role, role);
+    assert.equal(result.provider, 'gemini');
+    assert.ok(typeof result.model === 'string' && result.model.length > 0);
+    assert.equal(result.model, MODEL_ROLES[role]);
+  }
+});
+
+test('resolveModelRole compaction role uses lighter model than normal', () => {
+  const normal = resolveModelRole('normal', {});
+  const compaction = resolveModelRole('compaction', {});
+  assert.notEqual(compaction.model, normal.model);
+  assert.ok(compaction.model.includes('lite'), 'compaction model should be a lite variant');
+});
+
+test('resolveModelRole respects env override', () => {
+  const result = resolveModelRole('normal', { RLHF_MODEL_ROLE_NORMAL: 'gemini-custom-model' });
+  assert.equal(result.model, 'gemini-custom-model');
+});
+
+test('resolveModelRole throws on unknown role', () => {
+  assert.throws(() => resolveModelRole('nonexistent', {}), /Unknown model role/);
 });
