@@ -16,6 +16,9 @@ const { GoogleGenAI } = require('@google/genai');
 
 const PROJECT_ROOT = path.join(__dirname, '..');
 const { getFeedbackPaths, readJSONL } = require('./feedback-loop');
+const { compactContext } = require('./context-engine');
+const { resolveModelRole } = require('./local-model-profile');
+const { trackEvent, shouldInjectReminder, injectReminder } = require('./reminder-engine');
 
 // Keep track of the last processed ID to avoid re-consolidating the exact same logs
 const STATE_FILE = process.env.ADK_STATE_FILE || path.join(PROJECT_ROOT, '.rlhf', 'adk-state.json');
@@ -63,7 +66,7 @@ async function consolidateMemory() {
   }
 
   // 1. Anchor-Memories: Always include the first 5 "foundational" logs of the session.
-  // These act as "attention sinks" that provide global context and numerical anchors
+  // These act as 'attention sinks' that provide global context and numerical anchors
   // for the model's reasoning stability.
   const anchorLogs = allLogs.slice(0, 5);
 
@@ -81,14 +84,23 @@ async function consolidateMemory() {
   }
 
   // Filter anchors out of newLogs if they overlap to save tokens
-  const filteredNewLogs = newLogs.filter(nl => !anchorLogs.some(al => al.id === nl.id));
+  const rawNewLogs = newLogs.filter(nl => !anchorLogs.some(al => al.id === nl.id));
 
-  if (filteredNewLogs.length === 0 && anchorLogs.length > 0) {
+  if (rawNewLogs.length === 0 && anchorLogs.length > 0) {
     console.log('[ADK Consolidator] No new logs since last consolidation cycle.');
     return;
   }
 
-  console.log(`[ADK Consolidator] Activating Gemini with ${anchorLogs.length} anchors and ${filteredNewLogs.length} new events...`);
+  // Adaptive context compaction: reduce prompt size before sending to Gemini
+  const compactionResult = compactContext(rawNewLogs, anchorLogs, { windowSize: 30, perEntryMaxChars: 512 });
+  const filteredNewLogs = compactionResult.entries.filter(e => !anchorLogs.some(a => a.id === e.id));
+  if (compactionResult.compacted) {
+    console.log(`[ADK Consolidator] Context compacted: removed ${compactionResult.removedCount} entries (stage ${compactionResult.stage}).`);
+  }
+
+  // Resolve model via role router instead of hardcoding
+  const modelConfig = resolveModelRole('normal');
+  console.log(`[ADK Consolidator] Activating ${modelConfig.model} with ${anchorLogs.length} anchors and ${filteredNewLogs.length} new events...`);
 
   const prompt = `
 You are the Agent Development Kit (ADK) 'Always-On' Memory Consolidator.
@@ -121,7 +133,7 @@ Output ONLY valid JSON:
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: modelConfig.model,
       contents: prompt,
       config: { responseMimeType: 'application/json' }
     });
@@ -132,7 +144,22 @@ Output ONLY valid JSON:
     if (result.consolidatedInsights) {
       // Append to markdown (legacy fallback)
       appendRules(result.consolidatedInsights, paths.PREVENTION_RULES_PATH);
-      
+
+      // Track guardrail spikes and emit reminders when threshold is met
+      const criticalInsights = result.consolidatedInsights.filter(
+        i => i.severity === 'critical' || i.severity === 'high',
+      );
+      if (criticalInsights.length > 0) {
+        trackEvent('guardrail_spike');
+        if (shouldInjectReminder('guardrail_spike')) {
+          const topRule = criticalInsights[0].rule;
+          const reminderTurns = injectReminder([], 'guardrail_spike', { rule: topRule });
+          const reminderPath = path.join(PROJECT_ROOT, '.rlhf', `reminder_${Date.now()}.json`);
+          fs.writeFileSync(reminderPath, JSON.stringify(reminderTurns[0], null, 2));
+          console.log(`[ADK Consolidator] Emitted system reminder: ${reminderPath}`);
+        }
+      }
+
       // Emit A2UI components (New Model)
       result.consolidatedInsights.forEach(insight => {
         const proposal = createRuleProposal(insight.pattern, insight.rule, insight.severity);

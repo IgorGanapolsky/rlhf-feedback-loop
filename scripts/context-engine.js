@@ -515,6 +515,84 @@ function listPrompts(registryPath) {
 }
 
 // ---------------------------------------------------------------------------
+// Adaptive Context Compaction (OpenDev 5-stage algorithm)
+// ---------------------------------------------------------------------------
+
+/**
+ * Compact a set of feedback entries using a 5-stage progressive algorithm.
+ *
+ * Stage 1: Group by signal type, keep top 10 per group
+ * Stage 2: Truncate large text fields to perEntryMaxChars
+ * Stage 3: Drop entries missing both context and whatWentWrong
+ * Stage 4: Window to most recent windowSize (anchors preserved)
+ * Stage 5: Deduplicate entries with identical whatWentWrong
+ *
+ * @param {object[]} entries - Feedback log entries
+ * @param {object[]} [anchors=[]] - Anchor entries to always preserve
+ * @param {{ windowSize?: number, perEntryMaxChars?: number }} [opts={}]
+ * @returns {{ entries: object[], stage: number, removedCount: number, compacted: boolean }}
+ */
+function compactContext(entries, anchors, opts) {
+  const anchorIds = new Set((anchors || []).map((a) => a.id));
+  const options = opts || {};
+  const windowSize = typeof options.windowSize === 'number' ? options.windowSize : 30;
+  const perEntryMaxChars = typeof options.perEntryMaxChars === 'number' ? options.perEntryMaxChars : 512;
+
+  const anchorEntries = entries.filter((e) => anchorIds.has(e.id));
+  let working = entries.filter((e) => !anchorIds.has(e.id));
+  const initial = working.length;
+
+  // Stage 1: Group by signal, keep most recent 10 per signal type
+  const bySignal = {};
+  for (const entry of working) {
+    const sig = entry.signal || 'unknown';
+    if (!bySignal[sig]) bySignal[sig] = [];
+    bySignal[sig].push(entry);
+  }
+  working = Object.values(bySignal).flatMap((group) => group.slice(-10));
+
+  // Stage 2: Truncate large text fields
+  working = working.map((entry) => {
+    const truncated = { ...entry };
+    if (truncated.context && truncated.context.length > perEntryMaxChars) {
+      truncated.context = truncated.context.slice(0, perEntryMaxChars);
+    }
+    if (truncated.whatWentWrong && truncated.whatWentWrong.length > perEntryMaxChars) {
+      truncated.whatWentWrong = truncated.whatWentWrong.slice(0, perEntryMaxChars);
+    }
+    return truncated;
+  });
+
+  // Stage 3: Drop low-information entries (empty context AND empty whatWentWrong)
+  working = working.filter(
+    (e) => (e.context && e.context.trim()) || (e.whatWentWrong && e.whatWentWrong.trim()),
+  );
+
+  // Stage 4: Window to most recent N
+  if (working.length > windowSize) {
+    working = working.slice(-windowSize);
+  }
+
+  // Stage 5: Deduplicate by whatWentWrong fingerprint
+  const seen = new Set();
+  working = working.filter((e) => {
+    const key = e.whatWentWrong ? e.whatWentWrong.trim().toLowerCase() : null;
+    if (!key) return true;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  const removedCount = initial - working.length;
+  return {
+    entries: [...anchorEntries, ...working],
+    stage: 5,
+    removedCount,
+    compacted: removedCount > 0,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Exports
 // ---------------------------------------------------------------------------
 
@@ -536,6 +614,9 @@ module.exports = {
   registerPrompt,
   getPrompt,
   listPrompts,
+
+  // Adaptive Context Compaction
+  compactContext,
 
   // MCP Consolidation Manifest
   TOOL_CONSOLIDATION,
