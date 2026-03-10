@@ -15,6 +15,7 @@ process.env.RLHF_ALLOW_INSECURE = 'true';
 
 const { startServer } = require('../src/api/server');
 const pkg = require('../package.json');
+const PROJECT_ROOT = path.join(__dirname, '..');
 
 const DEPLOY_PORT = 8793;
 let handle;
@@ -75,4 +76,19 @@ test('feedback endpoint returns valid JSON under insecure mode', async () => {
   const res = await fetch(`http://localhost:${DEPLOY_PORT}/v1/feedback/stats`);
   const body = await res.json();
   assert.ok(typeof body === 'object' && body !== null, 'response must be a JSON object');
+});
+
+test('CI Railway deploy is gated by explicit repo configuration', () => {
+  const workflow = fs.readFileSync(path.join(PROJECT_ROOT, '.github', 'workflows', 'ci.yml'), 'utf8');
+
+  assert.match(workflow, /Check Railway deployment configuration/);
+  assert.match(workflow, /steps\.railway-config\.outputs\.enabled == 'true'/);
+  assert.match(workflow, /RAILWAY_PROJECT_ID/);
+  assert.match(workflow, /RAILWAY_ENVIRONMENT_ID/);
+  assert.match(workflow, /RAILWAY_HEALTHCHECK_URL/);
+  assert.match(workflow, /railway up \\/);
+  assert.match(workflow, /--ci/);
+  assert.match(workflow, /--project "\$RAILWAY_PROJECT_ID"/);
+  assert.match(workflow, /--environment "\$RAILWAY_ENVIRONMENT_ID"/);
+  assert.doesNotMatch(workflow, /https:\/\/rlhf-feedback-loop-710216278770\.us-central1\.run\.app\/health/);
 });

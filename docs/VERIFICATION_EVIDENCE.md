@@ -1,5 +1,38 @@
 # Verification Evidence (March 9, 2026)
 
+## March 10, 2026: Main CI Railway deploy gate hardening on final hotfix diff
+
+Commands:
+
+```bash
+node --test tests/deployment.test.js
+npm test
+npm run test:coverage
+env RLHF_PROOF_DIR="$(mktemp -d)" npm run prove:adapters
+env RLHF_PROOF_DIR="$(mktemp -d)" npm run prove:automation
+env RLHF_PROOF_DIR="$(mktemp -d)" npm run self-heal:check
+```
+
+Observed result:
+
+- Targeted deployment verification passed: `9` tests passed, `0` failed in `tests/deployment.test.js`.
+- `npm test` passed end-to-end on the narrowed hotfix diff with only the Railway deploy regression coverage added.
+- `npm run test:coverage` passed with overall coverage at `82.97%` lines, `69.36%` branches, and `86.81%` functions.
+- `env RLHF_PROOF_DIR="$(mktemp -d)" npm run prove:adapters`: `24 passed`, `0 failed`.
+- `env RLHF_PROOF_DIR="$(mktemp -d)" npm run prove:automation`: `14 passed`, `0 failed`.
+- `env RLHF_PROOF_DIR="$(mktemp -d)" npm run self-heal:check`: `HEALTHY` with `4/4` checks healthy.
+
+Evidence artifacts:
+
+- Focused deployment regression output from `node --test tests/deployment.test.js`.
+- Ephemeral machine-readable proof reports emitted under temporary `RLHF_PROOF_DIR` directories during the adapter and automation proof runs.
+
+Requirements verified:
+
+- The CI deploy workflow now refuses to enter the Railway deploy path unless explicit repo configuration is present for token, project, environment, and health-check inputs.
+- The workflow no longer depends on the previously hard-coded Cloud Run health URL when validating a Railway deploy.
+- The hotfix is scoped to deploy-gate behavior plus regression coverage; no unrelated runtime or proof harness changes were required to keep the branch green.
+
 ## March 10, 2026: CLI and adapter proof handshake hardening under full-suite load
 
 Commands:
