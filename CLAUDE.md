@@ -98,3 +98,13 @@ Feedback and context data are local and git-ignored:
 - `.claude/memory/feedback/feedback-summary.json`
 - `.claude/memory/feedback/prevention-rules.md`
 - `.claude/memory/feedback/contextfs/`
+
+## Session Directive: PR Management & System Hygiene
+
+### CTO Protocol
+1. **Research & Recall:** Read directives and query RAG/RLHF memory for lessons before starting.
+2. **PR Inspection:** Review all open PRs for merge readiness. Report blockers immediately.
+3. **Orphan Cleanup:** Evaluate branches/worktrees without PRs. Merge, archive, or delete regressive/stale state.
+4. **Main Integrity:** Ensure `main` is 100% green after all merges. Fix regressions before claiming completion.
+5. **Operational Readiness:** Run a dry run verification to confirm the system is ready for the next session.
+6. **Completion Claim:** Say: **"Done merging PRs. CI passing. System hygiene complete. Ready for next session."**

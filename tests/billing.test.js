@@ -26,11 +26,22 @@ const savedApiKeysPath = process.env._TEST_API_KEYS_PATH;
 const savedFunnelPath = process.env._TEST_FUNNEL_LEDGER_PATH;
 const savedLocalCheckoutSessionsPath = process.env._TEST_LOCAL_CHECKOUT_SESSIONS_PATH;
 
+const savedStripeSecretKey = process.env.STRIPE_SECRET_KEY;
+const savedStripePriceId = process.env.STRIPE_PRICE_ID;
+
 process.env._TEST_API_KEYS_PATH = testApiKeysPath;
 process.env._TEST_FUNNEL_LEDGER_PATH = testFunnelLedgerPath;
 process.env._TEST_LOCAL_CHECKOUT_SESSIONS_PATH = testLocalCheckoutSessionsPath;
 
+// Force local mode for billing tests
+process.env.STRIPE_SECRET_KEY = '';
+process.env.STRIPE_PRICE_ID = '';
+
 after(() => {
+  // Restore Stripe keys
+  process.env.STRIPE_SECRET_KEY = savedStripeSecretKey;
+  process.env.STRIPE_PRICE_ID = savedStripePriceId;
+
   if (savedApiKeysPath === undefined) {
     delete process.env._TEST_API_KEYS_PATH;
   } else {

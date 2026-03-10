@@ -74,3 +74,13 @@ When external Gemini/LLM calls are routed through a gateway, keep this loop as t
 ## Objective
 
 Use feedback-derived prevention rules as constraints to reduce repeated failures across sessions.
+
+## Session Directive: PR Management & System Hygiene
+
+### CTO Protocol
+1. **Research & Recall:** Read directives and local RLHF memory for lessons before tasks.
+2. **PR Inspection:** Review all open PRs. No PR should remain open if mergeable.
+3. **Orphan Cleanup:** List branches without PRs. Evaluate and delete stale/regressive ones.
+4. **Main Integrity:** Ensure CI passes on `main` after all merges. Fix regressions immediately.
+5. **Dry Run:** Confirm operational readiness for the next session.
+6. **Confirmation:** Say: **"Done merging PRs. CI passing. System hygiene complete. Ready for next session."**

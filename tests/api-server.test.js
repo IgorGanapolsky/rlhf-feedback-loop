@@ -11,6 +11,10 @@ process.env._TEST_API_KEYS_PATH = path.join(tmpFeedbackDir, 'api-keys.json');
 process.env._TEST_FUNNEL_LEDGER_PATH = path.join(tmpFeedbackDir, 'funnel-events.jsonl');
 process.env._TEST_LOCAL_CHECKOUT_SESSIONS_PATH = path.join(tmpFeedbackDir, 'local-checkout-sessions.json');
 
+// Force local mode for billing tests by clearing Stripe keys
+process.env.STRIPE_SECRET_KEY = '';
+process.env.STRIPE_PRICE_ID = '';
+
 const { startServer } = require('../src/api/server');
 const { provisionApiKey } = require('../scripts/billing');
 

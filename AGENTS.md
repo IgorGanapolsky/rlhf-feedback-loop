@@ -65,3 +65,13 @@ On explicit user preference signals (`up/down`, `correct/wrong`, or subjective "
 - Follow Conventional Commits for all messages.
 - Never report unverified metrics or fake ROI.
 - Maintain 100% reliability in the RLHF feedback-to-rule pipeline.
+
+## Session Directive: PR Management & System Hygiene
+
+### CTO Protocol
+1. **Research:** Read directives and local RLHF memory first.
+2. **PRs:** Inspect all open PRs. Merge green, non-blocking ones.
+3. **Orphans:** Delete branches/worktrees without PRs after evaluation.
+4. **Integrity:** `main` must be 100% green. Fix regressions on sight.
+5. **Hygiene:** Remove stale logs and temporary files.
+6. **Ready:** Say: **"Done merging PRs. CI passing. System hygiene complete. Ready for next session."**
