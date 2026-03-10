@@ -9,6 +9,20 @@ const PROJECT_ROOT = path.join(__dirname, '..');
 const DEFAULT_FEEDBACK_DIR = path.join(PROJECT_ROOT, '.claude', 'memory', 'feedback');
 const DEFAULT_EMBED_MODEL = 'Xenova/all-MiniLM-L6-v2';
 
+// ---------------------------------------------------------------------------
+// Model Role Router (OpenDev workload-specialized model routing)
+// ---------------------------------------------------------------------------
+
+const MODEL_ROLES = {
+  normal: 'gemini-2.5-flash',
+  thinking: 'gemini-2.5-pro',
+  critique: 'gemini-2.5-flash',
+  compaction: 'gemini-2.5-flash-lite',
+  vlm: 'gemini-2.5-flash',
+};
+
+const VALID_MODEL_ROLES = Object.keys(MODEL_ROLES);
+
 const EMBEDDING_PROFILES = {
   compact: {
     id: 'compact',
@@ -121,6 +135,27 @@ function resolveEmbeddingProfile(env = process.env) {
   };
 }
 
+/**
+ * Resolve the LLM model ID for a given workload role.
+ *
+ * Roles: normal, thinking, critique, compaction, vlm
+ * Each role can be overridden via RLHF_MODEL_ROLE_<ROLE> env var.
+ *
+ * @param {string} role - One of the valid model roles
+ * @param {object} [env=process.env]
+ * @returns {{ role: string, model: string, provider: string, envKey: string }}
+ */
+function resolveModelRole(role, env) {
+  const e = env || process.env;
+  const normalized = String(role || '').toLowerCase().trim();
+  if (!MODEL_ROLES[normalized]) {
+    throw new Error(`Unknown model role: '${normalized}'. Valid roles: ${VALID_MODEL_ROLES.join(', ')}`);
+  }
+  const envKey = `RLHF_MODEL_ROLE_${normalized.toUpperCase()}`;
+  const model = (e[envKey] && String(e[envKey]).trim()) || MODEL_ROLES[normalized];
+  return { role: normalized, model, provider: 'gemini', envKey };
+}
+
 function buildModelFitReport(options = {}) {
   const resolved = options.resolved || resolveEmbeddingProfile(options.env);
   const selected = resolved.selectedProfile;
@@ -155,8 +190,11 @@ module.exports = {
   DEFAULT_EMBED_MODEL,
   DEFAULT_FEEDBACK_DIR,
   EMBEDDING_PROFILES,
+  MODEL_ROLES,
+  VALID_MODEL_ROLES,
   detectHardware,
   resolveEmbeddingProfile,
+  resolveModelRole,
   buildModelFitReport,
   writeModelFitReport,
   getModelFitReportPath,
