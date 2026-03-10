@@ -24,7 +24,7 @@ Observed result:
   - first-run anchor-only consolidation no longer exits early
   - `ADK_FAKE_CONSOLIDATION=true` is honored only under `NODE_ENV=test`
   - the anchor-memory test opts into deterministic consolidation instead of a live Gemini path
-- Coverage summary: `83.23%` lines, `69.24%` branches, `87.00%` functions.
+- Coverage summary: `83.20%` lines, `69.28%` branches, `86.78%` functions.
 - `npm run prove:adapters`: `24 passed`, `0 failed`.
 - `npm run prove:automation`: `14 passed`, `0 failed`.
 - `npm run self-heal:check`: `HEALTHY` with `4/4` checks healthy.
