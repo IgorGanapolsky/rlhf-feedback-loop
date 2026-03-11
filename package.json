@@ -59,7 +59,13 @@
     "always-on-memory",
     "guardrails",
     "llmops",
-    "dpo"
+    "dpo",
+    "agentic-commerce",
+    "agent-quality",
+    "commerce",
+    "prevention-rules",
+    "thompson-sampling",
+    "feedback-loop"
   ],
   "author": "Igor Ganapolsky",
   "license": "MIT",
