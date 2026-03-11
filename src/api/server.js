@@ -112,9 +112,11 @@ function loadLandingPageHtml(origin) {
     '__APP_ORIGIN__': origin,
     '__CHECKOUT_ENDPOINT__': '/v1/billing/checkout',
     '__CHECKOUT_FALLBACK_URL__': 'https://buy.stripe.com/bJe14neyU4r4f0leOD3sI02',
-    '__VERIFICATION_URL__': 'https://github.com/IgorGanapolsky/rlhf-feedback-loop/blob/main/docs/VERIFICATION_EVIDENCE.md',
-    '__GTM_PLAN_URL__': 'https://github.com/IgorGanapolsky/rlhf-feedback-loop/blob/main/docs/GO_TO_MARKET_REVENUE_WEDGE_2026-03.md',
-    '__GITHUB_URL__': 'https://github.com/IgorGanapolsky/rlhf-feedback-loop',
+    '__VERIFICATION_URL__': 'https://github.com/IgorGanapolsky/mcp-memory-gateway/blob/main/docs/VERIFICATION_EVIDENCE.md',
+    '__COMPATIBILITY_REPORT_URL__': 'https://github.com/IgorGanapolsky/mcp-memory-gateway/blob/main/proof/compatibility/report.json',
+    '__AUTOMATION_REPORT_URL__': 'https://github.com/IgorGanapolsky/mcp-memory-gateway/blob/main/proof/automation/report.json',
+    '__GTM_PLAN_URL__': 'https://github.com/IgorGanapolsky/mcp-memory-gateway/blob/main/docs/GO_TO_MARKET_REVENUE_WEDGE_2026-03.md',
+    '__GITHUB_URL__': 'https://github.com/IgorGanapolsky/mcp-memory-gateway',
   });
 }
 
