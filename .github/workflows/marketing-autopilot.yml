@@ -1,0 +1,135 @@
+name: Marketing Autopilot
+
+on:
+  schedule:
+    - cron: '0 14 * * 1,3,5'
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Marketing action to perform'
+        required: true
+        type: choice
+        options:
+          - tweet
+          - thread
+          - search-and-reply
+          - generate-content
+          - full
+      dry_run:
+        description: 'Dry run (no actual posts)'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: marketing-autopilot
+  cancel-in-progress: true
+
+jobs:
+  marketing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      X_API_KEY: ${{ secrets.X_API_KEY }}
+      X_API_SECRET: ${{ secrets.X_API_SECRET }}
+      X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+      X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
+      PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Budget guard
+        id: budget
+        run: |
+          COUNTER_FILE=".marketing-tweet-count"
+          CURRENT_MONTH=$(date +%Y-%m)
+
+          # Fetch counter from artifact or initialize
+          if [ -f "$COUNTER_FILE" ]; then
+            STORED_MONTH=$(head -1 "$COUNTER_FILE")
+            COUNT=$(tail -1 "$COUNTER_FILE")
+            if [ "$STORED_MONTH" != "$CURRENT_MONTH" ]; then
+              COUNT=0
+            fi
+          else
+            COUNT=0
+          fi
+
+          MAX_TWEETS=30
+          echo "Tweet count this month: $COUNT / $MAX_TWEETS"
+
+          if [ "$COUNT" -ge "$MAX_TWEETS" ]; then
+            echo "::warning::Budget guard: monthly tweet limit ($MAX_TWEETS) reached. Skipping posts."
+            echo "allowed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "allowed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+          echo "month=$CURRENT_MONTH" >> "$GITHUB_OUTPUT"
+
+      - name: Generate fresh content
+        if: |
+          steps.budget.outputs.allowed == 'true' &&
+          (github.event_name == 'schedule' ||
+           github.event.inputs.action == 'generate-content' ||
+           github.event.inputs.action == 'full') &&
+          env.PERPLEXITY_API_KEY != ''
+        run: node scripts/perplexity-marketing.js generate
+
+      - name: Post tweet
+        if: |
+          steps.budget.outputs.allowed == 'true' &&
+          (github.event_name == 'schedule' ||
+           github.event.inputs.action == 'tweet' ||
+           github.event.inputs.action == 'full')
+        run: |
+          DRY_RUN_FLAG=""
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            DRY_RUN_FLAG="--dry-run"
+          fi
+          node scripts/post-to-x.js --scheduled $DRY_RUN_FLAG
+
+          # Increment tweet counter
+          COUNT=${{ steps.budget.outputs.count }}
+          MONTH=${{ steps.budget.outputs.month }}
+          if [ "${{ github.event.inputs.dry_run }}" != "true" ]; then
+            COUNT=$((COUNT + 1))
+          fi
+          echo "$MONTH" > .marketing-tweet-count
+          echo "$COUNT" >> .marketing-tweet-count
+
+      - name: Search and reply
+        if: |
+          steps.budget.outputs.allowed == 'true' &&
+          (github.event.inputs.action == 'search-and-reply' ||
+           github.event.inputs.action == 'full')
+        run: |
+          DRY_RUN_FLAG=""
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            DRY_RUN_FLAG="--dry-run"
+          fi
+          node scripts/post-to-x.js --search "MCP agent memory" --reply-relevant $DRY_RUN_FLAG
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: marketing-content
+          path: |
+            .marketing-tweet-count
+            scripts/marketing-output/
+            proof/marketing/
