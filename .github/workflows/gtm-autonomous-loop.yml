@@ -1,0 +1,35 @@
+name: Always-On GTM Acquisition Loop
+
+on:
+  schedule:
+    - cron: '0 * * * *' # Every hour
+  workflow_dispatch:
+
+jobs:
+  acquisition:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm install
+      - name: Run Prospecting & Personalization Agent
+        run: node scripts/autonomous-sales-agent.js
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run X.com Premium+ Marketing Loop
+        run: node scripts/x-autonomous-marketing.js
+        env:
+          X_API_KEY: ${{ secrets.X_API_KEY }}
+          X_API_SECRET: ${{ secrets.X_API_SECRET }}
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+      - name: Commit Hourly Leads
+        run: |
+          git config --global user.name "GTM Agent"
+          git config --global user.email "gtm-agent@mcp-memory-gateway.ai"
+          git add docs/AUTONOMOUS_GITOPS.md docs/X_AUTOMATION_REPORT.md
+          git commit -m "chore: hourly leads and marketing dispatch [skip ci]" || echo "No new leads"
+          git push origin main
