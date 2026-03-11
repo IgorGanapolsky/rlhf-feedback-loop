@@ -27,9 +27,9 @@ jobs:
           X_API_SECRET: ${{ secrets.X_API_SECRET }}
           GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
       - name: Commit Hourly Leads
-        run: |
-          git config --global user.name "GTM Agent"
-          git config --global user.email "gtm-agent@mcp-memory-gateway.ai"
-          git add docs/AUTONOMOUS_GITOPS.md docs/X_AUTOMATION_REPORT.md
-          git commit -m "chore: hourly leads and marketing dispatch [skip ci]" || echo "No new leads"
-          git push origin main
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: hourly leads and marketing dispatch [skip ci]"
+          file_pattern: 'docs/AUTONOMOUS_GITOPS.md docs/X_AUTOMATION_REPORT.md'
+          commit_author: 'GTM Agent <gtm-agent@mcp-memory-gateway.ai>'
+
