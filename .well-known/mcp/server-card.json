@@ -1,6 +1,6 @@
 {
   "name": "rlhf-feedback-loop",
-  "version": "0.6.11",
+  "version": "0.6.12",
   "description": "Production RLHF & DPO data pipeline for AI agents. Capture human preference signals, generate automated guardrails, and export DPO training pairs.",
   "homepage": "https://github.com/IgorGanapolsky/rlhf-feedback-loop",
   "transport": "stdio",
@@ -21,15 +21,39 @@
       "description": "Capture thumbs up/down feedback and promote actionable memory",
       "inputSchema": {
         "type": "object",
-        "required": ["signal", "context"],
+        "required": [
+          "signal",
+          "context"
+        ],
         "properties": {
-          "signal": { "type": "string", "enum": ["up", "down"] },
-          "context": { "type": "string" },
-          "whatWentWrong": { "type": "string" },
-          "whatToChange": { "type": "string" },
-          "whatWorked": { "type": "string" },
-          "tags": { "type": "array", "items": { "type": "string" } },
-          "skill": { "type": "string" }
+          "signal": {
+            "type": "string",
+            "enum": [
+              "up",
+              "down"
+            ]
+          },
+          "context": {
+            "type": "string"
+          },
+          "whatWentWrong": {
+            "type": "string"
+          },
+          "whatToChange": {
+            "type": "string"
+          },
+          "whatWorked": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "skill": {
+            "type": "string"
+          }
         }
       }
     },
@@ -39,7 +63,9 @@
       "inputSchema": {
         "type": "object",
         "properties": {
-          "recent": { "type": "number" }
+          "recent": {
+            "type": "number"
+          }
         }
       }
     },
@@ -57,8 +83,12 @@
       "inputSchema": {
         "type": "object",
         "properties": {
-          "mcpProfile": { "type": "string" },
-          "bundleId": { "type": "string" }
+          "mcpProfile": {
+            "type": "string"
+          },
+          "bundleId": {
+            "type": "string"
+          }
         }
       }
     },
@@ -67,13 +97,25 @@
       "description": "Generate an intent execution plan with policy checkpoints",
       "inputSchema": {
         "type": "object",
-        "required": ["intentId"],
+        "required": [
+          "intentId"
+        ],
         "properties": {
-          "intentId": { "type": "string" },
-          "context": { "type": "string" },
-          "mcpProfile": { "type": "string" },
-          "bundleId": { "type": "string" },
-          "approved": { "type": "boolean" }
+          "intentId": {
+            "type": "string"
+          },
+          "context": {
+            "type": "string"
+          },
+          "mcpProfile": {
+            "type": "string"
+          },
+          "bundleId": {
+            "type": "string"
+          },
+          "approved": {
+            "type": "boolean"
+          }
         }
       }
     },
@@ -83,8 +125,12 @@
       "inputSchema": {
         "type": "object",
         "properties": {
-          "minOccurrences": { "type": "number" },
-          "outputPath": { "type": "string" }
+          "minOccurrences": {
+            "type": "number"
+          },
+          "outputPath": {
+            "type": "string"
+          }
         }
       }
     },
@@ -94,7 +140,9 @@
       "inputSchema": {
         "type": "object",
         "properties": {
-          "memoryLogPath": { "type": "string" }
+          "memoryLogPath": {
+            "type": "string"
+          }
         }
       }
     },
@@ -104,10 +152,21 @@
       "inputSchema": {
         "type": "object",
         "properties": {
-          "query": { "type": "string" },
-          "maxItems": { "type": "number" },
-          "maxChars": { "type": "number" },
-          "namespaces": { "type": "array", "items": { "type": "string" } }
+          "query": {
+            "type": "string"
+          },
+          "maxItems": {
+            "type": "number"
+          },
+          "maxChars": {
+            "type": "number"
+          },
+          "namespaces": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
         }
       }
     },
@@ -116,12 +175,23 @@
       "description": "Record evaluation outcome for a context pack",
       "inputSchema": {
         "type": "object",
-        "required": ["packId", "outcome"],
+        "required": [
+          "packId",
+          "outcome"
+        ],
         "properties": {
-          "packId": { "type": "string" },
-          "outcome": { "type": "string" },
-          "signal": { "type": "string" },
-          "notes": { "type": "string" }
+          "packId": {
+            "type": "string"
+          },
+          "outcome": {
+            "type": "string"
+          },
+          "signal": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
         }
       }
     },
@@ -131,7 +201,9 @@
       "inputSchema": {
         "type": "object",
         "properties": {
-          "limit": { "type": "number" }
+          "limit": {
+            "type": "number"
+          }
         }
       }
     },
@@ -140,10 +212,18 @@
       "description": "Recall relevant past feedback, memories, and prevention rules for the current task",
       "inputSchema": {
         "type": "object",
-        "required": ["query"],
+        "required": [
+          "query"
+        ],
         "properties": {
-          "query": { "type": "string", "description": "Describe the current task or context to find relevant past feedback" },
-          "limit": { "type": "number", "description": "Max memories to return (default 5)" }
+          "query": {
+            "type": "string",
+            "description": "Describe the current task or context to find relevant past feedback"
+          },
+          "limit": {
+            "type": "number",
+            "description": "Max memories to return (default 5)"
+          }
         }
       }
     }

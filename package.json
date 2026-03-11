@@ -1,6 +1,6 @@
 {
   "name": "rlhf-feedback-loop",
-  "version": "0.6.11",
+  "version": "0.6.12",
   "description": "Feedback-Driven Development (FDD) for AI agents — capture preference signals, steer behavior via Thompson Sampling, and export KTO/DPO training pairs for downstream fine-tuning.",
   "homepage": "https://rlhf-feedback-loop-production.up.railway.app",
   "repository": {
