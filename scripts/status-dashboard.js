@@ -107,7 +107,7 @@ function inferDomainFromTags(tags) {
 
 function printDashboard(status) {
   console.log('╔══════════════════════════════════════════╗');
-  console.log('║        RLHF Learning Status Dashboard    ║');
+  console.log('║      Feedback Tracking Dashboard          ║');
   console.log('╠══════════════════════════════════════════╣');
   console.log(`║  Total Signals:     ${String(status.totalSignals).padStart(6)}              ║`);
   console.log(`║  Positive:          ${String(status.positive).padStart(6)}              ║`);
@@ -130,7 +130,7 @@ function printDashboard(status) {
   }
 
   console.log('╠══════════════════════════════════════════╣');
-  console.log('║  Learning Curve:                         ║');
+  console.log('║  Feedback Trend:                         ║');
   if (status.learningCurve.length > 0) {
     const step = Math.max(1, Math.floor(status.learningCurve.length / 5));
     for (let i = 0; i < status.learningCurve.length; i += step) {
@@ -140,7 +140,7 @@ function printDashboard(status) {
       console.log(`║  ${line.padEnd(38)}║`);
     }
   } else {
-    console.log('║  Not enough data for learning curve      ║');
+    console.log('║  Not enough data for feedback trend      ║');
   }
 
   console.log('╚══════════════════════════════════════════╝');

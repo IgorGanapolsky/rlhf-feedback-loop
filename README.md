@@ -9,22 +9,34 @@
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/igorganapolsky)
 [![Pro Pack](https://img.shields.io/badge/Pro%20Pack-Gumroad-FF90E8?logo=gumroad)](https://iganapolsky.gumroad.com/l/tjovof)
 
-**Local-first memory and feedback pipeline for AI agents.** Captures thumbs-up/down signals, promotes reusable memories, generates prevention rules from repeated failures, and exports KTO/DPO pairs for fine-tuning.
+**Local-first context engineering layer for AI agents.** Persists decisions, surfaces prevention rules, and injects relevant history into every new session — so agents stop repeating the same mistakes.
+
+> **Honest disclaimer:** This is a **context injection system**, not RLHF. LLM weights are not updated by thumbs-up/down signals. What actually happens: feedback is validated, promoted to searchable memory, and recalled at session start so agents have project history they'd otherwise lose. That's genuinely valuable — but it's context engineering, not reinforcement learning.
 
 Works with any MCP-compatible agent: Claude, Codex, Gemini, Amp, Cursor.
 
-## What It Does
+## What It Actually Does
 
 ```
-thumbs up/down → validate → promote to memory → vector index → prevention rules → DPO export
+feedback signal → validate → promote to memory → vector index → prevention rules → recall at session start
 ```
 
-1. **Capture** — `capture_feedback` MCP tool accepts signals with context
-2. **Validate** — Rubric engine gates promotion (vague feedback is rejected with clarification prompts)
-3. **Remember** — Promoted memories stored in JSONL + LanceDB vectors
-4. **Prevent** — Repeated failures auto-generate prevention rules
-5. **Export** — KTO/DPO pairs for downstream fine-tuning
-6. **Bridge** — JSONL file watcher auto-ingests signals from external sources (Amp plugins, hooks, scripts)
+1. **Capture** — `capture_feedback` MCP tool accepts signals with structured context (vague "thumbs down" is rejected)
+2. **Validate** — Rubric engine gates promotion — requires specific failure descriptions, not vibes
+3. **Remember** — Promoted memories stored in JSONL + LanceDB vectors for semantic search
+4. **Prevent** — Repeated failures auto-generate prevention rules (the actual value — agents follow these when loaded)
+5. **Recall** — `recall` tool injects relevant past context into current session (this is the mechanism that works)
+6. **Export** — DPO/KTO pairs for optional downstream fine-tuning (separate from runtime behavior)
+7. **Bridge** — JSONL file watcher auto-ingests signals from external sources (Amp plugins, hooks, scripts)
+
+### What Works vs. What Doesn't
+
+| ✅ Actually works | ❌ Does not work |
+|---|---|
+| `recall` injects past context — agent reads and uses it | Thumbs up/down changing agent behavior mid-session |
+| `remember` persists decisions across sessions | LLM weight updates from feedback signals |
+| Prevention rules — followed when loaded at session start | Feedback stats improving agent performance automatically |
+| Knowledge graph — gives agents project history | "Learning curve" implying the agent itself learns |
 
 ## Quick Start
 
@@ -90,7 +102,7 @@ External sources write entries with a `source` field:
 
 The watcher tracks its position via `.rlhf/.watcher-offset` for crash-safe, idempotent processing.
 
-## Learning Curve Dashboard
+## Feedback Dashboard
 
 ```bash
 npx rlhf-feedback-loop status
@@ -98,7 +110,7 @@ npx rlhf-feedback-loop status
 
 ```
 ╔══════════════════════════════════════╗
-║     RLHF Learning Curve Dashboard   ║
+║     Feedback Tracking Dashboard     ║
 ╠══════════════════════════════════════╣
 ║ Total signals:    148                ║
 ║ Positive:          45  (30%)         ║
@@ -113,7 +125,7 @@ npx rlhf-feedback-loop status
 ║   asked-not-doing   2                ║
 ║   speed             2                ║
 ╠══════════════════════════════════════╣
-║ Learning curve (approval % by window)║
+║ Feedback trend (approval % by window)║
 ║   [1-10]   10% ██                    ║
 ║   [11-20]  20% ████                  ║
 ║   [21-30]  35% ███████               ║
@@ -125,7 +137,7 @@ npx rlhf-feedback-loop status
 
 Five-phase pipeline: **Capture** → **Validate** → **Remember** → **Prevent** → **Export**
 
-![RLHF Architecture](https://raw.githubusercontent.com/IgorGanapolsky/mcp-memory-gateway/main/docs/diagrams/rlhf-architecture-pb.png)
+![Context Engineering Architecture](https://raw.githubusercontent.com/IgorGanapolsky/mcp-memory-gateway/main/docs/diagrams/rlhf-architecture-pb.png)
 
 ![Plugin Topology](https://raw.githubusercontent.com/IgorGanapolsky/mcp-memory-gateway/main/docs/diagrams/plugin-topology-pb.png)
 
@@ -156,7 +168,7 @@ Agent (Claude/Codex/Amp/Gemini)
 - [.github/ISSUE_TEMPLATE/ready-for-agent.yml](.github/ISSUE_TEMPLATE/ready-for-agent.yml): bounded intake template for "Ready for Agent" tickets
 - [.github/pull_request_template.md](.github/pull_request_template.md): proof-first handoff format for PRs
 
-## 💎 Pro Pack — Production RLHF Configs
+## 💎 Pro Pack — Production Context Engineering Configs
 
 Battle-tested configurations extracted from 500+ agentic sessions. Skip months of tuning.
 
