@@ -1,0 +1,30 @@
+{
+  "name": "MCP Memory Gateway",
+  "description": "Persistent memory for AI coding agents — stops Claude Code from repeating mistakes",
+  "url": "https://rlhf-feedback-loop-production.up.railway.app",
+  "hook_attributes": {
+    "url": "https://rlhf-feedback-loop-production.up.railway.app/webhooks/github",
+    "active": true
+  },
+  "redirect_url": "https://rlhf-feedback-loop-production.up.railway.app/github/callback",
+  "callback_urls": [
+    "https://rlhf-feedback-loop-production.up.railway.app/github/callback",
+    "https://rlhf-feedback-loop-production.up.railway.app/auth/github"
+  ],
+  "setup_url": "https://rlhf-feedback-loop-production.up.railway.app/setup",
+  "public": true,
+  "default_permissions": {
+    "contents": "read",
+    "pull_requests": "read",
+    "issues": "read",
+    "workflows": "read"
+  },
+  "default_events": [
+    "pull_request",
+    "issues",
+    "push",
+    "workflow_run"
+  ],
+  "request_oauth_on_install": false,
+  "setup_on_update": true
+}
