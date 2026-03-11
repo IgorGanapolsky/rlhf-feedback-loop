@@ -12,5 +12,5 @@ startCommand:
     command: "npx"
     args:
       - "-y"
-      - "rlhf-feedback-loop"
+      - "mcp-memory-gateway"
       - "serve"
