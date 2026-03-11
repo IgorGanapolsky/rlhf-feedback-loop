@@ -125,6 +125,10 @@ npx rlhf-feedback-loop status
 
 Five-phase pipeline: **Capture** → **Validate** → **Remember** → **Prevent** → **Export**
 
+![RLHF Architecture](https://raw.githubusercontent.com/IgorGanapolsky/mcp-memory-gateway/main/docs/diagrams/rlhf-architecture-pb.png)
+
+![Plugin Topology](https://raw.githubusercontent.com/IgorGanapolsky/mcp-memory-gateway/main/docs/diagrams/plugin-topology-pb.png)
+
 ```
 Agent (Claude/Codex/Amp/Gemini)
   │
