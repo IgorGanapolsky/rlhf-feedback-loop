@@ -89,5 +89,5 @@
     "apache-arrow": "^18.1.0",
     "stripe": "^20.4.1"
   },
-  "mcpName": "io.github.igorganapolsky/mcp-memory-gateway"
+  "mcpName": "io.github.IgorGanapolsky/mcp-memory-gateway"
 }
