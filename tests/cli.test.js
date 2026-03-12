@@ -353,6 +353,15 @@ describe('bin/cli.js', () => {
     assert.ok(result.stdout.includes('prove'), 'Help should mention prove');
   });
 
+  test('pro command prints truthful commercial offer info', () => {
+    const result = spawnSync(process.execPath, [CLI, 'pro'], { encoding: 'utf8' });
+    assert.strictEqual(result.status, 0, `Expected exit 0, got ${result.status}\n${result.stderr}`);
+    assert.match(result.stdout, /Pro Pack \(\$9 one-time\)/);
+    assert.match(result.stdout, /pilot\/by-request/);
+    assert.match(result.stdout, /COMMERCIAL_TRUTH\.md/);
+    assert.doesNotMatch(result.stdout, /\$10\/mo|38 spots remaining|first 50 users|Founding Member/i);
+  });
+
   test('--help flag exits 0', () => {
     const result = spawnSync(process.execPath, [CLI, '--help'], { encoding: 'utf8' });
     assert.strictEqual(result.status, 0);

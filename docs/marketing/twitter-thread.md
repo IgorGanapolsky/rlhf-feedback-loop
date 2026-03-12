@@ -48,7 +48,7 @@ All local. All auditable. All yours.
 
 ---
 
-## Tweet 4 (Social proof)
+## Tweet 4 (Engineering proof)
 
 4 AI agents — Claude, Codex, Amp, Gemini — independently evaluated this in the same repo.
 
@@ -56,7 +56,7 @@ All four validated it works.
 
 No orchestration. No prompting to agree. They each ran the tests and passed.
 
-That's the best code review I've ever had.
+That's engineering validation, not customer proof.
 
 #AIAgents
 
@@ -84,8 +84,8 @@ npm install rlhf-feedback-loop
 
 GitHub: github.com/IgorGanapolsky/mcp-memory-gateway
 npm: npmjs.com/package/rlhf-feedback-loop
-Context Gateway ($10/mo): live Stripe checkout on the repo
-Live API: rlhf-feedback-loop-production.up.railway.app
+Pro Pack ($9 one-time): https://iganapolsky.gumroad.com/l/tjovof
+Hosted demo: rlhf-feedback-loop-production.up.railway.app
 
 #DevTools #MCP
 

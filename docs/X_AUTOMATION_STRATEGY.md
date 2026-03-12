@@ -1,5 +1,7 @@
 # 𝕏 Premium+ Automation Strategy (March 2026)
 
+> Historical research note: this file captures a launch experiment and may reference outdated pricing or reach assumptions. Use `docs/COMMERCIAL_TRUTH.md` for current pricing and traction claims. Reach figures below are research snapshots, not product proof.
+
 ## Executive Audit of Screenshot
 Your account is in a high-leverage position:
 - **Verified Status**: Premium+ active (Since March 2026).
@@ -16,7 +18,7 @@ We will no longer wait for people to find us. We will use the **Radar Beta** API
 ## 2. Automated "Reply Boost" Displacement
 Premium+ gives your replies priority. We will automate this to dominate technical conversations.
 - **Tactic**: Inject a "Veto Layer" educational pitch into the top 1% of AI reliability threads.
-- **The Goal**: Capture a percentage of those 17M impressions and direct them to the $10/mo founding link.
+- **The Historical Goal**: Capture a percentage of those 17M impressions and direct them to the current commercial truth page and active offer instead of an outdated subscription pitch.
 
 ## 3. Generative SEO/GEO (via X Articles)
 X Articles now rank higher in AI Search (Perplexity/Grok).
@@ -25,8 +27,8 @@ X Articles now rank higher in AI Search (Perplexity/Grok).
 
 ---
 
-## **CTO Action Items for CEO**
-To fully automate this loop, I need the following environment variables added to Railway:
+## Historical Execution Checklist
+To fully automate this loop, the plan required the following environment variables on Railway:
 
 1. `X_API_KEY` & `X_API_SECRET`: For posting and engagement.
 2. `GROK_API_KEY`: To use `api.x.ai` for high-reasoning outreach.
@@ -34,9 +36,9 @@ To fully automate this loop, I need the following environment variables added to
 
 ---
 
-## **Autonomous Execution Status**
-- **Logic Deployed**: `scripts/x-autonomous-marketing.js` is ready.
-- **Targeting**: Discovered 4 intent clusters via Radar simulation.
-- **Readiness**: 100% (Awaiting Credentials).
+## Historical Execution Status
+- **Logic Deployed**: `scripts/x-autonomous-marketing.js` was considered ready.
+- **Targeting**: The plan had discovered 4 intent clusters via Radar simulation.
+- **Readiness**: This document recorded the loop as blocked on credentials.
 
-**Ready to launch the X-First Marketing Loop. Just add the keys.**
+**Historical note:** this launch loop was never product proof, customer proof, or current pricing truth.

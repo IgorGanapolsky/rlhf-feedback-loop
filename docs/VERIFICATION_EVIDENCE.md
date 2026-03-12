@@ -1,3 +1,23 @@
+## March 12, 2026: Commercial truth correction
+
+Scope:
+
+- Replaced stale `$5/mo` and `$10/mo` self-serve subscription language on live-facing surfaces with the actual public offer: Pro Pack (`$9` one-time).
+- Removed unsupported scarcity and adoption framing from CLI and landing-page copy.
+- Added `docs/COMMERCIAL_TRUTH.md` as the source of truth for pricing, traction, and proof claims.
+
+Commands run:
+
+```bash
+node --test tests/version-metadata.test.js tests/api-server.test.js tests/cli.test.js
+```
+
+Requirements verified:
+
+- Live-facing copy no longer presents a public recurring subscription as the current self-serve offer.
+- Live-facing copy no longer treats repo metrics or hardcoded scarcity as customer proof.
+- Pricing and traction claims now point back to a single source of truth.
+
 ## March 12, 2026: CFO billing summary control plane
 
 Scope:
@@ -38,15 +58,20 @@ Requirements verified:
 - `node bin/cli.js cfo` returns the same machine-readable summary shape as the API surface, while reading the local ledger and key store in the current checkout.
 - This surface is an operational billing proxy only; it does not claim booked revenue or invoice truth because the persisted stores track paid events, API keys, customer IDs, and usage rather than Stripe ledger amounts.
 
-## March 12, 2026: Revenue Sprint & Conversion Optimization
+## March 12, 2026: Revenue Sprint & Conversion Optimization (historical, superseded)
+
+Status:
+
+- Historical pricing experiment notes only.
+- Superseded by `docs/COMMERCIAL_TRUTH.md` for current public pricing and proof language.
 
 Scope:
 
 - Version sync across `package.json`, `mcpize.yaml`, and `server.json` to `v0.6.16`.
-- Landing page conversion optimization: added "Founding Member $5/mo" offer with price lock and urgency hooks.
+- Historical pricing experiment: tested a "Founding Member $5/mo" offer and urgency hooks before the current commercial-truth correction.
 - Discovery optimization: Added high-ROI GitHub topics and updated `SKILL.md` auto-indexing keywords.
 - Launch content package: Created `docs/marketing/LAUNCH_CONTENT.md` with Reddit, HN, and Discord assets.
-- CLI `pro` command updated to reflect the new $5 founding offer.
+- CLI `pro` command was, at that time, updated to reflect the same historical pricing experiment.
 
 Commands run:
 

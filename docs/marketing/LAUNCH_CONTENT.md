@@ -16,7 +16,7 @@ It's called **Agentic Feedback Studio**.
   - Bayesian Preference Scoring: Thompson Sampling models your preferences in real-time.
   - DPO/KTO Export: Turn your sessions into training data for fine-tuning.
 - **Open Source:** Totally free for solo devs.
-- **Hosted:** We're launching a "Founding Member" tier today: **$5/mo forever** (limited to first 50 spots).
+- **Commercial:** The public self-serve offer today is the **$9 one-time Pro Pack**. Hosted pilots are by request.
 
 Check it out on GitHub: [https://github.com/IgorGanapolsky/rlhf-feedback-loop]
 Demo/Hosted: [https://mcp-memory-gateway.up.railway.app]
@@ -61,7 +61,7 @@ Stop vibe-coding. If Claude makes a mistake, flag it, and the Studio generates a
 - 🧠 **Smart Memory:** Vector storage via LanceDB + Bayesian reward estimation.
 - ⚡ **Global Skill:** Install once, use across all your repos.
 
-OSS is free. Founding Member spots ($5/mo forever) are live now!
+OSS is free. The public self-serve offer is the $9 one-time Pro Pack.
 Repo: https://github.com/IgorGanapolsky/rlhf-feedback-loop
 Live: https://mcp-memory-gateway.up.railway.app
 

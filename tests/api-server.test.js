@@ -58,9 +58,10 @@ test('root serves the landing page by default', async () => {
   assert.match(body, /GO_TO_MARKET_REVENUE_WEDGE_2026-03\.md/);
   assert.match(body, /proof\/compatibility\/report\.json/);
   assert.match(body, /proof\/automation\/report\.json/);
-  assert.match(body, /https:\/\/billing\.example\.com\/v1\/billing\/checkout/);
-  assert.match(body, /const appOrigin = 'https:\/\/app\.example\.com';/);
-  assert.match(body, /successUrl: `\$\{appOrigin\}\/success\?session_id=\{CHECKOUT_SESSION_ID\}&trace_id=\$\{encodeURIComponent\(traceId\)\}`/);
+  assert.match(body, /Get Pro Pack — \$9 one-time/);
+  assert.match(body, /COMMERCIAL_TRUTH\.md/);
+  assert.match(body, /gumroad\.com/);
+  assert.doesNotMatch(body, /\$10\/mo|Founding Member/);
 });
 
 test('provisioning endpoint works', async () => {

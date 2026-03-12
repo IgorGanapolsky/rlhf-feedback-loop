@@ -1,7 +1,9 @@
 # Revenue Sprint: First Paying Customer TODAY, $1K MRR in 30 Days
 
+> Historical research note: community-size figures, pricing experiments, and growth targets in this file are point-in-time planning assumptions from March 11, 2026. They are not current product truth. Use `docs/COMMERCIAL_TRUTH.md` for current pricing, traction, and proof language. All `$5/mo`, `$10/mo`, "Founding Member", and scarcity references below are retired experiments retained for historical context only.
+
 **Date:** 2026-03-11
-**Status:** EXECUTE NOW
+**Status:** Historical plan archived
 **Research basis:** Live web research, March 2026 MCP ecosystem data
 
 ---
@@ -49,7 +51,7 @@
 
 ---
 
-## Part 2: Exact Buyer Profile Who Pays $10/mo on Day 1
+## Part 2: Historical Buyer Profile Hypothesis For A Then-Proposed $10/mo Offer
 
 ### Primary Persona: "The AI Team Lead"
 - **Role:** Engineering lead or senior dev running 2-5 person team using Claude Code daily
@@ -68,7 +70,7 @@
 ### Secondary Persona: "The Solo AI Engineer"
 - Building MCP integrations or AI products
 - Needs DPO/KTO export pairs for fine-tuning
-- Pays $10/mo to avoid building their own feedback infrastructure
+- Would have paid `$10/mo` to avoid building their own feedback infrastructure
 
 ### Trigger Moment (converts "interesting" to "shut up and take my money"):
 > "I just spent 2 hours debugging because Claude forgot what we decided yesterday. I need persistent memory that works across sessions WITHOUT me managing infrastructure."
@@ -103,14 +105,16 @@
 
 ---
 
-## Part 4: Pricing/Offer Optimization for Maximum Conversion TODAY
+## Part 4: Historical Pricing Experiment Considered For Day-1 Conversion
 
 ### Current State Analysis
 - $10/mo flat is **not wrong** but friction is high
 - 2026 market expects consumption-based pricing (per-request, per-GB)
 - Less than 5% of 11,000+ MCP servers are monetized — opportunity is wide open
 
-### Recommended Pricing Structure (implement today)
+### Historical Pricing Structure Considered At The Time
+
+Retired experiment: the `$5/mo`, `$10/mo`, and scarcity-based tiers below are preserved as research history only. They are not current product truth.
 
 | Tier | Price | What's Included | Conversion Target |
 |------|-------|-----------------|-------------------|
@@ -119,13 +123,13 @@
 | **Pro** | $10/mo | 50K captures/mo, 10 seats, priority support, custom guardrails | Standard |
 | **Team** | $29/mo | Unlimited captures, unlimited seats, SSO, audit log, SLA | Upsell target |
 
-### Why "Founding Member $5/mo Forever" Converts Today:
+### Why The Team Believed "Founding Member $5/mo Forever" Could Convert At The Time:
 1. **Loss aversion** — "This price disappears after 50 users" creates urgency
 2. **Lower barrier** — $5 is impulse-buy territory for developers
 3. **"Forever" lock** — developers hate price increases, this removes the objection
 4. **Social proof** — "Join 12 founding members" (update counter in real-time)
 
-### Alternative Quick Test:
+### Alternative Quick Test Considered At The Time:
 - **72-hour flash: $1 first month** via Stripe coupon code `FOUNDING1`
 - After 72 hours, price reverts to $10/mo
 - Post this coupon in every Reddit/Discord/HN thread
@@ -156,7 +160,7 @@ Based on research, the top Claude Code YouTube creators have substantial audienc
 
 ---
 
-## TOP 10 ACTIONS: Ranked by (Speed x Revenue Impact)
+## Historical Action List From March 11, 2026: Ranked By (Speed x Revenue Impact)
 
 ### 1. Deploy to MCPize Marketplace (2 hours, HIGH impact)
 ```bash

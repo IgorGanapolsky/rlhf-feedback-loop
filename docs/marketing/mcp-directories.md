@@ -1,5 +1,7 @@
 # MCP Directory Submission Guide
 
+> Research note: external repo stars, directory size, and community reach numbers in this file are time-bound research snapshots, not current product proof. Use `docs/COMMERCIAL_TRUTH.md` for current traction language.
+
 **Package:** `rlhf-feedback-loop` (npm)
 **GitHub:** https://github.com/IgorGanapolsky/rlhf-feedback-loop
 **Registry name:** `io.github.IgorGanapolsky/rlhf-feedback-loop`
@@ -129,7 +131,7 @@ You can also post in https://github.com/chatmcp/mcpso/discussions/categories/mcp
 
 There are three major lists. Submit to all of them.
 
-### 5a. punkpeye/awesome-mcp-servers (largest, 30k+ stars)
+### 5a. punkpeye/awesome-mcp-servers (largest GitHub discovery surface in March 2026 research)
 **URL:** https://github.com/punkpeye/awesome-mcp-servers
 **Contributing guide:** https://github.com/punkpeye/awesome-mcp-servers/blob/main/CONTRIBUTING.md
 
@@ -164,8 +166,8 @@ There are three major lists. Submit to all of them.
 
 | # | Directory | Method | Effort | Reach |
 |---|-----------|--------|--------|-------|
-| 1 | punkpeye/awesome-mcp-servers | GitHub PR | Low | Very High (30k+ stars) |
-| 2 | mcp.so | GitHub issue comment | Very Low | High (18k+ servers listed) |
+| 1 | punkpeye/awesome-mcp-servers | GitHub PR | Low | Very High (large GitHub discovery surface) |
+| 2 | mcp.so | GitHub issue comment | Very Low | High (large directory footprint) |
 | 3 | Smithery.ai | Web UI + smithery.yaml | Medium | High |
 | 4 | appcypher/awesome-mcp-servers | GitHub PR | Low | Medium |
 | 5 | mcpservers.org | Web form | Very Low | Medium |

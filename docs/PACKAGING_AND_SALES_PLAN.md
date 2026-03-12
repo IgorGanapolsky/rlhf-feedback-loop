@@ -1,12 +1,14 @@
 # Packaging and Sales Plan
 
+> Historical research note: this file contains packaging hypotheses and outdated pricing experiments. Use `docs/COMMERCIAL_TRUTH.md` for current pricing and traction claims.
+
 ## North Star
 
 Weekly active proof-backed workflow runs.
 
 This is the metric that matters most. Stars, visits, and installs matter only if they lead to teams running one monitored workflow with shared memory, guardrails, and evidence.
 
-## Best First Offer
+## Historical Best First Offer Hypothesis
 
 - OSS core for one operator proving a workflow locally.
 - Context Gateway for one team running one workflow with shared memory and proof-ready runs.
@@ -22,7 +24,7 @@ This is the metric that matters most. Stars, visits, and installs matter only if
 - DPO export
 - Local MCP server
 
-### Tier 2: Context Gateway (Founding price: $10/mo)
+### Tier 2: Historical Context Gateway Hypothesis (Then-Proposed $10/mo)
 
 - Hosted API endpoint
 - Provisioned API keys and hosted onboarding
@@ -33,8 +35,13 @@ This is the metric that matters most. Stars, visits, and installs matter only if
 
 Pricing note:
 
-- Keep the current live Stripe price at `$10/mo` while Context Gateway is still proving conversion.
-- Revisit repricing after the hosted workflow layer shows retained usage and stronger buyer pull.
+- At the time, the plan was to keep the live Stripe price at `$10/mo` while Context Gateway was still proving conversion.
+- At the time, the plan was to revisit repricing after the hosted workflow layer showed retained usage and stronger buyer pull.
+
+Current note:
+
+- The public self-serve commercial offer is the `$9` one-time Pro Pack in `docs/COMMERCIAL_TRUTH.md`.
+- Hosted Context Gateway access is pilot/by-request, not a public recurring subscription.
 
 ### Tier 3: Enterprise (Pricing: custom quote)
 

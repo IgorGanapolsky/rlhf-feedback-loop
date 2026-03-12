@@ -1,15 +1,17 @@
 # CTO Crisis Report: Revenue Autopsy & Strategic Pivot (March 2026)
 
-## The Core Problem: Why We Are at $0.00
-Our engineering is world-class, but our go-to-market (GTM) strategy is misaligned with the current March 2026 AI developer ecosystem. We built a powerful local-first "RLHF Feedback Studio," but we put massive friction between the developer and the "Buy" button. 
+> Historical research note: this document describes a pricing and packaging pivot proposal. It is not the current product truth. Use `docs/COMMERCIAL_TRUTH.md` for current pricing and proof language. All subscription references below describe the March 2026 situation being analyzed, not the current offer.
+
+## The Core Problem: Why The Funnel Was At $0.00 In This March 2026 Analysis
+At the time, the go-to-market (GTM) strategy was misaligned with the March 2026 AI developer ecosystem. We had built a powerful local-first "RLHF Feedback Studio," but we also put massive friction between the developer and the commercial surface.
 
 Here is the empirical breakdown of why our funnel is failing:
 
 ### 1. The "Local-First" Trap
-Developers in 2026 want zero-friction "agentic primitives." We require them to clone a repository, run local tests, and manually discover our `docs/landing-page.html` to find the $10/mo "Context Gateway" upgrade. **There is zero top-of-funnel acquisition because our monetization surface is buried inside a local codebase.**
+At the time, developers in 2026 wanted zero-friction "agentic primitives." We required them to clone a repository, run local tests, and manually discover `docs/landing-page.html` to find the then-proposed `$10/mo` "Context Gateway" upgrade. **This report concluded that top-of-funnel acquisition was weak because the monetization surface was buried inside a local codebase.**
 
 ### 2. Pricing Model Mismatch
-The 2026 market for agent tooling operates almost exclusively on **consumption-based credit systems** or "per-agent identity" models (like Okta for Agents). Our flat $10/month subscription feels outdated. Developers don't want to pay a subscription for a local tool; they want to pay for the *inference and storage costs* associated with "Always-On" memory.
+The March 2026 market for agent tooling was operating largely on **consumption-based credit systems** or "per-agent identity" models (like Okta for Agents). This report argued that the flat `$10/month` subscription felt outdated. The thesis was that developers would rather pay for the *inference and storage costs* associated with "Always-On" memory than for a recurring fee on a local tool.
 
 ### 3. Misaligned Positioning (RLHF vs. MCP Gateway)
 We are marketing ourselves as an "MCP Memory Gateway." However, the March 2026 market data shows that the highest revenue growth is in **MCP (Model Context Protocol) Gateways and Observability**. MCP has become the "USB-C of AI." We already have deep MCP integration, but we aren't selling ourselves as an "MCP Memory & Context Hub." 
@@ -33,4 +35,4 @@ To move from $0 to revenue immediately, we must execute the following pivot in "
 2.  **Publish to the AI Agent Store:** Ensure we are listed not just on GitHub, but on MCP Hubs, LangChain/LangGraph integrations directories, and relevant AI agent marketplaces.
 
 ## Conclusion
-We don't have a product problem; we have a distribution and packaging problem. By shifting from a local CLI subscription to a hosted, consumption-based MCP Gateway, we can immediately capture the explosive growth of the 2026 agent economy.
+The conclusion of this report was that the business had a distribution and packaging problem more than a product problem. It argued for shifting from a local CLI subscription pitch to a hosted, consumption-based MCP Gateway. That recommendation is retained here as historical analysis only.

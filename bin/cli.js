@@ -472,19 +472,21 @@ function cfo() {
 }
 
 function pro() {
-  const stripeUrl = 'https://buy.stripe.com/fZu4gz0I47Dg9G1cGv3sI03';
-  console.log('\n🚀 MCP Memory Gateway — Founding Member');
+  const gumroadUrl = 'https://iganapolsky.gumroad.com/l/tjovof';
+  const hostedUrl = 'https://rlhf-feedback-loop-production.up.railway.app';
+  const truthUrl = 'https://github.com/IgorGanapolsky/mcp-memory-gateway/blob/main/docs/COMMERCIAL_TRUTH.md';
+  console.log('\nMCP Memory Gateway — Commercial Truth');
   console.log('─'.repeat(50));
-  console.log('FLASH DEAL: $5/mo forever for the first 50 users.');
-  console.log('Price locks today. 38 spots remaining.');
-  console.log('\nUnlock the full Agentic Control Plane:');
-  console.log('  - Hosted Context Gateway (Shared memory across all repos)');
-  console.log('  - ShieldCortex Managed Context Packs');
-  console.log('  - Automated DPO/KTO Training Pipelines');
-  console.log('  - Team-wide Agentic Guardrails');
-  console.log('\n👉 Claim your founding spot here:');
-  console.log(`   ${stripeUrl}`);
-  console.log('\nOnce upgraded, run: npx rlhf-feedback-loop init --key=YOUR_PRO_KEY\n');
+  console.log('Self-serve offer today: Pro Pack ($9 one-time) on Gumroad.');
+  console.log('Hosted Context Gateway access is pilot/by-request; it is not a public self-serve recurring subscription.');
+  console.log('\nWhat is available:');
+  console.log('  - Pro Pack: curated prevention rules, presets, hooks, and reminder templates');
+  console.log('  - Hosted demo: public product surface and onboarding shell');
+  console.log('  - Commercial truth doc: source of truth for traction, pricing, and proof claims');
+  console.log('\nLinks:');
+  console.log(`  Pro Pack        : ${gumroadUrl}`);
+  console.log(`  Hosted demo     : ${hostedUrl}`);
+  console.log(`  Commercial truth: ${truthUrl}\n`);
 }
 
 function summary() {
@@ -686,7 +688,7 @@ function help() {
   console.log('  export-dpo            Export DPO training pairs (prompt/chosen/rejected JSONL)');
   console.log('  rules                 Generate prevention rules from repeated failures');
   console.log('  self-heal             Run self-healing check and auto-fix');
-  console.log('  pro                   Upgrade to Context Gateway ($10/mo)');
+  console.log('  pro                   Open the $9 one-time Pro Pack + hosted pilot info');
   console.log('  prove [--target=X]    Run proof harness (adapters|automation|attribution|lancedb|local-intelligence|...)');
   console.log('  watch [flags]           Watch .rlhf/ for external signals and ingest through pipeline (--once, --source=X)');
   console.log('  status                  Show feedback tracking dashboard — approval trend + failure domains');

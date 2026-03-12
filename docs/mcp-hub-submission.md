@@ -87,8 +87,9 @@ Optional manual config (`~/.claude/claude_desktop_config.json` or `.claude/setti
 }
 ```
 
-Get your API key at: https://buy.stripe.com/fZu4gz0I47Dg9G1cGv3sI03 ($10/mo Context Gateway founding price)
-Verification evidence: https://github.com/IgorGanapolsky/rlhf-feedback-loop/blob/main/docs/VERIFICATION_EVIDENCE.md
+Hosted API access is currently pilot/by-request rather than a public self-serve monthly subscription.
+Current self-serve commercial offer: Pro Pack ($9 one-time): https://iganapolsky.gumroad.com/l/tjovof
+Verification evidence: https://github.com/IgorGanapolsky/mcp-memory-gateway/blob/main/docs/VERIFICATION_EVIDENCE.md
 
 ---
 

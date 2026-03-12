@@ -29,10 +29,11 @@ test('public docs render the current package version', () => {
   const mcpSubmission = readText('docs/mcp-hub-submission.md');
 
   assert.match(landingPage, /v__PACKAGE_VERSION__/);
-  assert.match(landingPage, /Join as Founding Member — \$10\/mo/);
+  assert.match(landingPage, /Get Pro Pack — \$9 one-time/);
+  assert.match(landingPage, /Current commercial truth/);
   assert.match(landingPage, /Hosted onboarding at https:\/\/rlhf-feedback-loop-production\.up\.railway\.app/);
-  assert.match(landingPage, /falls back to the hosted app if checkout creation fails/);
-  assert.doesNotMatch(landingPage, /100 spots|50 founding spots/i);
+  assert.doesNotMatch(landingPage, /\$10\/mo|Founding Member/i);
+  assert.doesNotMatch(landingPage, /Bought by teams|100 spots|50 founding spots/i);
   assert.match(mcpSubmission, new RegExp(`## Version\\s+${packageJson.version}`));
 });
 
@@ -66,15 +67,18 @@ test('hosted origin and repository metadata stay canonical across live-facing ar
   assert.match(publicLanding, new RegExp(`Versioned proof: v${packageJson.version.replaceAll('.', '\\.')}`));
   assert.match(publicLanding, new RegExp(`Context Gateway • v${packageJson.version.replaceAll('.', '\\.')}`));
   assert.doesNotMatch(publicLanding, /mcp-gateway\.vercel\.app/);
+  assert.match(publicLanding, /COMMERCIAL_TRUTH\.md/);
+  assert.match(publicLanding, /Get Pro Pack — \$9 one-time/);
   assert.doesNotMatch(publicLanding, /buy\.stripe\.com/);
-  assert.doesNotMatch(publicLanding, /\$5\/mo/);
-  assert.doesNotMatch(publicLanding, /50 spots|38 spots|Join 12 founding members/i);
+  assert.doesNotMatch(publicLanding, /\$10\/mo|Founding Member/i);
+  assert.doesNotMatch(publicLanding, /50 spots|38 spots|Join 12 founding members|Bought by teams|Used by operators/i);
   assert.doesNotMatch(publicLanding, /github\.com\/IgorGanapolsky\/rlhf-feedback-loop/);
 
   assert.match(serverSource, new RegExp(CURRENT_REPOSITORY_URL.replaceAll('.', '\\.')));
   assert.doesNotMatch(serverSource, /github\.com\/IgorGanapolsky\/rlhf-feedback-loop/);
 
-  assert.match(twitterThread, /Live API: rlhf-feedback-loop-production\.up\.railway\.app/);
+  assert.match(twitterThread, /Hosted demo: rlhf-feedback-loop-production\.up\.railway\.app/);
+  assert.match(twitterThread, /engineering validation, not customer proof/i);
   assert.doesNotMatch(twitterThread, /us-central1\.run\.app/);
 });
 
@@ -84,7 +88,7 @@ test('runtime hosted billing config defaults to the live founding price', () => 
 
   try {
     const runtimeConfig = resolveHostedBillingConfig();
-    assert.equal(runtimeConfig.foundingPrice, '$10/mo');
+    assert.equal(runtimeConfig.foundingPrice, '$9 one-time');
     assert.equal(runtimeConfig.checkoutFallbackUrl, CANONICAL_APP_ORIGIN);
   } finally {
     if (previous === undefined) {
@@ -93,4 +97,33 @@ test('runtime hosted billing config defaults to the live founding price', () => 
       process.env.RLHF_FOUNDING_PRICE = previous;
     }
   }
+});
+
+test('commercial truth sources stay aligned across public and historical docs', () => {
+  const commercialTruth = readText('docs/COMMERCIAL_TRUTH.md');
+  const readme = readText('README.md');
+  const proReadme = readText('pro/README.md');
+  const pricingResearch = readText('docs/PRICING_RESEARCH_2026-03-09.md');
+  const crisisReport = readText('docs/PRICING_RESEARCH_2026-03-10.md');
+  const packagingPlan = readText('docs/PACKAGING_AND_SALES_PLAN.md');
+  const revenueSprint = readText('docs/REVENUE_SPRINT_MAR2026.md');
+  const anthropicStrategy = readText('docs/ANTHROPIC_MARKETPLACE_STRATEGY.md');
+  const xStrategy = readText('docs/X_AUTOMATION_STRATEGY.md');
+  const directoryGuide = readText('docs/marketing/mcp-directories.md');
+
+  assert.match(commercialTruth, /Pro Pack on Gumroad: `\$9` one-time/);
+  assert.match(commercialTruth, /pilot\/by-request workflow layer/);
+  assert.match(commercialTruth, /Do not treat GitHub stars, watchers, dependents, or npm download counts as customer or revenue proof/);
+
+  assert.match(readme, /Commercial Truth/);
+  assert.match(proReadme, /Commercial Truth/);
+  assert.doesNotMatch(readme, /500\+ agentic sessions|battle-tested/i);
+  assert.doesNotMatch(proReadme, /500\+ agentic sessions|battle-tested/i);
+
+  for (const historicalDoc of [pricingResearch, crisisReport, packagingPlan, revenueSprint, anthropicStrategy, xStrategy]) {
+    assert.match(historicalDoc, /Historical .*note|Historical .*archived|Historical .*hypothesis/i);
+    assert.match(historicalDoc, /COMMERCIAL_TRUTH\.md/);
+  }
+
+  assert.doesNotMatch(directoryGuide, /30k\+ stars|18k\+ servers listed/i);
 });

@@ -1,5 +1,7 @@
 # Anthropic Marketplace Strategy: The Reliability & Context Engineering Layer
 
+> Historical research note: this strategy file may reference outdated pricing and distribution assumptions. Use `docs/COMMERCIAL_TRUTH.md` for current pricing and traction claims.
+
 ## Marketplace Positioning
 MCP Memory Gateway is the **Enterprise Control Plane** for Claude-based agentic workflows. We solve the "Vibe Coding" security crisis by providing a verifiable, context-engineered runtime.
 
@@ -16,7 +18,7 @@ MCP Memory Gateway is the **Enterprise Control Plane** for Claude-based agentic 
 ## Technical Integration (The Listing Payload)
 - **Delivery Format:** MCP Server (Standard) + OpenAPI Spec (for Claude Cowork).
 - **Security Evidence:** All listed skills are verified by our `VERIFICATION_EVIDENCE.md` audit trail.
-- **Pricing:** Founding price `$10/mo` (Context Gateway) while the product is still in the early distribution phase.
+- **Pricing (historical hypothesis):** This strategy assumed a `$10/mo` Context Gateway founding price while the product was still in early distribution. The current public self-serve offer is the `$9` one-time Pro Pack in `docs/COMMERCIAL_TRUTH.md`, and hosted gateway access is pilot/by-request.
 
 ## Strategic Improvement: "Vibe-to-Verification" (V2V)
 The product will now feature a **V2V Pipeline**:

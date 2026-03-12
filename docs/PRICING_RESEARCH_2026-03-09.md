@@ -1,12 +1,16 @@
 # Pricing Research (March 9, 2026)
 
-## Decision
+> Historical research note: this document captures a point-in-time pricing exploration. It is not the current product truth. Use `docs/COMMERCIAL_TRUTH.md` for current pricing and proof language.
 
-Keep Context Gateway at the current live Stripe price of `$10/mo` for now, but position it explicitly as a founding price rather than the permanent list price.
+## Historical Decision At The Time
 
-## Why
+On March 9, 2026, the working hypothesis was to keep Context Gateway at a `$10/mo` Stripe price for a limited period and position it explicitly as a founding price rather than the permanent list price.
 
-- The current Stripe product tied to this repo is a live `$10/mo` monthly subscription.
+This monthly self-serve hypothesis has since been retired. The current public commercial truth is documented in `docs/COMMERCIAL_TRUTH.md`.
+
+## Why That Hypothesis Existed
+
+- At the time, the Stripe product tied to this repo was a live `$10/mo` monthly subscription.
 - The product is early, recently launched, and does not yet have strong retained paid demand.
 - The open-source package is free, so Context Gateway has to clear a second spending threshold on top of the user's existing model subscriptions.
 - A `$49/mo` self-serve ask is aggressive at this stage relative to both individual AI tooling and early-stage agent infrastructure products.
@@ -22,9 +26,9 @@ Keep Context Gateway at the current live Stripe price of `$10/mo` for now, but p
 - Helicone Pro: `$79/mo`
 - Braintrust Pro: `$249/mo`
 
-## Recommendation
+## Historical Recommendation
 
-- Keep `Context Gateway` at `$10/mo` while proving onboarding, activation, and retention.
-- Describe it as a `founding price` or `early adopter price`.
-- Do not move to `$49/mo` until the hosted dashboard, team workflows, and measurable ROI proof are live.
-- Revisit a move into the `$29-$49/mo` range once the hosted product clearly competes with Langfuse, LangSmith, Portkey, or Helicone instead of just low-friction developer subscriptions.
+- The recommendation at the time was to keep `Context Gateway` at `$10/mo` while proving onboarding, activation, and retention.
+- The recommendation at the time was to describe it as a `founding price` or `early adopter price`.
+- The recommendation at the time was not to move to `$49/mo` until the hosted dashboard, team workflows, and measurable ROI proof were live.
+- The recommendation at the time was to revisit a move into the `$29-$49/mo` range once the hosted product clearly competed with Langfuse, LangSmith, Portkey, or Helicone instead of just low-friction developer subscriptions.

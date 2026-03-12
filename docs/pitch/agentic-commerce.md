@@ -97,9 +97,9 @@ Export preference pairs for fine-tuning commerce-specific agent models. This is 
 
 - 384 tests, 100% pass rate
 - 5 agent adapters: Claude, Codex, Gemini, Amp, Cursor
-- npm package: `rlhf-feedback-loop` (production-ready)
+- npm package: `rlhf-feedback-loop`
 - Open source: MIT license
-- Trusted by enterprise workflows with 500+ agentic sessions
+- Commercial traction is early; use verification evidence for engineering proof and pilots/orders for market proof
 
 ## Call to Action
 

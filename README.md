@@ -199,7 +199,7 @@ Agent (Claude/Codex/Amp/Gemini)
 
 ## 💎 Pro Pack — Production Context Engineering Configs
 
-Battle-tested configurations extracted from 500+ agentic sessions. Skip months of tuning.
+Curated configuration pack for teams that want a faster production setup without inventing their own guardrails from scratch.
 
 | What You Get | Description |
 |---|---|
@@ -210,6 +210,8 @@ Battle-tested configurations extracted from 500+ agentic sessions. Skip months o
 | **Reminder Templates** | 8 production reminder templates with priority levels |
 
 **[$9 on Gumroad →](https://iganapolsky.gumroad.com/l/tjovof)**
+
+Current pricing and traction policy: [Commercial Truth](docs/COMMERCIAL_TRUTH.md)
 
 ## Support the Project
 

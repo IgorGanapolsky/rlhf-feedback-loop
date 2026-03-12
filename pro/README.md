@@ -5,7 +5,7 @@ Production-ready RLHF configurations for AI agent teams.
 ## What's Included
 
 ### 1. Curated Prevention Rules (`prevention-rules-pro.md`)
-Battle-tested rules extracted from 500+ agentic sessions covering:
+Curated rules and presets covering:
 - PR workflow failures (declaring done without evidence)
 - Git push hygiene (thread verification, CI confirmation)
 - Tool misuse patterns (wrong tool for the task)
@@ -48,3 +48,5 @@ npm run self-heal:check
 ## License
 
 Commercial license. Single-team use. See purchase terms on Gumroad.
+
+Current pricing and traction policy: [Commercial Truth](../docs/COMMERCIAL_TRUTH.md)

@@ -1,4 +1,4 @@
-# Pro Prevention Rules — Battle-Tested from 500+ Agentic Sessions
+# Pro Prevention Rules — Curated Production Rules
 
 ## PR Workflow Rules
 

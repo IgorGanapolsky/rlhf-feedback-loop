@@ -16,8 +16,8 @@ MCP Memory Gateway gives Claude Code, Codex, and Gemini persistent memory across
 
 Thumbs-up/down feedback → stored locally → queried before every action → repeated failures auto-blocked.
 
-Live hosted at $10/mo:
-https://rlhf-feedback-loop-production.up.railway.app
+Self-serve Pro Pack ($9 one-time):
+https://iganapolsky.gumroad.com/l/tjovof
 
 ---
 
@@ -40,12 +40,12 @@ Under the hood:
 
 ---
 
-**Tweet 5 (social proof / validation):**
+**Tweet 5 (engineering proof / validation):**
 The system was validated using four independent AI agents — Claude, Codex, Amp, Gemini — each running the same test suite against it.
 
 Compatibility report is generated in CI on every push.
 
-This is what dogfooding looks like.
+This is dogfooding and engineering proof, not customer proof.
 
 ---
 
@@ -60,7 +60,6 @@ This does all three.
 
 **Tweet 7 (close + dual CTA):**
 Free self-hosted: npx rlhf-feedback-loop serve
-Hosted ($10/mo): https://rlhf-feedback-loop-production.up.railway.app
+Pro Pack ($9 one-time): https://iganapolsky.gumroad.com/l/tjovof
+Hosted demo: https://rlhf-feedback-loop-production.up.railway.app
 GitHub: https://github.com/IgorGanapolsky/mcp-memory-gateway
-
-First 10 signups get a 30-min setup call. DM me.
