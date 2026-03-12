@@ -15,7 +15,9 @@
       "context_provenance",
       "commerce_recall",
       "generate_skill",
-      "satisfy_gate"
+      "satisfy_gate",
+      "gate_stats",
+      "dashboard"
     ],
     "essential": [
       "capture_feedback",
@@ -38,7 +40,9 @@
       "feedback_stats",
       "list_intents",
       "plan_intent",
-      "context_provenance"
+      "context_provenance",
+      "gate_stats",
+      "dashboard"
     ],
     "locked": [
       "feedback_summary",

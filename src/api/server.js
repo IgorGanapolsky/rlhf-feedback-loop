@@ -58,6 +58,13 @@ const {
 const {
   generateSkills,
 } = require('../../scripts/skill-generator');
+const {
+  satisfyCondition,
+  loadStats: loadGateStats,
+} = require('../../scripts/gates-engine');
+const {
+  generateDashboard,
+} = require('../../scripts/dashboard');
 
 const LANDING_PAGE_PATH = path.resolve(__dirname, '../../docs/landing-page.html');
 
@@ -1237,6 +1244,33 @@ function createApiServer() {
       if (req.method === 'GET' && pathname === '/v1/analytics/funnel') {
         const summary = getFunnelAnalytics();
         sendJson(res, 200, summary);
+        return;
+      }
+
+      // GET /v1/dashboard -- Full RLHF dashboard JSON
+      if (req.method === 'GET' && pathname === '/v1/dashboard') {
+        const { FEEDBACK_DIR } = getFeedbackPaths();
+        const data = generateDashboard(FEEDBACK_DIR);
+        sendJson(res, 200, data);
+        return;
+      }
+
+      // GET /v1/gates/stats -- Gate enforcement statistics
+      if (req.method === 'GET' && pathname === '/v1/gates/stats') {
+        const stats = loadGateStats();
+        sendJson(res, 200, stats);
+        return;
+      }
+
+      // POST /v1/gates/satisfy -- Record evidence that a gate condition is satisfied
+      if (req.method === 'POST' && pathname === '/v1/gates/satisfy') {
+        const body = await parseJsonBody(req);
+        if (!body.gateId || !body.evidence) {
+          sendJson(res, 400, { error: 'gateId and evidence are required' });
+          return;
+        }
+        const entry = satisfyCondition(body.gateId, body.evidence);
+        sendJson(res, 200, { satisfied: true, gateId: body.gateId, ...entry });
         return;
       }
 

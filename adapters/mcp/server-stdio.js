@@ -41,6 +41,13 @@ const {
 const {
   generateSkills,
 } = require('../../scripts/skill-generator');
+
+const {
+  loadStats: loadGateStats,
+} = require('../../scripts/gates-engine');
+const {
+  generateDashboard,
+} = require('../../scripts/dashboard');
 const {
   satisfyGate,
 } = require('../../scripts/gate-satisfy');
@@ -258,6 +265,22 @@ const TOOLS = [
         gate: { type: 'string', description: 'Gate condition ID to satisfy (e.g., pr_threads_checked)' },
         evidence: { type: 'string', description: 'Evidence text (e.g., "0 unresolved threads")' },
       },
+    },
+  },
+  {
+    name: 'gate_stats',
+    description: 'Get gate enforcement statistics -- blocked count, warned count, top gates',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+    },
+  },
+  {
+    name: 'dashboard',
+    description: 'Get full RLHF dashboard -- approval rate, gate stats, prevention impact, system health',
+    inputSchema: {
+      type: 'object',
+      properties: {},
     },
   },
   {
@@ -674,6 +697,16 @@ async function callToolInner(name, args = {}) {
   if (name === 'satisfy_gate') {
     const result = satisfyGate(args.gate, args.evidence);
     return { content: [{ type: 'text', text: toText(result) }] };
+  }
+
+  if (name === 'gate_stats') {
+    const stats = loadGateStats();
+    return { content: [{ type: 'text', text: toText(stats) }] };
+  }
+
+  if (name === 'dashboard') {
+    const data = generateDashboard(SAFE_DATA_DIR);
+    return { content: [{ type: 'text', text: toText(data) }] };
   }
 
   if (name === 'generate_skill') {
