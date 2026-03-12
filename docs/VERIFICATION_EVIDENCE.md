@@ -1,3 +1,43 @@
+## March 12, 2026: CFO billing summary control plane
+
+Scope:
+
+- Added a shared operational billing summary in `scripts/billing.js` that merges the funnel ledger with the local key store.
+- Added admin-only `GET /v1/billing/summary` plus the `node bin/cli.js cfo` command so API, CLI, watcher, and strategist surfaces read the same source of truth.
+- Replaced fake paid-line revenue guessing in operator scripts with the new billing summary proxy.
+
+Commands run:
+
+```bash
+node --test tests/billing.test.js tests/api-server.test.js tests/cli.test.js tests/openapi-parity.test.js
+npm test
+npm run test:coverage
+env RLHF_PROOF_DIR="$(mktemp -d)" npm run prove:adapters
+env RLHF_PROOF_DIR="$(mktemp -d)" npm run prove:automation
+env RLHF_PROOF_DIR="$(mktemp -d)" npm run self-heal:check
+```
+
+Observed result:
+
+- Targeted regression coverage passed: `63` tests passed, `0` failed across billing, API server, CLI, and OpenAPI parity.
+- `npm test` passed end-to-end after adding the CFO control plane.
+- `npm run test:coverage` passed with all-files coverage at `82.18%` lines, `68.13%` branches, and `84.90%` functions.
+- `env RLHF_PROOF_DIR="$(mktemp -d)" npm run prove:adapters`: `38` passed, `0` failed.
+- `env RLHF_PROOF_DIR="$(mktemp -d)" npm run prove:automation`: `35` passed, `0` failed.
+- `env RLHF_PROOF_DIR="$(mktemp -d)" npm run self-heal:check`: `Overall: HEALTHY` with `4/4` checks healthy.
+
+Evidence artifacts:
+
+- Command output from the targeted regression run is the primary proof for the new CFO control plane.
+- Ephemeral `RLHF_PROOF_DIR` directories were used for adapter and automation proof runs to avoid tracked proof churn.
+
+Requirements verified:
+
+- Billing funnel telemetry, active keys, disabled keys, customer usage, and source attribution now resolve from one shared summary shape instead of ad hoc paid-line counting.
+- `GET /v1/billing/summary` is admin-only and rejects provisioned billing keys.
+- `node bin/cli.js cfo` returns the same machine-readable control-plane summary as the API surface.
+- This surface is an operational billing proxy only; it does not claim booked revenue or invoice truth because the persisted stores track paid events, API keys, customer IDs, and usage rather than Stripe ledger amounts.
+
 ## March 12, 2026: Revenue Sprint & Conversion Optimization
 
 Scope:

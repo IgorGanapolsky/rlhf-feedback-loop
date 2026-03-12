@@ -8,25 +8,32 @@
 
 'use strict';
 
-const fs = require('fs');
 const path = require('path');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { withReasoningPrompt } = require('./code-reasoning');
+const { getBillingSummary } = require('./billing');
 
 async function generateStrategy() {
-  console.log('🧠 [Strategist Agent] Analyzing current system state and revenue funnel...');
+  console.log('🧠 [Strategist Agent] Analyzing current system state and billing control plane...');
 
-  const ledgerPath = path.resolve(__dirname, '../.claude/memory/feedback/funnel-events.jsonl');
-  const revenue = fs.existsSync(ledgerPath) ? fs.readFileSync(ledgerPath, 'utf-8').split('\n').filter(l => l.includes('"stage":"paid"')).length : 0;
+  const summary = getBillingSummary();
 
   const rawPrompt = `
     System State:
-    - Revenue Today: $${revenue * 49} (Estimated)
+    - Billing Coverage: ${summary.coverage.source}
+    - Booked Revenue Tracking: ${summary.coverage.tracksBookedRevenue ? 'enabled' : 'not yet instrumented'}
+    - Funnel Stage Counts: acquisition=${summary.funnel.stageCounts.acquisition}, activation=${summary.funnel.stageCounts.activation}, paid=${summary.funnel.stageCounts.paid}
+    - First Paid Event At: ${summary.funnel.firstPaidAt || 'none'}
+    - Last Paid Event: ${summary.funnel.lastPaidEvent ? summary.funnel.lastPaidEvent.event : 'none'}
+    - Active Keys: ${summary.keys.active}
+    - Active Customers: ${summary.keys.activeCustomers}
+    - Total Usage Count: ${summary.keys.totalUsage}
+    - Key Sources: ${JSON.stringify(summary.keys.bySource)}
     - Infrastructure: Stripe Live, AWS Handshake verified, Perplexity Max SEO injected.
     - Active Channels: X.com (17M impressionsLever), GitHub (Always-On Loop).
     - Latest Milestone: support for $49 "Mistake-Free" credit packs.
 
-    Goal: Capture the first real external dollar in the next 60 minutes.
+    Goal: Capture the first real external paid event in the next 60 minutes.
 
     TASKS:
     1. Reason about the current bottleneck.

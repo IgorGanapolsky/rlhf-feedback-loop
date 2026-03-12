@@ -133,6 +133,108 @@ function getFunnelAnalytics() {
   return { totalEvents: events.length, stageCounts, eventCounts, conversionRates: { acquisitionToActivation: safeRate(stageCounts.activation, stageCounts.acquisition), activationToPaid: safeRate(stageCounts.paid, stageCounts.activation), acquisitionToPaid: safeRate(stageCounts.paid, stageCounts.acquisition) } };
 }
 
+function getBillingSummary() {
+  const events = loadFunnelLedger();
+  const funnel = getFunnelAnalytics();
+  const store = loadKeyStore();
+  const keyEntries = Object.values(store.keys || {});
+  const paidEvents = events.filter((entry) => entry && entry.stage === 'paid');
+  const firstPaid = paidEvents[0] || null;
+  const lastPaid = paidEvents[paidEvents.length - 1] || null;
+  const customers = new Map();
+  const bySource = {};
+  const activeBySource = {};
+  let activeKeys = 0;
+  let disabledKeys = 0;
+  let totalUsage = 0;
+  const activeCustomerIds = new Set();
+
+  for (const meta of keyEntries) {
+    const source = meta.source || 'unknown';
+    const customerId = meta.customerId || 'unknown';
+    const usageCount = Number(meta.usageCount || 0);
+    bySource[source] = (bySource[source] || 0) + 1;
+    totalUsage += usageCount;
+
+    if (meta.active) {
+      activeKeys += 1;
+      activeBySource[source] = (activeBySource[source] || 0) + 1;
+      activeCustomerIds.add(customerId);
+    } else {
+      disabledKeys += 1;
+    }
+
+    if (!customers.has(customerId)) {
+      customers.set(customerId, {
+        customerId,
+        activeKeys: 0,
+        totalKeys: 0,
+        usageCount: 0,
+        source,
+        installId: meta.installId || null,
+        createdAt: meta.createdAt || null,
+        disabledAt: meta.disabledAt || null,
+      });
+    }
+
+    const summary = customers.get(customerId);
+    summary.totalKeys += 1;
+    summary.usageCount += usageCount;
+    if (meta.active) {
+      summary.activeKeys += 1;
+    }
+    if (meta.source && (!summary.source || summary.source === 'unknown')) {
+      summary.source = meta.source;
+    }
+    if (meta.installId && !summary.installId) {
+      summary.installId = meta.installId;
+    }
+    if (meta.createdAt && (!summary.createdAt || meta.createdAt < summary.createdAt)) {
+      summary.createdAt = meta.createdAt;
+    }
+    if (meta.disabledAt && (!summary.disabledAt || meta.disabledAt > summary.disabledAt)) {
+      summary.disabledAt = meta.disabledAt;
+    }
+  }
+
+  const orderedCustomers = Array.from(customers.values()).sort((a, b) => {
+    const aTime = a.createdAt || '';
+    const bTime = b.createdAt || '';
+    return aTime.localeCompare(bTime) || a.customerId.localeCompare(b.customerId);
+  });
+
+  return {
+    generatedAt: new Date().toISOString(),
+    coverage: {
+      source: 'funnel_ledger+key_store',
+      tracksBookedRevenue: false,
+      tracksInvoices: false,
+    },
+    funnel: {
+      ...funnel,
+      firstPaidAt: firstPaid ? firstPaid.timestamp || null : null,
+      lastPaidAt: lastPaid ? lastPaid.timestamp || null : null,
+      lastPaidEvent: lastPaid ? {
+        timestamp: lastPaid.timestamp || null,
+        event: lastPaid.event || null,
+        evidence: lastPaid.evidence || null,
+        customerId: lastPaid.metadata?.customerId || null,
+        traceId: lastPaid.traceId || null,
+      } : null,
+    },
+    keys: {
+      total: keyEntries.length,
+      active: activeKeys,
+      disabled: disabledKeys,
+      activeCustomers: activeCustomerIds.size,
+      totalUsage,
+      bySource,
+      activeBySource,
+    },
+    customers: orderedCustomers,
+  };
+}
+
 function loadKeyStore() {
   try {
     const target = CONFIG.API_KEYS_PATH;
@@ -421,7 +523,7 @@ function handleGithubWebhook(event) {
 }
 
 module.exports = {
-  createCheckoutSession, getCheckoutSessionStatus, provisionApiKey, rotateApiKey, validateApiKey, recordUsage, reportUsageToStripe, disableCustomerKeys, handleWebhook, verifyWebhookSignature, verifyGithubWebhookSignature, handleGithubWebhook, loadKeyStore, appendFunnelEvent, loadFunnelLedger, getFunnelAnalytics,
+  createCheckoutSession, getCheckoutSessionStatus, provisionApiKey, rotateApiKey, validateApiKey, recordUsage, reportUsageToStripe, disableCustomerKeys, handleWebhook, verifyWebhookSignature, verifyGithubWebhookSignature, handleGithubWebhook, loadKeyStore, appendFunnelEvent, loadFunnelLedger, getFunnelAnalytics, getBillingSummary,
   _API_KEYS_PATH: () => CONFIG.API_KEYS_PATH,
   _FUNNEL_LEDGER_PATH: () => CONFIG.FUNNEL_LEDGER_PATH,
   _LOCAL_CHECKOUT_SESSIONS_PATH: () => CONFIG.LOCAL_CHECKOUT_SESSIONS_PATH,

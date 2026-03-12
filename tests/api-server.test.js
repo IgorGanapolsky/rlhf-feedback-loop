@@ -373,6 +373,42 @@ test('billing provision requires static admin key and rejects billing keys', asy
   assert.equal(res.status, 403);
 });
 
+test('billing summary returns admin-only operational proxy', async () => {
+  billing.provisionApiKey('cus_admin_summary', {
+    installId: 'inst_admin_summary',
+    source: 'stripe_webhook_checkout_completed',
+  });
+  billing.appendFunnelEvent({
+    stage: 'paid',
+    event: 'stripe_checkout_completed',
+    installId: 'inst_admin_summary',
+    evidence: 'cs_admin_summary',
+    metadata: { customerId: 'cus_admin_summary' },
+  });
+
+  const res = await fetch('http://localhost:8790/v1/billing/summary', {
+    headers: authHeader,
+  });
+  assert.equal(res.status, 200);
+
+  const body = await res.json();
+  assert.equal(body.coverage.source, 'funnel_ledger+key_store');
+  assert.equal(body.coverage.tracksBookedRevenue, false);
+  assert.ok(body.funnel.stageCounts.paid >= 1);
+  assert.ok(body.keys.active >= 1);
+  assert.ok(Array.isArray(body.customers));
+});
+
+test('billing summary rejects billing keys', async () => {
+  const billingKey = billing.provisionApiKey('cus_non_admin_summary').key;
+  const res = await fetch('http://localhost:8790/v1/billing/summary', {
+    headers: {
+      authorization: `Bearer ${billingKey}`,
+    },
+  });
+  assert.equal(res.status, 403);
+});
+
 test('rejects external output path by default', async () => {
   const externalPath = '/tmp/should-not-write-outside-safe-root.jsonl';
   const res = await fetch('http://localhost:8790/v1/dpo/export', {

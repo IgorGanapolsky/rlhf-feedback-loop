@@ -343,6 +343,7 @@ describe('bin/cli.js', () => {
     assert.ok(result.stdout.includes('rlhf-feedback-loop'), 'Help should include CLI name');
     assert.ok(result.stdout.includes('init'), 'Help should mention init');
     assert.ok(result.stdout.includes('capture'), 'Help should mention capture');
+    assert.ok(result.stdout.includes('cfo'), 'Help should mention cfo');
     assert.ok(result.stdout.includes('model-fit'), 'Help should mention model-fit');
     assert.ok(result.stdout.includes('risk'), 'Help should mention risk');
     assert.ok(result.stdout.includes('export-dpo'), 'Help should mention export-dpo');
@@ -366,6 +367,73 @@ describe('bin/cli.js', () => {
   test('unknown command exits 1', () => {
     const result = spawnSync(process.execPath, [CLI, 'unknown-xyz'], { encoding: 'utf8' });
     assert.strictEqual(result.status, 1, `Expected exit 1, got ${result.status}`);
+  });
+
+  test('cfo emits operational billing summary JSON', () => {
+    const isolatedDir = makeTmpDir();
+    const apiKeysPath = path.join(isolatedDir, 'api-keys.json');
+    const ledgerPath = path.join(isolatedDir, 'funnel-events.jsonl');
+    fs.writeFileSync(apiKeysPath, JSON.stringify({
+      keys: {
+        rlhf_active_cli: {
+          customerId: 'cus_cli_summary',
+          active: true,
+          usageCount: 3,
+          createdAt: '2026-03-12T00:00:00.000Z',
+          installId: 'inst_cli_summary',
+          source: 'stripe_webhook_checkout_completed',
+        },
+        rlhf_disabled_cli: {
+          customerId: 'cus_cli_disabled',
+          active: false,
+          usageCount: 0,
+          createdAt: '2026-03-12T00:05:00.000Z',
+          disabledAt: '2026-03-12T00:10:00.000Z',
+          source: 'github_marketplace_purchased',
+        },
+      },
+    }, null, 2));
+    fs.writeFileSync(ledgerPath, [
+      JSON.stringify({
+        timestamp: '2026-03-12T00:00:00.000Z',
+        stage: 'acquisition',
+        event: 'checkout_session_created',
+        evidence: 'sess_cli_summary',
+        installId: 'inst_cli_summary',
+        traceId: 'trace_cli_summary',
+        metadata: { customerId: 'cus_cli_summary' },
+      }),
+      JSON.stringify({
+        timestamp: '2026-03-12T00:15:00.000Z',
+        stage: 'paid',
+        event: 'stripe_checkout_completed',
+        evidence: 'cs_cli_summary',
+        installId: 'inst_cli_summary',
+        traceId: 'trace_cli_summary',
+        metadata: { customerId: 'cus_cli_summary' },
+      }),
+      '',
+    ].join('\n'));
+
+    const result = spawnSync(process.execPath, [CLI, 'cfo'], {
+      encoding: 'utf8',
+      cwd: isolatedDir,
+      env: {
+        ...process.env,
+        _TEST_API_KEYS_PATH: apiKeysPath,
+        _TEST_FUNNEL_LEDGER_PATH: ledgerPath,
+      },
+    });
+    assert.equal(result.status, 0, `cfo failed:\n${result.stderr}`);
+
+    const payload = JSON.parse(result.stdout);
+    assert.equal(payload.coverage.source, 'funnel_ledger+key_store');
+    assert.equal(payload.keys.active, 1);
+    assert.equal(payload.keys.bySource.stripe_webhook_checkout_completed, 1);
+    assert.equal(payload.keys.bySource.github_marketplace_purchased, 1);
+    assert.equal(payload.funnel.stageCounts.paid, 1);
+
+    fs.rmSync(isolatedDir, { recursive: true, force: true });
   });
 
   test('model-fit writes a machine-readable report using hardware overrides', () => {

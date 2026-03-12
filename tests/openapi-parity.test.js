@@ -43,6 +43,7 @@ test('canonical openapi includes monetization and funnel analytics routes', () =
     '/v1/billing/checkout',
     '/v1/billing/usage',
     '/v1/billing/provision',
+    '/v1/billing/summary',
     '/v1/billing/webhook',
     '/v1/billing/github-webhook',
     '/v1/analytics/funnel',

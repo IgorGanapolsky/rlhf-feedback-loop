@@ -47,6 +47,7 @@ const {
   verifyGithubWebhookSignature,
   handleGithubWebhook,
   getFunnelAnalytics,
+  getBillingSummary,
 } = require('../../scripts/billing');
 const {
   resolveHostedBillingConfig,
@@ -1156,6 +1157,18 @@ function createApiServer() {
           source: 'admin_provision',
         });
         sendJson(res, 200, result);
+        return;
+      }
+
+      // GET /v1/billing/summary — admin-only operational billing summary
+      if (req.method === 'GET' && pathname === '/v1/billing/summary') {
+        if (!isStaticAdminAuthorized(req, expectedApiKey)) {
+          sendJson(res, 403, { error: 'Forbidden: admin key required' });
+          return;
+        }
+
+        const summary = getBillingSummary();
+        sendJson(res, 200, summary);
         return;
       }
 

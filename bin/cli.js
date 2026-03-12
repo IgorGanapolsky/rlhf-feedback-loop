@@ -7,6 +7,7 @@
  *   npx rlhf-feedback-loop capture       # capture feedback
  *   npx rlhf-feedback-loop export-dpo    # export DPO training pairs
  *   npx rlhf-feedback-loop stats         # feedback analytics + Revenue-at-Risk
+ *   npx rlhf-feedback-loop cfo           # operational billing summary
  *   npx rlhf-feedback-loop pro           # upgrade to Context Gateway
  */
 
@@ -464,6 +465,12 @@ function stats() {
   }
 }
 
+function cfo() {
+  const { getBillingSummary } = require(path.join(PKG_ROOT, 'scripts', 'billing'));
+  const summary = getBillingSummary();
+  console.log(JSON.stringify(summary, null, 2));
+}
+
 function pro() {
   const stripeUrl = 'https://buy.stripe.com/fZu4gz0I47Dg9G1cGv3sI03';
   console.log('\n🚀 MCP Memory Gateway — Founding Member');
@@ -672,6 +679,7 @@ function help() {
   console.log('  serve                 Start MCP server (stdio) — for claude/codex/gemini mcp add');
   console.log('  capture [flags]       Capture feedback (--feedback=up|down --context="..." --tags="...")');
   console.log('  stats                 Show feedback analytics + Revenue-at-Risk');
+  console.log('  cfo                   Show operational billing summary as JSON');
   console.log('  summary               Human-readable feedback summary');
   console.log('  model-fit             Detect the current local embedding profile and write evidence report');
   console.log('  risk [flags]          Train or query the boosted local risk scorer');
@@ -688,6 +696,7 @@ function help() {
   console.log('Examples:');
   console.log('  npx rlhf-feedback-loop init');
   console.log('  npx rlhf-feedback-loop stats');
+  console.log('  npx rlhf-feedback-loop cfo');
   console.log('  npx rlhf-feedback-loop model-fit');
   console.log('  npx rlhf-feedback-loop risk');
   console.log('  npx rlhf-feedback-loop pro');
@@ -713,6 +722,10 @@ switch (COMMAND) {
     break;
   case 'stats':
     stats();
+    break;
+  case 'cfo':
+  case 'revenue':
+    cfo();
     break;
   case 'summary':
     summary();

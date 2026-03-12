@@ -136,6 +136,49 @@ components:
               type: number
             acquisitionToPaid:
               type: number
+    BillingSummaryResponse:
+      type: object
+      properties:
+        generatedAt:
+          type: string
+          format: date-time
+        coverage:
+          type: object
+          properties:
+            source:
+              type: string
+            tracksBookedRevenue:
+              type: boolean
+            tracksInvoices:
+              type: boolean
+        funnel:
+          allOf:
+            - $ref: '#/components/schemas/FunnelAnalyticsResponse'
+            - type: object
+              properties:
+                firstPaidAt:
+                  type: string
+                  nullable: true
+                lastPaidAt:
+                  type: string
+                  nullable: true
+        keys:
+          type: object
+          properties:
+            total:
+              type: integer
+            active:
+              type: integer
+            disabled:
+              type: integer
+            activeCustomers:
+              type: integer
+            totalUsage:
+              type: integer
+            bySource:
+              type: object
+              additionalProperties:
+                type: integer
 paths:
   /healthz:
     get:
@@ -181,6 +224,20 @@ paths:
                 $ref: '#/components/schemas/FunnelAnalyticsResponse'
         '401':
           description: Unauthorized
+  /v1/billing/summary:
+    get:
+      operationId: getBillingSummary
+      responses:
+        '200':
+          description: Admin-only operational billing summary from the funnel ledger and key store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillingSummaryResponse'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
   /v1/intents/catalog:
     get:
       operationId: listIntentCatalog

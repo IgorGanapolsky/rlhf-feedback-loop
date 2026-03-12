@@ -126,6 +126,61 @@ describe('billing.js — funnel ledger', () => {
     const events = readLedgerEvents();
     assert.equal(events.filter(e => e.stage === 'activation').length, 1);
   });
+
+  test('getBillingSummary merges funnel ledger and key store state', () => {
+    const billing = require('../scripts/billing');
+    const activeKey = billing.provisionApiKey('cus_summary_a', {
+      installId: 'inst_summary_a',
+      source: 'stripe_webhook_checkout_completed',
+    });
+    const disabledKey = billing.provisionApiKey('cus_summary_b', {
+      installId: 'inst_summary_b',
+      source: 'github_marketplace_purchased',
+    });
+
+    billing.recordUsage(activeKey.key);
+    billing.recordUsage(activeKey.key);
+    billing.disableCustomerKeys('cus_summary_b');
+    billing.appendFunnelEvent({
+      stage: 'acquisition',
+      event: 'checkout_session_created',
+      installId: 'inst_summary_a',
+      evidence: 'sess_summary_a',
+      metadata: { customerId: 'cus_summary_a' },
+    });
+    billing.appendFunnelEvent({
+      stage: 'paid',
+      event: 'stripe_checkout_completed',
+      installId: 'inst_summary_a',
+      evidence: 'cs_summary_a',
+      metadata: { customerId: 'cus_summary_a' },
+    });
+
+    const summary = billing.getBillingSummary();
+    assert.equal(summary.coverage.source, 'funnel_ledger+key_store');
+    assert.equal(summary.coverage.tracksBookedRevenue, false);
+    assert.equal(summary.funnel.stageCounts.acquisition, 1);
+    assert.equal(summary.funnel.stageCounts.activation, 1);
+    assert.equal(summary.funnel.stageCounts.paid, 1);
+    assert.equal(summary.keys.total, 2);
+    assert.equal(summary.keys.active, 1);
+    assert.equal(summary.keys.disabled, 1);
+    assert.equal(summary.keys.totalUsage, 2);
+    assert.equal(summary.keys.activeCustomers, 1);
+    assert.equal(summary.keys.bySource.stripe_webhook_checkout_completed, 1);
+    assert.equal(summary.keys.bySource.github_marketplace_purchased, 1);
+    assert.equal(summary.keys.activeBySource.stripe_webhook_checkout_completed, 1);
+    assert.ok(summary.funnel.firstPaidAt);
+    assert.equal(summary.funnel.lastPaidEvent.customerId, 'cus_summary_a');
+
+    const activeCustomer = summary.customers.find((entry) => entry.customerId === 'cus_summary_a');
+    const disabledCustomer = summary.customers.find((entry) => entry.customerId === 'cus_summary_b');
+    assert.equal(activeCustomer.activeKeys, 1);
+    assert.equal(activeCustomer.usageCount, 2);
+    assert.equal(disabledCustomer.activeKeys, 0);
+    assert.equal(disabledCustomer.source, 'github_marketplace_purchased');
+    assert.equal(disabledKey.customerId, 'cus_summary_b');
+  });
 });
 
 describe('billing.js — rotateApiKey', () => {
