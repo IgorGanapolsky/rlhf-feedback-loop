@@ -1,6 +1,6 @@
 'use strict';
 
-const { describe, it, beforeEach, afterEach, mock } = require('node:test');
+const { describe, it, beforeEach, afterEach } = require('node:test');
 const assert = require('node:assert/strict');
 const {
   percentEncode,
@@ -11,6 +11,29 @@ const {
   searchTweets,
   parseTweetsFromThread,
 } = require('../scripts/post-to-x');
+
+const ORIGINAL_FETCH = globalThis.fetch;
+const ORIGINAL_CONSOLE_LOG = console.log;
+const ORIGINAL_CONSOLE_ERROR = console.error;
+
+function stubFetch(impl) {
+  globalThis.fetch = impl;
+}
+
+function silenceConsole() {
+  console.log = () => {};
+  console.error = () => {};
+}
+
+function restoreGlobals() {
+  if (typeof ORIGINAL_FETCH === 'undefined') {
+    delete globalThis.fetch;
+  } else {
+    globalThis.fetch = ORIGINAL_FETCH;
+  }
+  console.log = ORIGINAL_CONSOLE_LOG;
+  console.error = ORIGINAL_CONSOLE_ERROR;
+}
 
 describe('percentEncode', () => {
   it('encodes special chars (!, *, \', (, ))', () => {
@@ -88,10 +111,11 @@ describe('postTweet', () => {
     process.env.X_API_SECRET = 'test-api-secret';
     process.env.X_ACCESS_TOKEN = 'test-access-token';
     process.env.X_ACCESS_TOKEN_SECRET = 'test-access-token-secret';
+    silenceConsole();
   });
 
   afterEach(() => {
-    mock.restoreAll();
+    restoreGlobals();
     delete process.env.X_API_KEY;
     delete process.env.X_API_SECRET;
     delete process.env.X_ACCESS_TOKEN;
@@ -99,7 +123,7 @@ describe('postTweet', () => {
   });
 
   it('returns tweet ID on 201', async () => {
-    mock.method(globalThis, 'fetch', async () => ({
+    stubFetch(async () => ({
       ok: true,
       status: 201,
       json: async () => ({ data: { id: '123456789' } }),
@@ -110,7 +134,7 @@ describe('postTweet', () => {
   });
 
   it('returns null on error status', async () => {
-    mock.method(globalThis, 'fetch', async () => ({
+    stubFetch(async () => ({
       ok: false,
       status: 403,
       json: async () => ({ detail: 'Forbidden' }),
@@ -121,8 +145,8 @@ describe('postTweet', () => {
   });
 
   it('handles 429 rate limit and eventually returns null', async () => {
-    const headers = new Map([['retry-after', '0']]);
-    mock.method(globalThis, 'fetch', async () => ({
+    const headers = { get: (key) => key === 'retry-after' ? '0' : null };
+    stubFetch(async () => ({
       ok: false,
       status: 429,
       headers,
@@ -140,10 +164,11 @@ describe('searchTweets', () => {
     process.env.X_API_SECRET = 'test-api-secret';
     process.env.X_ACCESS_TOKEN = 'test-access-token';
     process.env.X_ACCESS_TOKEN_SECRET = 'test-access-token-secret';
+    silenceConsole();
   });
 
   afterEach(() => {
-    mock.restoreAll();
+    restoreGlobals();
     delete process.env.X_API_KEY;
     delete process.env.X_API_SECRET;
     delete process.env.X_ACCESS_TOKEN;
@@ -155,7 +180,7 @@ describe('searchTweets', () => {
       { id: '1', text: 'tweet one' },
       { id: '2', text: 'tweet two' },
     ];
-    mock.method(globalThis, 'fetch', async () => ({
+    stubFetch(async () => ({
       ok: true,
       status: 200,
       json: async () => ({ data: fakeTweets }),
@@ -168,7 +193,7 @@ describe('searchTweets', () => {
   });
 
   it('returns empty array on error', async () => {
-    mock.method(globalThis, 'fetch', async () => ({
+    stubFetch(async () => ({
       ok: false,
       status: 500,
       json: async () => ({ detail: 'Internal error' }),
@@ -185,10 +210,11 @@ describe('postThread', () => {
     process.env.X_API_SECRET = 'test-api-secret';
     process.env.X_ACCESS_TOKEN = 'test-access-token';
     process.env.X_ACCESS_TOKEN_SECRET = 'test-access-token-secret';
+    silenceConsole();
   });
 
   afterEach(() => {
-    mock.restoreAll();
+    restoreGlobals();
     delete process.env.X_API_KEY;
     delete process.env.X_API_SECRET;
     delete process.env.X_ACCESS_TOKEN;
@@ -197,7 +223,7 @@ describe('postThread', () => {
 
   it('posts multiple tweets in sequence with reply threading', async () => {
     let callCount = 0;
-    mock.method(globalThis, 'fetch', async (_url, opts) => {
+    stubFetch(async (_url, opts) => {
       callCount++;
       const body = JSON.parse(opts.body);
       if (callCount === 1) {
@@ -219,7 +245,7 @@ describe('postThread', () => {
 
   it('stops thread when a tweet fails', async () => {
     let callCount = 0;
-    mock.method(globalThis, 'fetch', async () => {
+    stubFetch(async () => {
       callCount++;
       if (callCount === 2) {
         return {
