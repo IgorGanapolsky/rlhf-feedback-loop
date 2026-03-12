@@ -40,7 +40,7 @@ This repo uses PR-gated autonomous automation. No direct merge-to-main shortcuts
 ## Secret Sync Helper
 
 ```bash
-bash scripts/sync-gh-secrets-from-env.sh IgorGanapolsky/rlhf-feedback-loop
+bash scripts/sync-gh-secrets-from-env.sh IgorGanapolsky/mcp-memory-gateway
 ```
 
 The helper only sets keys present in your local environment.

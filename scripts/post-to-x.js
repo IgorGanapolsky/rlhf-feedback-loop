@@ -289,11 +289,11 @@ async function main() {
   } else if (command === '--scheduled') {
     const tips = [
       '🧠 Did you know? MCP Memory Gateway uses Thompson Sampling to decide which feedback signals matter most. Less noise, better training data.\n\nhttps://github.com/IgorGanapolsky/mcp-memory-gateway',
-      '🛡️ AI agents repeat the same mistakes because they have no memory across sessions. MCP Memory Gateway fixes that with local-first feedback loops.\n\nnpx rlhf-feedback-loop init',
+      '🛡️ AI agents repeat the same mistakes because they have no memory across sessions. MCP Memory Gateway fixes that with local-first feedback loops.\n\nnpx mcp-memory-gateway init',
       '📊 The learning curve dashboard shows your agent actually getting smarter — approval rate climbing, failure domains shrinking, prevention rules firing.\n\nhttps://github.com/IgorGanapolsky/mcp-memory-gateway',
-      '🔄 Capture → Validate → Remember → Prevent → Export. Five phases to turn agent mistakes into training data.\n\nMCP Memory Gateway — local-first RLHF for AI agents.\n\nnpx rlhf-feedback-loop init',
+      '🔄 Capture → Validate → Remember → Prevent → Export. Five phases to turn agent mistakes into training data.\n\nMCP Memory Gateway — local-first RLHF for AI agents.\n\nnpx mcp-memory-gateway init',
       '💡 Prevention rules generated from repeated failures = an immune system for your AI agent. No cloud required.\n\nPro Pack: $9 → https://gumroad.com/igorganapolsky',
-      '⚡ Works with Claude Code, Amp, Codex, Gemini CLI, Cursor. One install, all agents learn.\n\nnpx rlhf-feedback-loop init\n\nhttps://github.com/IgorGanapolsky/mcp-memory-gateway',
+      '⚡ Works with Claude Code, Amp, Codex, Gemini CLI, Cursor. One install, all agents learn.\n\nnpx mcp-memory-gateway init\n\nhttps://github.com/IgorGanapolsky/mcp-memory-gateway',
     ];
     const dayIndex = Math.floor(Date.now() / 86400000) % tips.length;
     const tip = tips[dayIndex];
@@ -333,7 +333,7 @@ Captures 👍/👎 → promotes memories → generates prevention rules → expo
 
 Works with Claude, Codex, Amp, Gemini.
 
-npm: npx rlhf-feedback-loop init
+npm: npx mcp-memory-gateway init
 Pro Pack: $9
 
 ⭐ https://github.com/IgorGanapolsky/mcp-memory-gateway`;

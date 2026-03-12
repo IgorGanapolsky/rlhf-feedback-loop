@@ -21,9 +21,9 @@ AI coding agents (Claude, Codex, Gemini, Cursor, Amp) are stateless by default. 
 
 The missing piece is not a better model. It is a persistent feedback signal that the agent can read before it acts.
 
-## The Solution: rlhf-feedback-loop
+## The Solution: mcp-memory-gateway
 
-[rlhf-feedback-loop](https://github.com/IgorGanapolsky/rlhf-feedback-loop) is an MCP server that gives your agent a memory. You rate its work (thumbs up or down), and those signals get captured, indexed, and turned into actionable rules — automatically.
+[mcp-memory-gateway](https://github.com/IgorGanapolsky/mcp-memory-gateway) is an MCP server that gives your agent a memory. You rate its work (thumbs up or down), and those signals get captured, indexed, and turned into actionable rules — automatically.
 
 The architecture is simple:
 
@@ -59,19 +59,19 @@ Pick your platform:
 
 ```bash
 # Claude
-claude mcp add rlhf -- npx -y rlhf-feedback-loop@0.6.11 serve
+claude mcp add rlhf -- npx -y mcp-memory-gateway@0.7.0 serve
 
 # Codex
-codex mcp add rlhf -- npx -y rlhf-feedback-loop@0.6.11 serve
+codex mcp add rlhf -- npx -y mcp-memory-gateway@0.7.0 serve
 
 # Gemini
-gemini mcp add rlhf "npx -y rlhf-feedback-loop@0.6.11 serve"
+gemini mcp add rlhf "npx -y mcp-memory-gateway@0.7.0 serve"
 
 # Amp
-amp mcp add rlhf -- npx -y rlhf-feedback-loop@0.6.11 serve
+amp mcp add rlhf -- npx -y mcp-memory-gateway@0.7.0 serve
 
 # Cursor
-cursor mcp add rlhf -- npx -y rlhf-feedback-loop@0.6.11 serve
+cursor mcp add rlhf -- npx -y mcp-memory-gateway@0.7.0 serve
 ```
 
 Run once per project. The MCP server starts automatically on each session after that.
@@ -123,5 +123,5 @@ The feedback loop is running in production on my own projects. The roadmap:
 
 If your AI agent keeps making the same mistakes, it does not need a bigger context window. It needs a feedback loop.
 
-**GitHub:** [github.com/IgorGanapolsky/rlhf-feedback-loop](https://github.com/IgorGanapolsky/rlhf-feedback-loop)
-**npm:** [npmjs.com/package/rlhf-feedback-loop](https://www.npmjs.com/package/rlhf-feedback-loop)
+**GitHub:** [github.com/IgorGanapolsky/mcp-memory-gateway](https://github.com/IgorGanapolsky/mcp-memory-gateway)
+**npm:** [npmjs.com/package/mcp-memory-gateway](https://www.npmjs.com/package/mcp-memory-gateway)

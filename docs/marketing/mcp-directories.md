@@ -2,9 +2,9 @@
 
 > Research note: external repo stars, directory size, and community reach numbers in this file are time-bound research snapshots, not current product proof. Use `docs/COMMERCIAL_TRUTH.md` for current traction language.
 
-**Package:** `rlhf-feedback-loop` (npm)
-**GitHub:** https://github.com/IgorGanapolsky/rlhf-feedback-loop
-**Registry name:** `io.github.IgorGanapolsky/rlhf-feedback-loop`
+**Package:** `mcp-memory-gateway` (npm)
+**GitHub:** https://github.com/IgorGanapolsky/mcp-memory-gateway
+**Registry name:** `io.github.IgorGanapolsky/mcp-memory-gateway`
 **Already listed:** [registry.modelcontextprotocol.io](https://registry.modelcontextprotocol.io)
 
 ---
@@ -27,7 +27,7 @@
 - Valid `package.json` with `repository` field
 - MCP-compatible server implementation
 
-**URL pattern once listed:** `https://glama.ai/mcp/servers/@IgorGanapolsky/rlhf-feedback-loop`
+**URL pattern once listed:** `https://glama.ai/mcp/servers/@IgorGanapolsky/mcp-memory-gateway`
 
 ---
 
@@ -42,12 +42,12 @@
 ### Option A: Web UI (simplest)
 1. Go to https://smithery.ai/new
 2. Sign in with GitHub
-3. Provide your GitHub repo URL: `https://github.com/IgorGanapolsky/rlhf-feedback-loop`
+3. Provide your GitHub repo URL: `https://github.com/IgorGanapolsky/mcp-memory-gateway`
 4. Follow the guided setup
 
 ### Option B: CLI
 1. Install: `npm i -g @smithery/cli`
-2. Publish: `smithery mcp publish "https://github.com/IgorGanapolsky/rlhf-feedback-loop" -n IgorGanapolsky/rlhf-feedback-loop`
+2. Publish: `smithery mcp publish "https://github.com/IgorGanapolsky/mcp-memory-gateway" -n IgorGanapolsky/mcp-memory-gateway`
 
 ### Required: Add `smithery.yaml` to repo root
 
@@ -67,7 +67,7 @@ startCommand:
     command: "npx"
     args:
       - "-y"
-      - "rlhf-feedback-loop"
+      - "mcp-memory-gateway"
 ```
 
 **Requirements:**
@@ -107,12 +107,12 @@ Go to: https://github.com/chatmcp/mcpso/issues/1
 
 Leave a comment with:
 ```
-**rlhf-feedback-loop**
-https://github.com/IgorGanapolsky/rlhf-feedback-loop
+**mcp-memory-gateway**
+https://github.com/IgorGanapolsky/mcp-memory-gateway
 
 RLHF feedback loop for AI agents. Capture feedback, block mistakes, export DPO training data. Compatible with Claude, GPT-4, Gemini, and multi-agent systems.
 
-- npm: https://www.npmjs.com/package/rlhf-feedback-loop
+- npm: https://www.npmjs.com/package/mcp-memory-gateway
 - Transport: stdio
 - Runtime: Node.js
 ```
@@ -139,8 +139,8 @@ There are three major lists. Submit to all of them.
 1. Fork the repo
 2. Edit `README.md`
 3. Add entry under the appropriate category (likely "AI/LLM Integration" or "Data & Analytics")
-4. Format: `- [rlhf-feedback-loop](https://github.com/IgorGanapolsky/rlhf-feedback-loop) - RLHF feedback loop for AI agents. Capture feedback, block repeated mistakes, export DPO training pairs.`
-5. Submit PR with title: `Add rlhf-feedback-loop`
+4. Format: `- [mcp-memory-gateway](https://github.com/IgorGanapolsky/mcp-memory-gateway) - RLHF feedback loop for AI agents. Capture feedback, block repeated mistakes, export DPO training pairs.`
+5. Submit PR with title: `Add mcp-memory-gateway`
 
 ### 5b. appcypher/awesome-mcp-servers (well-established)
 **URL:** https://github.com/appcypher/awesome-mcp-servers
@@ -149,7 +149,7 @@ There are three major lists. Submit to all of them.
 1. Fork the repo
 2. Edit `README.md`
 3. Add entry under appropriate category
-4. Format: `- **[rlhf-feedback-loop](https://github.com/IgorGanapolsky/rlhf-feedback-loop)** - RLHF feedback loop for AI agents. Capture feedback, block repeated mistakes, export DPO training data. (Node.js)`
+4. Format: `- **[mcp-memory-gateway](https://github.com/IgorGanapolsky/mcp-memory-gateway)** - RLHF feedback loop for AI agents. Capture feedback, block repeated mistakes, export DPO training data. (Node.js)`
 5. Submit PR
 
 ### 5c. wong2/awesome-mcp-servers → mcpservers.org
@@ -179,22 +179,22 @@ There are three major lists. Submit to all of them.
 
 ### Entry text (punkpeye format):
 ```markdown
-- [rlhf-feedback-loop](https://github.com/IgorGanapolsky/rlhf-feedback-loop) - RLHF feedback loop for AI agents. Capture feedback, block repeated mistakes, export DPO training pairs.
+- [mcp-memory-gateway](https://github.com/IgorGanapolsky/mcp-memory-gateway) - RLHF feedback loop for AI agents. Capture feedback, block repeated mistakes, export DPO training pairs.
 ```
 
 ### Entry text (appcypher format):
 ```markdown
-- **[rlhf-feedback-loop](https://github.com/IgorGanapolsky/rlhf-feedback-loop)** - RLHF feedback loop for AI agents with feedback capture, mistake prevention, and DPO data export. (Node.js)
+- **[mcp-memory-gateway](https://github.com/IgorGanapolsky/mcp-memory-gateway)** - RLHF feedback loop for AI agents with feedback capture, mistake prevention, and DPO data export. (Node.js)
 ```
 
 ### mcp.so comment (ready to paste):
 ```
-**rlhf-feedback-loop**
-https://github.com/IgorGanapolsky/rlhf-feedback-loop
+**mcp-memory-gateway**
+https://github.com/IgorGanapolsky/mcp-memory-gateway
 
 RLHF feedback loop for AI agents. Capture feedback, block mistakes, export DPO training data.
 
-- npm: https://www.npmjs.com/package/rlhf-feedback-loop
+- npm: https://www.npmjs.com/package/mcp-memory-gateway
 - MCP Registry: https://registry.modelcontextprotocol.io
 - Transport: stdio
 - Runtime: Node.js

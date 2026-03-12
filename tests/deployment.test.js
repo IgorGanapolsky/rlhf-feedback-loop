@@ -64,7 +64,7 @@ test('GET /health content-type is application/json', async () => {
 });
 
 test('POST /v1/telemetry/ping returns 204 without auth', async () => {
-  const payload = JSON.stringify({ installId: 'test-install-123', version: '0.6.16', platform: 'darwin', nodeVersion: 'v20.0.0' });
+  const payload = JSON.stringify({ installId: 'test-install-123', version: '0.7.0', platform: 'darwin', nodeVersion: 'v20.0.0' });
   const res = await fetch(`http://localhost:${DEPLOY_PORT}/v1/telemetry/ping`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

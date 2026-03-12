@@ -110,7 +110,7 @@ function main() {
     console.log(`  Storage     : JSONL log + LanceDB vector index`);
     console.log('');
     console.log(`  Action: promoted to reusable memory. Prevention rules will auto-update.`);
-    console.log(`  DPO export: run \`npx rlhf-feedback-loop export-dpo\` to generate training pairs.`);
+    console.log(`  DPO export: run \`npx mcp-memory-gateway export-dpo\` to generate training pairs.`);
     console.log('');
     return;
   }

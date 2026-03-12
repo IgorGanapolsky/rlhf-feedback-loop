@@ -9,7 +9,7 @@
  * topical bundles and route queries to the most relevant subset. This reduces
  * MCP tool calls and context window consumption.
  *
- * Ported from Subway_RN_Demo/scripts/context-engine.js for rlhf-feedback-loop.
+ * Ported from Subway_RN_Demo/scripts/context-engine.js for mcp-memory-gateway.
  * PATH: PROJECT_ROOT = path.join(__dirname, '..') — 1 level up from scripts/
  */
 

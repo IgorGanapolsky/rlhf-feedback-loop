@@ -53,7 +53,7 @@ const {
 } = require('../../scripts/gate-satisfy');
 
 const SERVER_INFO = {
-  name: 'rlhf-feedback-loop-mcp',
+  name: 'mcp-memory-gateway-mcp',
   version: '1.1.0',
 };
 const SAFE_DATA_DIR = path.resolve(path.dirname(FEEDBACK_LOG_PATH));

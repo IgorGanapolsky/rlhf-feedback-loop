@@ -47,7 +47,7 @@ async function runProof(options = {}) {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // VEC-01: LanceDB embedded table stores feedback vectors in rlhf-feedback-loop
+  // VEC-01: LanceDB embedded table stores feedback vectors in mcp-memory-gateway
   // Evidence: smoke test — upsertFeedback() creates lancedb dir, table row persists.
   // ─────────────────────────────────────────────────────────────────────────
   let vec01Status = 'fail';

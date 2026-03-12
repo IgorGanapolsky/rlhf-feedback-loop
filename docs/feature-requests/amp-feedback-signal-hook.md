@@ -48,7 +48,7 @@ When a feedback signal is given, Amp calls a designated MCP tool (e.g., `capture
 
 ## Context
 
-The [rlhf-feedback-loop](https://github.com/IgorGanapolsky/rlhf-feedback-loop) npm package already has full receiving infrastructure:
+The [mcp-memory-gateway](https://github.com/IgorGanapolsky/mcp-memory-gateway) npm package already has full receiving infrastructure:
 - `captureFeedback()` engine in `scripts/feedback-loop.js`
 - `capture_feedback` MCP tool in `adapters/mcp/server-stdio.js`
 - JSONL logging, DPO export, self-audit, prevention rules

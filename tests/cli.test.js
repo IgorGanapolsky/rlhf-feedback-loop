@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Tests for bin/cli.js — npx rlhf-feedback-loop
+ * Tests for bin/cli.js — npx mcp-memory-gateway
  *
  * Verifies:
  *   1. CLI runs without error
@@ -340,7 +340,7 @@ describe('bin/cli.js', () => {
   test('help command exits 0 and lists subcommands', () => {
     const result = spawnSync(process.execPath, [CLI, 'help'], { encoding: 'utf8' });
     assert.strictEqual(result.status, 0, `Expected exit 0, got ${result.status}\n${result.stderr}`);
-    assert.ok(result.stdout.includes('rlhf-feedback-loop'), 'Help should include CLI name');
+    assert.ok(result.stdout.includes('mcp-memory-gateway'), 'Help should include CLI name');
     assert.ok(result.stdout.includes('init'), 'Help should mention init');
     assert.ok(result.stdout.includes('capture'), 'Help should mention capture');
     assert.ok(result.stdout.includes('cfo'), 'Help should mention cfo');
@@ -694,7 +694,7 @@ describe('bin/cli.js', () => {
       stdin.write(frameMcpMessage(payload));
     });
     assert.equal(response.id, 99);
-    assert.equal(response.result.serverInfo.name, 'rlhf-feedback-loop-mcp');
+    assert.equal(response.result.serverInfo.name, 'mcp-memory-gateway-mcp');
   });
 
   test('serve responds to initialize over newline-delimited JSON transport', async () => {
@@ -702,7 +702,7 @@ describe('bin/cli.js', () => {
       stdin.write(`${JSON.stringify(payload)}\n`);
     });
     assert.equal(response.id, 99);
-    assert.equal(response.result.serverInfo.name, 'rlhf-feedback-loop-mcp');
+    assert.equal(response.result.serverInfo.name, 'mcp-memory-gateway-mcp');
   });
 
   test('serve returns ndjson error envelope for malformed ndjson input', async () => {
@@ -731,7 +731,7 @@ describe('bin/cli.js', () => {
     });
 
     assert.equal(response.id, 99);
-    assert.equal(response.result.serverInfo.name, 'rlhf-feedback-loop-mcp');
+    assert.equal(response.result.serverInfo.name, 'mcp-memory-gateway-mcp');
 
     fs.rmSync(isolatedDir, { recursive: true, force: true });
   });

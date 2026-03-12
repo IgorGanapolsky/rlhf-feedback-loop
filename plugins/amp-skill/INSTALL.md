@@ -11,8 +11,8 @@ cp plugins/amp-skill/SKILL.md .amp/skills/rlhf-feedback.md
 Or from the npm package:
 
 ```bash
-npx rlhf-feedback-loop init
-cp node_modules/rlhf-feedback-loop/plugins/amp-skill/SKILL.md .amp/skills/rlhf-feedback.md
+npx mcp-memory-gateway init
+cp node_modules/mcp-memory-gateway/plugins/amp-skill/SKILL.md .amp/skills/rlhf-feedback.md
 ```
 
 ## What This Does
@@ -43,7 +43,7 @@ node .rlhf/capture-feedback.js --feedback=down --context="..." --what-went-wrong
 
 - Amp (any version with skills support)
 - Node.js 18+ in PATH
-- `.rlhf/` directory (created by `npx rlhf-feedback-loop init`)
+- `.rlhf/` directory (created by `npx mcp-memory-gateway init`)
 
 ## Uninstall
 

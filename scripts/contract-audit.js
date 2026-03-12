@@ -94,7 +94,7 @@ function buildMarkdownReport(results) {
   lines.push('');
   lines.push(`Generated: ${now}`);
   lines.push('');
-  lines.push('This report is machine-generated evidence for CNTR-01: export mapping audit confirming compatibility between rlhf-feedback-loop and Subway_RN_Demo shared scripts.');
+  lines.push('This report is machine-generated evidence for CNTR-01: export mapping audit confirming compatibility between mcp-memory-gateway and Subway_RN_Demo shared scripts.');
   lines.push('');
 
   for (const result of results) {

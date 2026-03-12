@@ -552,7 +552,7 @@ function createApiServer() {
                 result: {
                   protocolVersion: '2024-11-05',
                   capabilities: { tools: {} },
-                  serverInfo: { name: 'rlhf-feedback-loop', version: pkg.version },
+                  serverInfo: { name: 'mcp-memory-gateway', version: pkg.version },
                 },
               });
             } else if (msg.method === 'notifications/initialized') {
@@ -595,7 +595,7 @@ function createApiServer() {
       if (req.method === 'GET') {
         // SSE upgrade or capability probe
         sendJson(res, 200, {
-          name: 'rlhf-feedback-loop',
+          name: 'mcp-memory-gateway',
           version: pkg.version,
           transport: ['streamable-http', 'stdio'],
         });
@@ -607,7 +607,7 @@ function createApiServer() {
     if (req.method === 'GET' && pathname === '/') {
       if (wantsJson(req, parsed)) {
         sendJson(res, 200, {
-          name: 'rlhf-feedback-loop',
+          name: 'mcp-memory-gateway',
           version: pkg.version,
           status: 'ok',
           docs: 'https://github.com/IgorGanapolsky/mcp-memory-gateway',
@@ -637,10 +637,10 @@ function createApiServer() {
     if (req.method === 'GET' && pathname === '/.well-known/mcp/server-card.json') {
       sendJson(res, 200, {
         serverInfo: {
-          name: 'rlhf-feedback-loop',
+          name: 'mcp-memory-gateway',
           version: pkg.version,
         },
-        name: 'rlhf-feedback-loop',
+        name: 'mcp-memory-gateway',
         description: 'RLHF feedback loop for AI agents. Capture feedback, block mistakes, export DPO data.',
         version: pkg.version,
         tools: [
@@ -759,7 +759,7 @@ function createApiServer() {
       res.writeHead(200, { 'Content-Type': 'text/html' });
       res.end(`<!DOCTYPE html><html><head><title>Privacy Policy — MCP Memory Gateway</title></head><body>
 <h1>Privacy Policy</h1>
-<p><strong>MCP Memory Gateway</strong> (npm: rlhf-feedback-loop)</p>
+<p><strong>MCP Memory Gateway</strong> (npm: mcp-memory-gateway)</p>
 <p>Last updated: 2026-03-11</p>
 <h2>Data Collection</h2>
 <p>The self-hosted version stores all data locally on your machine. No data is sent to external servers.</p>

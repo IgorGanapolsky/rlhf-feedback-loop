@@ -24,7 +24,7 @@ https://iganapolsky.gumroad.com/l/tjovof
 **Tweet 3 (free self-hosted CTA):**
 Self-hosting is free and takes 30 seconds.
 
-npx rlhf-feedback-loop serve
+npx mcp-memory-gateway serve
 
 That's it. Works with Claude Code, Codex CLI, Gemini CLI, Amp, Cursor. All data stays on your machine.
 
@@ -59,7 +59,7 @@ This does all three.
 ---
 
 **Tweet 7 (close + dual CTA):**
-Free self-hosted: npx rlhf-feedback-loop serve
+Free self-hosted: npx mcp-memory-gateway serve
 Pro Pack ($9 one-time): https://iganapolsky.gumroad.com/l/tjovof
 Hosted demo: https://rlhf-feedback-loop-production.up.railway.app
 GitHub: https://github.com/IgorGanapolsky/mcp-memory-gateway

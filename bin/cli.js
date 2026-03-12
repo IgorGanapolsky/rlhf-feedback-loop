@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 /**
- * rlhf-feedback-loop CLI
+ * mcp-memory-gateway CLI
  *
  * Usage:
- *   npx rlhf-feedback-loop init          # scaffold .rlhf/ config + .mcp.json
- *   npx rlhf-feedback-loop init --wire-hooks          # wire hooks only (auto-detect agent)
- *   npx rlhf-feedback-loop init --agent claude-code   # scaffold + wire hooks for specific agent
- *   npx rlhf-feedback-loop capture       # capture feedback
- *   npx rlhf-feedback-loop export-dpo    # export DPO training pairs
- *   npx rlhf-feedback-loop stats         # feedback analytics + Revenue-at-Risk
- *   npx rlhf-feedback-loop cfo           # local operational billing summary
- *   npx rlhf-feedback-loop pro           # upgrade to Context Gateway
+ *   npx mcp-memory-gateway init          # scaffold .rlhf/ config + .mcp.json
+ *   npx mcp-memory-gateway init --wire-hooks          # wire hooks only (auto-detect agent)
+ *   npx mcp-memory-gateway init --agent claude-code   # scaffold + wire hooks for specific agent
+ *   npx mcp-memory-gateway capture       # capture feedback
+ *   npx mcp-memory-gateway export-dpo    # export DPO training pairs
+ *   npx mcp-memory-gateway stats         # feedback analytics + Revenue-at-Risk
+ *   npx mcp-memory-gateway cfo           # local operational billing summary
+ *   npx mcp-memory-gateway pro           # upgrade to Context Gateway
  */
 
 'use strict';
@@ -79,7 +79,7 @@ const PORTABLE_MCP_COMMAND = 'npx';
 const LOCAL_MCP_COMMAND = 'node';
 
 function portableMcpArgs() {
-  return ['-y', `rlhf-feedback-loop@${pkgVersion()}`, 'serve'];
+  return ['-y', `mcp-memory-gateway@${pkgVersion()}`, 'serve'];
 }
 
 function localServerEntryPath() {
@@ -439,8 +439,8 @@ function init() {
   }
 
   console.log('');
-  console.log(`rlhf-feedback-loop v${pkgVersion()} initialized.`);
-  console.log('Run: npx rlhf-feedback-loop help');
+  console.log(`mcp-memory-gateway v${pkgVersion()} initialized.`);
+  console.log('Run: npx mcp-memory-gateway help');
   proNudge();
 
   try {
@@ -532,9 +532,9 @@ function stats() {
     console.log('\n⚠️  REVENUE-AT-RISK ANALYSIS');
     console.log(`  Repeated Failures detected: ${data.totalNegative}`);
     console.log(`  Estimated Operational Loss: $${revenueAtRisk}`);
-    console.log('  Action Required: Run "npx rlhf-feedback-loop rules" to generate guardrails.');
+    console.log('  Action Required: Run "npx mcp-memory-gateway rules" to generate guardrails.');
     console.log('  Strategic Recommendation: Upgrade to Context Gateway to sync these rules across your team.');
-    console.log('  Run: npx rlhf-feedback-loop pro');
+    console.log('  Run: npx mcp-memory-gateway pro');
   } else {
     console.log('\n✅ System is currently high-reliability. No immediate revenue loss detected.');
   }
@@ -784,7 +784,7 @@ function startApi() {
 
 function help() {
   const v = pkgVersion();
-  console.log(`rlhf-feedback-loop v${v}`);
+  console.log(`mcp-memory-gateway v${v}`);
   console.log('');
   console.log('Commands:');
   console.log('  init                  Scaffold .rlhf/ config + MCP server in current project');
@@ -815,12 +815,12 @@ function help() {
   console.log('  help                  Show this help message');
   console.log('');
   console.log('Examples:');
-  console.log('  npx rlhf-feedback-loop init');
-  console.log('  npx rlhf-feedback-loop stats');
-  console.log('  npx rlhf-feedback-loop cfo');
-  console.log('  npx rlhf-feedback-loop model-fit');
-  console.log('  npx rlhf-feedback-loop risk');
-  console.log('  npx rlhf-feedback-loop pro');
+  console.log('  npx mcp-memory-gateway init');
+  console.log('  npx mcp-memory-gateway stats');
+  console.log('  npx mcp-memory-gateway cfo');
+  console.log('  npx mcp-memory-gateway model-fit');
+  console.log('  npx mcp-memory-gateway risk');
+  console.log('  npx mcp-memory-gateway pro');
   proNudge();
 }
 
@@ -906,7 +906,7 @@ switch (COMMAND) {
   default:
     if (COMMAND) {
       console.error(`Unknown command: ${COMMAND}`);
-      console.error('Run: npx rlhf-feedback-loop help');
+      console.error('Run: npx mcp-memory-gateway help');
       process.exit(1);
     } else {
       help();

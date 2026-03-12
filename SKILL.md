@@ -1,5 +1,5 @@
 ---
-name: rlhf-feedback-loop
+name: mcp-memory-gateway
 description: The Agentic Feedback Studio & Veto Layer. Persistent agent memory, high-density context packs, and Agentic Guardrails (V2V) for Claude Code, Codex, and Gemini.
 ---
 

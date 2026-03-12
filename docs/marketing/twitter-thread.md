@@ -1,4 +1,4 @@
-# X/Twitter Launch Thread — rlhf-feedback-loop
+# X/Twitter Launch Thread — mcp-memory-gateway
 
 > Draft thread. Do not post without review.
 
@@ -8,7 +8,7 @@
 
 I got tired of my AI agent making the same mistakes across sessions. So I built an MCP server that captures feedback and blocks repeated failures.
 
-rlhf-feedback-loop — open source, works with Claude/Codex/Gemini/Amp/Cursor.
+mcp-memory-gateway — open source, works with Claude/Codex/Gemini/Amp/Cursor.
 
 #MCP #AIAgents #DevTools
 
@@ -19,7 +19,7 @@ rlhf-feedback-loop — open source, works with Claude/Codex/Gemini/Amp/Cursor.
 One command. Zero config.
 
 ```
-npx rlhf-feedback-loop
+npx mcp-memory-gateway
 ```
 
 It's an MCP server that plugs into Claude, Codex, Gemini, Amp, or Cursor.
@@ -79,11 +79,11 @@ Feed them into your fine-tuning pipeline. Make your agent actually improve, not 
 Get started:
 
 ```
-npm install rlhf-feedback-loop
+npm install mcp-memory-gateway
 ```
 
 GitHub: github.com/IgorGanapolsky/mcp-memory-gateway
-npm: npmjs.com/package/rlhf-feedback-loop
+npm: npmjs.com/package/mcp-memory-gateway
 Pro Pack ($9 one-time): https://iganapolsky.gumroad.com/l/tjovof
 Hosted demo: rlhf-feedback-loop-production.up.railway.app
 

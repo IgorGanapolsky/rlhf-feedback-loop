@@ -1,8 +1,8 @@
 # MCP Memory Gateway
 
-[![CI](https://github.com/IgorGanapolsky/rlhf-feedback-loop/actions/workflows/ci.yml/badge.svg)](https://github.com/IgorGanapolsky/rlhf-feedback-loop/actions/workflows/ci.yml)
-[![Self-Healing](https://github.com/IgorGanapolsky/rlhf-feedback-loop/actions/workflows/self-healing-monitor.yml/badge.svg)](https://github.com/IgorGanapolsky/rlhf-feedback-loop/actions/workflows/self-healing-monitor.yml)
-[![npm](https://img.shields.io/npm/v/rlhf-feedback-loop)](https://www.npmjs.com/package/rlhf-feedback-loop)
+[![CI](https://github.com/IgorGanapolsky/mcp-memory-gateway/actions/workflows/ci.yml/badge.svg)](https://github.com/IgorGanapolsky/mcp-memory-gateway/actions/workflows/ci.yml)
+[![Self-Healing](https://github.com/IgorGanapolsky/mcp-memory-gateway/actions/workflows/self-healing-monitor.yml/badge.svg)](https://github.com/IgorGanapolsky/mcp-memory-gateway/actions/workflows/self-healing-monitor.yml)
+[![npm](https://img.shields.io/npm/v/mcp-memory-gateway)](https://www.npmjs.com/package/mcp-memory-gateway)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D18.18.0-brightgreen)](package.json)
 [![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-pink?logo=github)](https://github.com/sponsors/IgorGanapolsky)
@@ -44,18 +44,18 @@ feedback signal → validate → promote to memory → vector index → preventi
 
 ```bash
 # Recommended: essential profile (5 high-ROI tools)
-claude mcp add rlhf -- npx -y rlhf-feedback-loop serve
-codex mcp add rlhf -- npx -y rlhf-feedback-loop serve
-amp mcp add rlhf -- npx -y rlhf-feedback-loop serve
-gemini mcp add rlhf "npx -y rlhf-feedback-loop serve"
+claude mcp add rlhf -- npx -y mcp-memory-gateway serve
+codex mcp add rlhf -- npx -y mcp-memory-gateway serve
+amp mcp add rlhf -- npx -y mcp-memory-gateway serve
+gemini mcp add rlhf "npx -y mcp-memory-gateway serve"
 
 # Or auto-detect all installed platforms
-npx rlhf-feedback-loop init
+npx mcp-memory-gateway init
 
 # Auto-wire PreToolUse hooks (blocks known mistakes before they happen)
-npx rlhf-feedback-loop init --agent claude-code
-npx rlhf-feedback-loop init --agent codex
-npx rlhf-feedback-loop init --agent gemini
+npx mcp-memory-gateway init --agent claude-code
+npx mcp-memory-gateway init --agent codex
+npx mcp-memory-gateway init --agent gemini
 ```
 
 > **Profiles:** Set `RLHF_MCP_PROFILE=essential` for the lean 5-tool setup (recommended), or leave unset for the full 11-tool pipeline. See [MCP Tools](#mcp-tools) for details.
@@ -148,7 +148,7 @@ npx rlhf-feedback-loop dashboard
 These 5 tools deliver ~80% of the value. Use the `essential` profile for a lean setup:
 
 ```bash
-RLHF_MCP_PROFILE=essential claude mcp add rlhf -- npx -y rlhf-feedback-loop serve
+RLHF_MCP_PROFILE=essential claude mcp add rlhf -- npx -y mcp-memory-gateway serve
 ```
 
 | Tool | Description |
@@ -178,20 +178,20 @@ These tools support fine-tuning workflows, context engineering, and audit trails
 ## CLI
 
 ```bash
-npx rlhf-feedback-loop init              # Scaffold .rlhf/ + configure MCP
-npx rlhf-feedback-loop init --agent X    # + auto-wire PreToolUse hooks (claude-code/codex/gemini)
-npx rlhf-feedback-loop init --wire-hooks # Wire hooks only (auto-detect agent)
-npx rlhf-feedback-loop serve             # Start MCP server (stdio) + watcher
-npx rlhf-feedback-loop dashboard         # Full RLHF dashboard with gate stats
-npx rlhf-feedback-loop gate-stats        # Gate enforcement statistics
-npx rlhf-feedback-loop status            # Learning curve dashboard
-npx rlhf-feedback-loop watch             # Watch .rlhf/ for external signals
-npx rlhf-feedback-loop capture           # Capture feedback via CLI
-npx rlhf-feedback-loop stats             # Analytics + Revenue-at-Risk
-npx rlhf-feedback-loop rules             # Generate prevention rules
-npx rlhf-feedback-loop export-dpo        # Export DPO training pairs
-npx rlhf-feedback-loop risk              # Train/query boosted risk scorer
-npx rlhf-feedback-loop self-heal         # Run self-healing diagnostics
+npx mcp-memory-gateway init              # Scaffold .rlhf/ + configure MCP
+npx mcp-memory-gateway init --agent X    # + auto-wire PreToolUse hooks (claude-code/codex/gemini)
+npx mcp-memory-gateway init --wire-hooks # Wire hooks only (auto-detect agent)
+npx mcp-memory-gateway serve             # Start MCP server (stdio) + watcher
+npx mcp-memory-gateway dashboard         # Full RLHF dashboard with gate stats
+npx mcp-memory-gateway gate-stats        # Gate enforcement statistics
+npx mcp-memory-gateway status            # Learning curve dashboard
+npx mcp-memory-gateway watch             # Watch .rlhf/ for external signals
+npx mcp-memory-gateway capture           # Capture feedback via CLI
+npx mcp-memory-gateway stats             # Analytics + Revenue-at-Risk
+npx mcp-memory-gateway rules             # Generate prevention rules
+npx mcp-memory-gateway export-dpo        # Export DPO training pairs
+npx mcp-memory-gateway risk              # Train/query boosted risk scorer
+npx mcp-memory-gateway self-heal         # Run self-healing diagnostics
 ```
 
 ## JSONL File Watcher
@@ -200,10 +200,10 @@ The `serve` command automatically starts a background watcher that monitors `fee
 
 ```bash
 # Standalone watcher
-npx rlhf-feedback-loop watch --source amp-plugin-bridge
+npx mcp-memory-gateway watch --source amp-plugin-bridge
 
 # Process pending entries once and exit
-npx rlhf-feedback-loop watch --once
+npx mcp-memory-gateway watch --once
 ```
 
 External sources write entries with a `source` field:
@@ -216,7 +216,7 @@ The watcher tracks its position via `.rlhf/.watcher-offset` for crash-safe, idem
 ## Feedback Dashboard
 
 ```bash
-npx rlhf-feedback-loop status
+npx mcp-memory-gateway status
 ```
 
 ```

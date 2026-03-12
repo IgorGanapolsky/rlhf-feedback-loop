@@ -26,9 +26,9 @@ It provides a **Veto Layer** for your workflows.
 2️⃣ The Studio extracts the semantic state of the failure.
 3️⃣ It auto-generates a hard architectural constraint (`CLAUDE.md`) that blocks the agent from repeating the mistake. 
 
-It is completely Zero-Config. Run `npx rlhf-feedback-loop install` in any repo, and it just works. 
+It is completely Zero-Config. Run `npx mcp-memory-gateway install` in any repo, and it just works. 
 
-**Bonus:** Run `npx rlhf-feedback-loop stats` to see our **Revenue-at-Risk Analyzer**, which calculates exactly how much money you are losing to repeated agent failures.
+**Bonus:** Run `npx mcp-memory-gateway stats` to see our **Revenue-at-Risk Analyzer**, which calculates exactly how much money you are losing to repeated agent failures.
 
 We are entirely open source, with a Context Gateway tier for teams who want to sync their Veto rules globally. 
 

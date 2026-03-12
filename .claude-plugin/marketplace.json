@@ -1,20 +1,20 @@
 {
-  "name": "rlhf-feedback-loop",
-  "version": "0.6.6",
+  "name": "mcp-memory-gateway",
+  "version": "0.7.0",
   "plugins": [
     {
-      "name": "rlhf-feedback-loop",
+      "name": "mcp-memory-gateway",
       "description": "RLHF feedback loop for AI agents — capture feedback, block mistakes, export DPO training pairs",
       "type": "mcp",
       "source": {
         "type": "npm",
-        "package": "rlhf-feedback-loop",
+        "package": "mcp-memory-gateway",
         "command": "npx",
-        "args": ["-y", "rlhf-feedback-loop", "serve"]
+        "args": ["-y", "mcp-memory-gateway", "serve"]
       },
       "metadata": {
         "author": "Igor Ganapolsky",
-        "homepage": "https://github.com/IgorGanapolsky/rlhf-feedback-loop",
+        "homepage": "https://github.com/IgorGanapolsky/mcp-memory-gateway",
         "license": "MIT",
         "keywords": ["rlhf", "feedback", "dpo", "mcp", "prevention-rules", "memory"],
         "category": "developer-tools"

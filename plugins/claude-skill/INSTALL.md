@@ -11,8 +11,8 @@ cp plugins/claude-skill/SKILL.md .claude/skills/rlhf-feedback.md
 Or from the published npm package:
 
 ```bash
-npx rlhf-feedback-loop init
-cp node_modules/rlhf-feedback-loop/plugins/claude-skill/SKILL.md .claude/skills/rlhf-feedback.md
+npx mcp-memory-gateway init
+cp node_modules/mcp-memory-gateway/plugins/claude-skill/SKILL.md .claude/skills/rlhf-feedback.md
 ```
 
 ## What This Does
@@ -46,7 +46,7 @@ node .rlhf/capture-feedback.js --feedback=up --context="skill install verified" 
 
 - Claude Code (any version)
 - Node.js 18+ in PATH
-- `.rlhf/` directory (created by `npx rlhf-feedback-loop init`)
+- `.rlhf/` directory (created by `npx mcp-memory-gateway init`)
 
 ## Uninstall
 

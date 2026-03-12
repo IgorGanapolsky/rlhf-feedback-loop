@@ -89,7 +89,7 @@ test('root still serves JSON status when explicitly requested', async () => {
   assert.match(String(res.headers.get('content-type')), /application\/json/);
 
   const body = await res.json();
-  assert.equal(body.name, 'rlhf-feedback-loop');
+  assert.equal(body.name, 'mcp-memory-gateway');
   assert.equal(body.status, 'ok');
 });
 

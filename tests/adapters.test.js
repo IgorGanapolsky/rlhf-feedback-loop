@@ -36,7 +36,7 @@ test('claude .mcp.json is valid JSON with mcpServers key', () => {
   assert.equal(typeof payload.mcpServers, 'object');
   assert.deepEqual(payload.mcpServers.rlhf, {
     command: 'npx',
-    args: ['-y', `rlhf-feedback-loop@${packageVersion}`, 'serve'],
+    args: ['-y', `mcp-memory-gateway@${packageVersion}`, 'serve'],
   });
 });
 
@@ -47,7 +47,7 @@ test('codex config.toml contains mcp_servers section', () => {
   assert.match(content, /command = "npx"/, 'config.toml must use portable npx launcher');
   assert.match(
     content,
-    new RegExp(`args = \\["-y", "rlhf-feedback-loop@${packageVersion.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}", "serve"\\]`),
+    new RegExp(`args = \\["-y", "mcp-memory-gateway@${packageVersion.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}", "serve"\\]`),
     'config.toml must launch the version-pinned package serve entrypoint'
   );
 });

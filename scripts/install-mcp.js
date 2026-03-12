@@ -22,7 +22,7 @@ const PKG_VERSION = JSON.parse(fs.readFileSync(path.join(PKG_ROOT, 'package.json
 function portableMcpConfig() {
   return {
     command: 'npx',
-    args: ['-y', `rlhf-feedback-loop@${PKG_VERSION}`, 'serve'],
+    args: ['-y', `mcp-memory-gateway@${PKG_VERSION}`, 'serve'],
   };
 }
 

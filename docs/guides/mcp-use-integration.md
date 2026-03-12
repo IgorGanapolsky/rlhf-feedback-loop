@@ -17,7 +17,7 @@ client = MCPClient.from_dict({
         },
         "memory": {
             "command": "npx",
-            "args": ["-y", "rlhf-feedback-loop", "serve"]
+            "args": ["-y", "mcp-memory-gateway", "serve"]
         }
     }
 })
@@ -54,7 +54,7 @@ import { MCPClient } from "mcp-use";
 const client = new MCPClient({
   mcpServers: {
     "your-server": { command: "your-existing-server", args: ["..."] },
-    "memory": { command: "npx", args: ["-y", "rlhf-feedback-loop", "serve"] }
+    "memory": { command: "npx", args: ["-y", "mcp-memory-gateway", "serve"] }
   }
 });
 ```
@@ -88,7 +88,7 @@ httpx.post(f"{API}/v1/feedback/capture", headers=headers, json={
 For agentic commerce use cases, use the `commerce` MCP profile:
 
 ```bash
-RLHF_MCP_PROFILE=commerce npx rlhf-feedback-loop serve
+RLHF_MCP_PROFILE=commerce npx mcp-memory-gateway serve
 ```
 
 This exposes `commerce_recall` with quality scores for: product_recommendation, brand_compliance, sizing, pricing, regulatory.
@@ -97,4 +97,4 @@ This exposes `commerce_recall` with quality scores for: product_recommendation, 
 
 - [MCP Memory Gateway](https://github.com/IgorGanapolsky/mcp-memory-gateway)
 - [mcp-use SDK](https://github.com/mcp-use/mcp-use)
-- [npm package](https://www.npmjs.com/package/rlhf-feedback-loop)
+- [npm package](https://www.npmjs.com/package/mcp-memory-gateway)

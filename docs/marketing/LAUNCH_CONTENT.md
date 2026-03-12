@@ -12,13 +12,13 @@ It's called **Agentic Feedback Studio**.
 - **Problem:** Claude forgets what we decided yesterday. Subjective instructions (vibes) don't stick.
 - **Solution:** A Veto Layer that captures feedback (up/down) and converts it into hard architectural constraints (`CLAUDE.md`) automatically.
 - **Features:** 
-  - Zero-Config: Drop it into any repo with `npx rlhf-feedback-loop install`.
+  - Zero-Config: Drop it into any repo with `npx mcp-memory-gateway install`.
   - Bayesian Preference Scoring: Thompson Sampling models your preferences in real-time.
   - DPO/KTO Export: Turn your sessions into training data for fine-tuning.
 - **Open Source:** Totally free for solo devs.
 - **Commercial:** The public self-serve offer today is the **$9 one-time Pro Pack**. Hosted pilots are by request.
 
-Check it out on GitHub: [https://github.com/IgorGanapolsky/rlhf-feedback-loop]
+Check it out on GitHub: [https://github.com/IgorGanapolsky/mcp-memory-gateway]
 Demo/Hosted: [https://mcp-memory-gateway.up.railway.app]
 
 Would love to hear how you're managing long-term agent memory!
@@ -41,9 +41,9 @@ I built an Agentic Control Plane that implements:
 
 It works with any MCP-compatible agent (Claude Code, Codex, Gemini).
 
-**Zero-Config:** Drop it into any repo with one command: `npx rlhf-feedback-loop install`
+**Zero-Config:** Drop it into any repo with one command: `npx mcp-memory-gateway install`
 
-GitHub: [https://github.com/IgorGanapolsky/rlhf-feedback-loop]
+GitHub: [https://github.com/IgorGanapolsky/mcp-memory-gateway]
 Landing Page: [https://mcp-memory-gateway.up.railway.app]
 
 I'm here all day to answer technical questions about Agentic Control Planes!
@@ -57,12 +57,12 @@ I'm here all day to answer technical questions about Agentic Control Planes!
 
 Stop vibe-coding. If Claude makes a mistake, flag it, and the Studio generates a hard guardrail in your `CLAUDE.md` so it never happens again.
 
-- 🛠 **Zero-Config:** `npx rlhf-feedback-loop install`
+- 🛠 **Zero-Config:** `npx mcp-memory-gateway install`
 - 🧠 **Smart Memory:** Vector storage via LanceDB + Bayesian reward estimation.
 - ⚡ **Global Skill:** Install once, use across all your repos.
 
 OSS is free. The public self-serve offer is the $9 one-time Pro Pack.
-Repo: https://github.com/IgorGanapolsky/rlhf-feedback-loop
+Repo: https://github.com/IgorGanapolsky/mcp-memory-gateway
 Live: https://mcp-memory-gateway.up.railway.app
 
 ---
@@ -70,4 +70,4 @@ Live: https://mcp-memory-gateway.up.railway.app
 ## 4. Cold Outreach Hooks (Twitter DM / LinkedIn)
 
 - **Hook 1:** "I saw your work on [Project]. We're building a Veto Layer for agent fleets to stop them from repeating expensive hallucinations. Would love your feedback on the Zero-Config setup."
-- **Hook 2:** "Running Claude Code in production? We built a Revenue-at-Risk analyzer that calculates exactly how much money you lose to repeated agent failures. Try it: `npx rlhf-feedback-loop stats`."
+- **Hook 2:** "Running Claude Code in production? We built a Revenue-at-Risk analyzer that calculates exactly how much money you lose to repeated agent failures. Try it: `npx mcp-memory-gateway stats`."

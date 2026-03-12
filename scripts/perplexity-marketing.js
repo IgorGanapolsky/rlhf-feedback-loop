@@ -28,7 +28,7 @@ const SONAR_URL = 'https://api.perplexity.ai/chat/completions';
 
 const PRODUCT = {
   name: 'MCP Memory Gateway',
-  npm: 'rlhf-feedback-loop',
+  npm: 'mcp-memory-gateway',
   repo: 'https://github.com/IgorGanapolsky/mcp-memory-gateway',
   gumroad: 'https://gumroad.com/igorganapolsky',
   sponsor: 'https://github.com/sponsors/IgorGanapolsky',

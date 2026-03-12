@@ -7,7 +7,7 @@ This document is the source of truth for product, pricing, traction, and proof c
 
 ## What is true today
 
-- The open-source `rlhf-feedback-loop` package is free and MIT licensed.
+- The open-source `mcp-memory-gateway` package is free and MIT licensed.
 - The current public self-serve commercial offer is the Pro Pack on Gumroad: `$9` one-time.
 - Hosted Context Gateway access exists as a pilot/by-request workflow layer. It is not a public self-serve recurring subscription.
 - Engineering verification is strong and should be cited through `docs/VERIFICATION_EVIDENCE.md` and machine-readable proof reports.

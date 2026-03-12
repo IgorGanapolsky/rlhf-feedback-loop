@@ -2,7 +2,7 @@
 
 **Date**: 2026-03-11
 **Product**: MCP Memory Gateway
-**npm**: rlhf-feedback-loop
+**npm**: mcp-memory-gateway
 **Repo**: IgorGanapolsky/mcp-memory-gateway
 **Live URL**: https://rlhf-feedback-loop-production.up.railway.app
 
@@ -74,7 +74,7 @@ GitHub Marketplace supports **only two categories**:
 
 MCP Memory Gateway is:
 - A protocol server (Model Context Protocol)
-- An npm package (`rlhf-feedback-loop`)
+- An npm package (`mcp-memory-gateway`)
 - An agent integration tool
 - A data persistence/memory service
 
@@ -112,7 +112,7 @@ None of these are GitHub-native workflows. While we *could* create a GitHub App 
 
 ### Secondary: npm Package Registry
 
-The `rlhf-feedback-loop` package is already on npm and discoverable.
+The `mcp-memory-gateway` package is already on npm and discoverable.
 
 ### Tertiary: Documentation & Blog
 

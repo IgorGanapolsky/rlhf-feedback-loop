@@ -118,7 +118,7 @@ Retired experiment: the `$5/mo`, `$10/mo`, and scarcity-based tiers below are pr
 
 | Tier | Price | What's Included | Conversion Target |
 |------|-------|-----------------|-------------------|
-| **Free** | $0 | `npx rlhf-feedback-loop serve` local, 1000 feedback captures/mo | Funnel entry |
+| **Free** | $0 | `npx mcp-memory-gateway serve` local, 1000 feedback captures/mo | Funnel entry |
 | **Founding Member** | **$5/mo forever** (locked, first 50 users) | Hosted gateway, 10K captures/mo, team sharing (3 seats), DPO export, dashboard | **Day-1 conversion** |
 | **Pro** | $10/mo | 50K captures/mo, 10 seats, priority support, custom guardrails | Standard |
 | **Team** | $29/mo | Unlimited captures, unlimited seats, SSO, audit log, SLA | Upsell target |
@@ -191,7 +191,7 @@ Title: "I built persistent memory for Claude Code — never lose context between
 Body:
 - Problem: Claude forgets everything between sessions
 - Solution: MCP Memory Gateway captures feedback, prevents repeated mistakes
-- Free: npx rlhf-feedback-loop serve
+- Free: npx mcp-memory-gateway serve
 - Hosted: $5/mo founding member (50 spots)
 - Demo: [Railway URL]
 - GitHub: [repo URL]

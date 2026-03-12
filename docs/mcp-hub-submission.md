@@ -15,7 +15,7 @@ Also submit to: https://mcp.so (community MCP directory)
 ## Server Name
 
 ```
-rlhf-feedback-loop
+mcp-memory-gateway
 ```
 
 ---
@@ -51,7 +51,7 @@ Works in local mode (zero config, no API key) or connected to the Context Gatewa
 ### Option A: Local mode (OSS, no API key needed)
 
 ```bash
-claude mcp add rlhf -- npx -y rlhf-feedback-loop@0.7.0 serve
+claude mcp add rlhf -- npx -y mcp-memory-gateway@0.7.0 serve
 ```
 
 Optional manual config (`~/.claude/claude_desktop_config.json` or `.claude/settings.json`):
@@ -61,7 +61,7 @@ Optional manual config (`~/.claude/claude_desktop_config.json` or `.claude/setti
   "mcpServers": {
     "rlhf": {
       "command": "npx",
-      "args": ["-y", "rlhf-feedback-loop@0.7.0", "serve"],
+      "args": ["-y", "mcp-memory-gateway@0.7.0", "serve"],
       "env": {
         "RLHF_BASE_URL": "http://localhost:8787"
       }
@@ -77,7 +77,7 @@ Optional manual config (`~/.claude/claude_desktop_config.json` or `.claude/setti
   "mcpServers": {
     "rlhf": {
       "command": "npx",
-      "args": ["-y", "rlhf-feedback-loop@0.7.0", "serve"],
+      "args": ["-y", "mcp-memory-gateway@0.7.0", "serve"],
       "env": {
         "RLHF_BASE_URL": "https://rlhf-feedback-loop-production.up.railway.app",
         "RLHF_API_KEY": "rlhf_YOUR_KEY_HERE"
@@ -124,7 +124,7 @@ Verification evidence: https://github.com/IgorGanapolsky/mcp-memory-gateway/blob
 
 ## Transport
 
-- **stdio** (primary): `npx -y rlhf-feedback-loop@0.7.0 serve` — version-pinned portable MCP launcher for Claude Code desktop and CLI
+- **stdio** (primary): `npx -y mcp-memory-gateway@0.7.0 serve` — version-pinned portable MCP launcher for Claude Code desktop and CLI
 - **HTTP** (secondary): `src/api/server.js` — REST API (`POST /v1/feedback/capture`, `GET /v1/feedback/summary`, `POST /v1/dpo/export`)
 
 ---
@@ -132,7 +132,7 @@ Verification evidence: https://github.com/IgorGanapolsky/mcp-memory-gateway/blob
 ## Repository
 
 ```
-https://github.com/IgorGanapolsky/rlhf-feedback-loop
+https://github.com/IgorGanapolsky/mcp-memory-gateway
 ```
 
 ---
@@ -140,12 +140,12 @@ https://github.com/IgorGanapolsky/rlhf-feedback-loop
 ## npm Package
 
 ```
-https://www.npmjs.com/package/rlhf-feedback-loop
+https://www.npmjs.com/package/mcp-memory-gateway
 ```
 
 Install:
 ```bash
-npm install rlhf-feedback-loop
+npm install mcp-memory-gateway
 ```
 
 ---
@@ -190,15 +190,15 @@ npm test
 - [ ] Fork https://github.com/modelcontextprotocol/servers
 - [ ] Add entry to `README.md` under **Community Servers** in alphabetical order:
   ```markdown
-  - **[MCP Memory Gateway](https://github.com/IgorGanapolsky/rlhf-feedback-loop)** — Capture feedback from AI coding agents, prevent repeated mistakes, export DPO training pairs. Works with Claude Code, ChatGPT, Gemini, Codex, and Amp.
+  - **[MCP Memory Gateway](https://github.com/IgorGanapolsky/mcp-memory-gateway)** — Capture feedback from AI coding agents, prevent repeated mistakes, export DPO training pairs. Works with Claude Code, ChatGPT, Gemini, Codex, and Amp.
   ```
-- [ ] Open PR titled: `Add rlhf-feedback-loop community server`
+- [ ] Open PR titled: `Add mcp-memory-gateway community server`
 - [ ] Verify CI passes on the PR
 
 ## Submission Checklist (mcp.so)
 
 - [ ] Go to https://mcp.so/submit
-- [ ] Paste GitHub URL: `https://github.com/IgorGanapolsky/rlhf-feedback-loop`
+- [ ] Paste GitHub URL: `https://github.com/IgorGanapolsky/mcp-memory-gateway`
 - [ ] Verify auto-populated fields (name, description, tools)
 - [ ] Add tags: `rlhf`, `feedback`, `dpo`, `coding-agent`
 - [ ] Submit

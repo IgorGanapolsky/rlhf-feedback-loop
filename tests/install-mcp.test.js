@@ -132,7 +132,7 @@ describe('install-mcp', () => {
       mcpServers: {
         [MCP_SERVER_KEY]: {
           command: 'npx',
-          args: ['-y', 'rlhf-feedback-loop', 'serve'],
+          args: ['-y', 'mcp-memory-gateway', 'serve'],
         },
       },
     }, null, 2) + '\n');

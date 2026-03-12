@@ -25,7 +25,7 @@ Hi {{First Name}},
 
 Following up on my last email. One of the biggest hurdles to adopting an Agentic Control Plane is the setup.
 
-That's why we made the Agentic Feedback Studio **Zero-Config**. You literally just drop `npx rlhf-feedback-loop install` into a repository, and it auto-discovers the context, integrating directly with Claude, Gemini, or Copilot via MCP. 
+That's why we made the Agentic Feedback Studio **Zero-Config**. You literally just drop `npx mcp-memory-gateway install` into a repository, and it auto-discovers the context, integrating directly with Claude, Gemini, or Copilot via MCP. 
 
 For teams that outgrow local-only use, we offer hosted pilot access by direct arrangement. The only public self-serve commercial SKU today is the $9 one-time Pro Pack.
 
@@ -41,9 +41,9 @@ Hi {{First Name}},
 
 Looks like timing isn't right to discuss agentic governance and the Veto Layer. 
 
-I'll leave you with our open-source repo. If your team starts feeling the pain of repeated AI hallucinations, you can run our Revenue-at-Risk analyzer locally (`npx rlhf-feedback-loop stats`) to see exactly what it's costing you.
+I'll leave you with our open-source repo. If your team starts feeling the pain of repeated AI hallucinations, you can run our Revenue-at-Risk analyzer locally (`npx mcp-memory-gateway stats`) to see exactly what it's costing you.
 
-Link: https://github.com/IgorGanapolsky/rlhf-feedback-loop
+Link: https://github.com/IgorGanapolsky/mcp-memory-gateway
 
 Best,
 Igor

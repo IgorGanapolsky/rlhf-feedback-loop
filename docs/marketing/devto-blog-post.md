@@ -30,11 +30,11 @@ The core loop of the Agentic Feedback Studio is the V2V pipeline. It turns subje
 ## Run the Revenue-at-Risk Analyzer
 Every time an agent repeats a mistake, it costs you developer time. We built a Revenue-at-Risk analyzer directly into the CLI. 
 
-Run `npx rlhf-feedback-loop stats` in any project, and it will calculate the estimated operational loss caused by repeated agent failures based on your local logs.
+Run `npx mcp-memory-gateway stats` in any project, and it will calculate the estimated operational loss caused by repeated agent failures based on your local logs.
 
 **Stop Vibe Coding. Start Context Engineering.**
 
 Try it now:
 ```bash
-npx rlhf-feedback-loop install
+npx mcp-memory-gateway install
 ```
