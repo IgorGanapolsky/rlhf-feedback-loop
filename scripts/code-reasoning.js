@@ -329,5 +329,22 @@ module.exports = {
   traceForProofCheck,
   aggregateTraces,
   DEFAULT_CONFIDENCE_THRESHOLD,
+  /**
+   * Wraps a prompt with private reasoning instructions to maximize accuracy.
+   */
+  withReasoningPrompt: (userPrompt, role = 'expert senior software engineer') => {
+    return `
+You are a ${role} in March 2026. 
+
+INSTRUCTION: 
+1. First, think through the problem step-by-step privately. 
+2. Do not reveal your reasoning process in the final output. 
+3. Perform an internal self-correction check for logic gaps or hallucinations.
+4. When you are done, provide ONLY the final, concise, and technically accurate answer or code.
+
+USER PROMPT:
+${userPrompt}
+`.trim();
+  }
 };
 // Tests cover this module through the node:test suite; avoid hardcoding counts here.
