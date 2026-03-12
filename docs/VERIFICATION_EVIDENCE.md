@@ -3,7 +3,7 @@
 Scope:
 
 - Added a shared operational billing summary in `scripts/billing.js` that merges the funnel ledger with the local key store.
-- Added admin-only `GET /v1/billing/summary` plus the `node bin/cli.js cfo` command so API, CLI, watcher, and strategist surfaces read the same source of truth.
+- Added admin-only `GET /v1/billing/summary` plus the repo-local `node bin/cli.js cfo` command so API, CLI, watcher, and strategist surfaces share the same summary shape.
 - Replaced fake paid-line revenue guessing in operator scripts with the new billing summary proxy.
 
 Commands run:
@@ -35,7 +35,7 @@ Requirements verified:
 
 - Billing funnel telemetry, active keys, disabled keys, customer usage, and source attribution now resolve from one shared summary shape instead of ad hoc paid-line counting.
 - `GET /v1/billing/summary` is admin-only and rejects provisioned billing keys.
-- `node bin/cli.js cfo` returns the same machine-readable control-plane summary as the API surface.
+- `node bin/cli.js cfo` returns the same machine-readable summary shape as the API surface, while reading the local ledger and key store in the current checkout.
 - This surface is an operational billing proxy only; it does not claim booked revenue or invoice truth because the persisted stores track paid events, API keys, customer IDs, and usage rather than Stripe ledger amounts.
 
 ## March 12, 2026: Revenue Sprint & Conversion Optimization

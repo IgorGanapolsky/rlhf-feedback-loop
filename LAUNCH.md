@@ -26,6 +26,6 @@ Send this to the top 3 agent builders in your network:
 > "Hey, I just launched the Context Gateway for MCP agents. It solves the context drift problem by consolidating agent failures into 'Always-On' memory. Would love for you to be our first paid user and break the machine: https://rlhf-feedback-loop-production.up.railway.app"
 
 ## 4. Verification
-I am monitoring the production billing proxy (`node bin/cli.js cfo`). It reports paid events, active keys, customer IDs, and usage from the append-only funnel ledger plus the key store. It is an operational proxy, not booked-revenue accounting.
+I am monitoring the repo-local billing proxy (`node bin/cli.js cfo`) in this checkout. It reports paid events, active keys, customer IDs, and usage from the append-only funnel ledger plus the local key store. The hosted API exposes the same summary shape at `GET /v1/billing/summary` when queried with the admin key. This is an operational proxy, not booked-revenue accounting.
 
 **Engineering is Done. Deployment is Active. Go get that first dollar.**

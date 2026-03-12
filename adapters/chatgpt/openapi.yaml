@@ -162,6 +162,25 @@ components:
                 lastPaidAt:
                   type: string
                   nullable: true
+                lastPaidEvent:
+                  type: object
+                  nullable: true
+                  properties:
+                    timestamp:
+                      type: string
+                      nullable: true
+                    event:
+                      type: string
+                      nullable: true
+                    evidence:
+                      type: string
+                      nullable: true
+                    customerId:
+                      type: string
+                      nullable: true
+                    traceId:
+                      type: string
+                      nullable: true
         keys:
           type: object
           properties:
@@ -179,6 +198,34 @@ components:
               type: object
               additionalProperties:
                 type: integer
+            activeBySource:
+              type: object
+              additionalProperties:
+                type: integer
+        customers:
+          type: array
+          items:
+            type: object
+            properties:
+              customerId:
+                type: string
+              activeKeys:
+                type: integer
+              totalKeys:
+                type: integer
+              usageCount:
+                type: integer
+              source:
+                type: string
+              installId:
+                type: string
+                nullable: true
+              createdAt:
+                type: string
+                nullable: true
+              disabledAt:
+                type: string
+                nullable: true
 paths:
   /healthz:
     get:
