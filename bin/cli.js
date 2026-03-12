@@ -679,8 +679,8 @@ function help() {
   console.log('  pro                   Upgrade to Context Gateway ($10/mo)');
   console.log('  prove [--target=X]    Run proof harness (adapters|automation|attribution|lancedb|local-intelligence|...)');
   console.log('  watch [flags]           Watch .rlhf/ for external signals and ingest through pipeline (--once, --source=X)');
-  console.log('  status                  Show learning curve dashboard — approval trend + failure domains');
-  console.log('  start-api             Start the RLHF HTTPS API server');
+  console.log('  status                  Show feedback tracking dashboard — approval trend + failure domains');
+  console.log('  start-api             Start the Memory Gateway HTTPS API server');
   console.log('  help                  Show this help message');
   console.log('');
   console.log('Examples:');

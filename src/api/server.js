@@ -31,6 +31,11 @@ const {
   planIntent,
 } = require('../../scripts/intent-router');
 const {
+  loadModel,
+  getReliability,
+  samplePosteriors,
+} = require('../../scripts/thompson-sampling');
+const {
   createCheckoutSession,
   getCheckoutSessionStatus,
   provisionApiKey,
@@ -959,6 +964,55 @@ function createApiServer() {
         return;
       }
 
+
+      // ----------------------------------------------------------------
+      // Quality / ACO routes
+      // ----------------------------------------------------------------
+
+      if (req.method === 'GET' && pathname === '/v1/quality/scores') {
+        const modelPath = path.join(getSafeDataDir(), 'feedback_model.json');
+        const model = loadModel(modelPath);
+        const reliability = getReliability(model);
+        const category = parsed.searchParams.get('category');
+        if (category) {
+          if (!reliability[category]) {
+            throw createHttpError(404, `Category '${category}' not found`);
+          }
+          sendJson(res, 200, { category, ...reliability[category] });
+          return;
+        }
+        sendJson(res, 200, {
+          categories: reliability,
+          totalEntries: model.total_entries || 0,
+          updated: model.updated || null,
+        });
+        return;
+      }
+
+      if (req.method === 'GET' && pathname === '/v1/quality/rules') {
+        const rulesPath = path.join(getSafeDataDir(), 'prevention-rules.md');
+        let markdown = '';
+        if (fs.existsSync(rulesPath)) {
+          markdown = fs.readFileSync(rulesPath, 'utf8').trim();
+        }
+        const rules = [];
+        for (const line of markdown.split('\n')) {
+          const match = line.match(/^-\s+\*\*(\w+)\*\*.*?:\s*(.+)/);
+          if (match) {
+            rules.push({ severity: match[1].toLowerCase(), rule: match[2].trim() });
+          }
+        }
+        sendJson(res, 200, { count: rules.length, rules, markdown });
+        return;
+      }
+
+      if (req.method === 'GET' && pathname === '/v1/quality/posteriors') {
+        const modelPath = path.join(getSafeDataDir(), 'feedback_model.json');
+        const model = loadModel(modelPath);
+        const posteriors = samplePosteriors(model);
+        sendJson(res, 200, { posteriors });
+        return;
+      }
 
       // ----------------------------------------------------------------
       // Billing routes
