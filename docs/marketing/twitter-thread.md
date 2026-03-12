@@ -82,10 +82,10 @@ Get started:
 npm install rlhf-feedback-loop
 ```
 
-GitHub: github.com/IgorGanapolsky/rlhf-feedback-loop
+GitHub: github.com/IgorGanapolsky/mcp-memory-gateway
 npm: npmjs.com/package/rlhf-feedback-loop
 Context Gateway ($10/mo): live Stripe checkout on the repo
-Live API: rlhf-feedback-loop-710216278770.us-central1.run.app
+Live API: rlhf-feedback-loop-production.up.railway.app
 
 #DevTools #MCP
 

@@ -31,13 +31,13 @@ Observed results:
 
 Evidence artifacts:
 
-- `public/index.html` updated with $5/mo Founding Member offer.
+- `public/index.html` points checkout and fallback flow at the canonical Railway hosted app.
 - `docs/marketing/LAUNCH_CONTENT.md` exists and contains high-intent hooks.
 - `SKILL.md` updated with `agent-memory` and `claude-code` keywords.
 
 Requirements verified:
 
-- Pricing aligns with the aggressive "First Dollar" strategy.
+- Pricing and fallback routing align with the current hosted billing funnel.
 - Repository is optimized for auto-discovery by AI search and MCP directories.
 - Technical integrity is maintained with a 100% test pass rate.
 

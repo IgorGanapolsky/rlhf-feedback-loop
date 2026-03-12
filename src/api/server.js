@@ -288,7 +288,7 @@ function renderCheckoutSuccessPage(runtimeConfig) {
       <pre id="curl-block">Waiting for provisioning...</pre>
       <div class="actions">
         <a class="button" href="/">Back to landing page</a>
-        <a class="button secondary" href="https://github.com/IgorGanapolsky/rlhf-feedback-loop/blob/main/docs/VERIFICATION_EVIDENCE.md" target="_blank" rel="noreferrer">Verification evidence</a>
+        <a class="button secondary" href="https://github.com/IgorGanapolsky/mcp-memory-gateway/blob/main/docs/VERIFICATION_EVIDENCE.md" target="_blank" rel="noreferrer">Verification evidence</a>
       </div>
     </div>
   </main>
@@ -602,7 +602,7 @@ function createApiServer() {
           name: 'rlhf-feedback-loop',
           version: pkg.version,
           status: 'ok',
-          docs: 'https://github.com/IgorGanapolsky/rlhf-feedback-loop',
+          docs: 'https://github.com/IgorGanapolsky/mcp-memory-gateway',
           endpoints: ['/health', '/v1/feedback/capture', '/v1/feedback/stats', '/v1/dpo/export'],
         });
         return;
@@ -753,6 +753,10 @@ function createApiServer() {
         }
 
         const result = await handleWebhook(rawBody, sig);
+        if (result && result.reason === 'invalid_signature') {
+          sendJson(res, 400, { error: result.error || 'Invalid webhook signature' });
+          return;
+        }
         sendJson(res, 200, result);
 
       } catch (err) {

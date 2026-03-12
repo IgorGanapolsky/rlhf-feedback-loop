@@ -116,6 +116,28 @@ function syncVersion(opts) {
     targets.push(mcpSubmPath);
   }
 
+  // 5. public/index.html — static landing proof pill + footer version
+  const publicIndexPath = 'public/index.html';
+  if (fs.existsSync(path.join(PROJECT_ROOT, publicIndexPath))) {
+    const publicContent = fs.readFileSync(path.join(PROJECT_ROOT, publicIndexPath), 'utf-8');
+    const proofMatch = publicContent.match(/Versioned proof: v(\d+\.\d+\.\d+)/);
+    if (proofMatch && proofMatch[1] !== version) {
+      drifted.push({ file: publicIndexPath, field: 'proof-pill', current: proofMatch[1] });
+      if (!checkOnly) {
+        replaceInFile(publicIndexPath, `Versioned proof: v${proofMatch[1]}`, `Versioned proof: v${version}`);
+      }
+    }
+
+    const footerMatch = publicContent.match(/Context Gateway • v(\d+\.\d+\.\d+)/);
+    if (footerMatch && footerMatch[1] !== version) {
+      drifted.push({ file: publicIndexPath, field: 'footer-version', current: footerMatch[1] });
+      if (!checkOnly) {
+        replaceInFile(publicIndexPath, `Context Gateway • v${footerMatch[1]}`, `Context Gateway • v${version}`);
+      }
+    }
+    targets.push(publicIndexPath);
+  }
+
   return {
     version,
     targets,

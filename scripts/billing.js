@@ -45,6 +45,19 @@ function getStripeClient() {
 
 const LOCAL_MODE = () => !CONFIG.STRIPE_SECRET_KEY;
 
+function safeCompareHex(expectedHex, actualHex) {
+  try {
+    const expected = Buffer.from(expectedHex, 'hex');
+    const actual = Buffer.from(actualHex, 'hex');
+    if (expected.length === 0 || expected.length !== actual.length) {
+      return false;
+    }
+    return crypto.timingSafeEqual(expected, actual);
+  } catch {
+    return false;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
@@ -322,13 +335,18 @@ function verifyWebhookSignature(rawBody, signature) {
   if (!signature || !rawBody) return false;
 
   // Stripe signature format: t=<timestamp>,v1=<hmac>,...
-  const parts = {};
+  const parts = { v1: [] };
   for (const part of signature.split(',')) {
     const [k, v] = part.split('=');
-    if (k && v) parts[k] = v;
+    if (!k || !v) continue;
+    if (k === 'v1') {
+      parts.v1.push(v);
+      continue;
+    }
+    parts[k] = v;
   }
 
-  if (!parts.t || !parts.v1) return false;
+  if (!parts.t || !Array.isArray(parts.v1) || parts.v1.length === 0) return false;
 
   // Timestamp tolerance: +/- 5 minutes
   const timestamp = parseInt(parts.t, 10);
@@ -338,11 +356,7 @@ function verifyWebhookSignature(rawBody, signature) {
   const payload = `${parts.t}.${typeof rawBody === 'string' ? rawBody : rawBody.toString('utf-8')}`;
   const expected = crypto.createHmac('sha256', CONFIG.STRIPE_WEBHOOK_SECRET).update(payload).digest('hex');
 
-  try {
-    return crypto.timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(parts.v1, 'hex'));
-  } catch {
-    return false;
-  }
+  return parts.v1.some((candidate) => safeCompareHex(expected, candidate));
 }
 
 async function handleWebhook(rawBody, signature) {

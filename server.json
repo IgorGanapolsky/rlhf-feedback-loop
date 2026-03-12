@@ -3,7 +3,7 @@
   "name": "io.github.IgorGanapolsky/mcp-memory-gateway",
   "description": "Agent quality feedback loop with prevention rules and commerce quality scores.",
   "title": "MCP Memory Gateway",
-  "websiteUrl": "https://mcp-memory-gateway.up.railway.app",
+  "websiteUrl": "https://rlhf-feedback-loop-production.up.railway.app",
   "repository": {
     "source": "github",
     "url": "https://github.com/IgorGanapolsky/mcp-memory-gateway"
