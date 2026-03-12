@@ -616,6 +616,16 @@ function captureFeedback(params) {
     // attribution is non-blocking
   }
 
+  // Auto-promote gates on negative feedback — non-blocking
+  if (feedbackEvent.signal === 'negative') {
+    try {
+      const autoPromote = require('./auto-promote-gates');
+      autoPromote.promote(FEEDBACK_LOG_PATH);
+    } catch (_err) {
+      // Gate promotion is non-critical — never fail the capture pipeline
+    }
+  }
+
   summary.accepted += 1;
   summary.lastUpdated = now;
   saveSummary(summary);

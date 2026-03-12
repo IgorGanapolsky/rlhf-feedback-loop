@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "gates": [
+    {
+      "id": "push-without-thread-check",
+      "trigger": "Bash:git_push",
+      "pattern": "git\\s+push",
+      "action": "block",
+      "unless": "pr_threads_checked",
+      "message": "Check PR review threads (reviewThreads first:50) before pushing",
+      "severity": "critical"
+    },
+    {
+      "id": "package-lock-reset",
+      "trigger": "Bash:package_lock",
+      "pattern": "git\\s+checkout\\s+\\S+\\s+--\\s+package-lock\\.json",
+      "action": "block",
+      "message": "Never reset package-lock.json from another branch. Run npm install instead.",
+      "severity": "critical"
+    },
+    {
+      "id": "force-push",
+      "trigger": "Bash:git_force_push",
+      "pattern": "git\\s+push\\s+(--force|-f)",
+      "action": "block",
+      "message": "Force push blocked. This is destructive and irreversible.",
+      "severity": "critical"
+    },
+    {
+      "id": "protected-branch-push",
+      "trigger": "Bash:protected_push",
+      "pattern": "git\\s+push\\s+(?:\\S+\\s+)?(?:develop|main|master)\\b",
+      "action": "block",
+      "message": "Direct push to protected branch. Use feature branches and PRs.",
+      "severity": "critical"
+    },
+    {
+      "id": "env-file-edit",
+      "trigger": "Edit:env_file",
+      "pattern": "\\.env",
+      "action": "warn",
+      "message": "Editing .env file — verify you are not deleting existing tokens",
+      "severity": "medium"
+    }
+  ]
+}
