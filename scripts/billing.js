@@ -228,7 +228,15 @@ function validateApiKey(key) {
   if (!key) return { valid: false };
   const store = loadKeyStore();
   const meta = store.keys[key];
-  return (meta && meta.active) ? { valid: true, metadata: meta } : { valid: false };
+  if (!meta || !meta.active) return { valid: false };
+  return {
+    valid: true,
+    customerId: meta.customerId,
+    usageCount: meta.usageCount || 0,
+    installId: meta.installId || null,
+    createdAt: meta.createdAt,
+    metadata: meta,
+  };
 }
 
 function recordUsage(key) {

@@ -118,7 +118,7 @@ function loadLandingPageHtml(origin) {
   return fillTemplate(template, {
     '__PACKAGE_VERSION__': pkg.version,
     '__APP_ORIGIN__': origin,
-    '__CHECKOUT_ENDPOINT__': '/v1/billing/checkout',
+    '__CHECKOUT_ENDPOINT__': 'https://rlhf-feedback-loop-710216278770.us-central1.run.app/v1/billing/checkout',
     '__CHECKOUT_FALLBACK_URL__': 'https://buy.stripe.com/fZu4gz0I47Dg9G1cGv3sI03',
     '__FOUNDING_PRICE__': '$5/mo',
     '__VERIFICATION_URL__': 'https://github.com/IgorGanapolsky/mcp-memory-gateway/blob/main/docs/VERIFICATION_EVIDENCE.md',

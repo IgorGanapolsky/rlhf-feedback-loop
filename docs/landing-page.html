@@ -830,7 +830,7 @@
 
   <script>
     (function () {
-      const checkoutEndpoint = '/v1/billing/checkout';
+      const checkoutEndpoint = '__CHECKOUT_ENDPOINT__';
       const checkoutFallbackUrl = '__CHECKOUT_FALLBACK_URL__';
       const appOrigin = 'https://rlhf-feedback-loop-production.up.railway.app';
       const installStorageKey = 'rlhf_cloud_pro_install_id';
@@ -858,6 +858,8 @@
             body: JSON.stringify({
               installId,
               oneTime: options.oneTime === true,
+              successUrl: `${appOrigin}/success?session_id={CHECKOUT_SESSION_ID}`,
+              cancelUrl: `${appOrigin}/cancel`,
               metadata: {
                 source: 'landing_page',
                 origin: appOrigin,

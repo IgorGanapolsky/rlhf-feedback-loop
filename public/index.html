@@ -862,6 +862,8 @@
             },
             body: JSON.stringify({
               installId,
+              successUrl: `${appOrigin}/success?session_id={CHECKOUT_SESSION_ID}`,
+              cancelUrl: `${appOrigin}/cancel`,
               metadata: {
                 source: 'landing_page',
                 origin: appOrigin

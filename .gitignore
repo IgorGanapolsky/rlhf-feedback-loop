@@ -3,6 +3,8 @@ node_modules/
 !.env.example
 !.env.paperbanana.example
 .DS_Store
+.claude/settings.local.json
+.claude/debug/
 .claude/memory/feedback/*.json
 .claude/memory/feedback/*.jsonl
 .claude/memory/feedback/*.md
