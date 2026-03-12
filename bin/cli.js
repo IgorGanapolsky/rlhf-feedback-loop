@@ -4,6 +4,8 @@
  *
  * Usage:
  *   npx rlhf-feedback-loop init          # scaffold .rlhf/ config + .mcp.json
+ *   npx rlhf-feedback-loop init --wire-hooks          # wire hooks only (auto-detect agent)
+ *   npx rlhf-feedback-loop init --agent claude-code   # scaffold + wire hooks for specific agent
  *   npx rlhf-feedback-loop capture       # capture feedback
  *   npx rlhf-feedback-loop export-dpo    # export DPO training pairs
  *   npx rlhf-feedback-loop stats         # feedback analytics + Revenue-at-Risk
@@ -320,6 +322,29 @@ function setupCursor() {
 }
 
 function init() {
+  const args = parseArgs(process.argv.slice(3));
+
+  // --wire-hooks only mode: skip scaffolding, just wire hooks
+  if (args['wire-hooks']) {
+    const { wireHooks, parseFlags: parseHookFlags } = require(path.join(PKG_ROOT, 'scripts', 'auto-wire-hooks'));
+    const hookResult = wireHooks({ agent: args.agent, dryRun: args['dry-run'] });
+    if (hookResult.error) {
+      console.error(hookResult.error);
+      process.exit(1);
+    }
+    if (!hookResult.changed) {
+      console.log(`Hooks already wired for ${hookResult.agent} at ${hookResult.settingsPath}`);
+    } else {
+      const prefix = args['dry-run'] ? '[DRY RUN] Would add' : 'Added';
+      console.log(`${prefix} hooks for ${hookResult.agent}:`);
+      for (const h of hookResult.added) {
+        console.log(`  ${h.lifecycle}: ${h.command}`);
+      }
+      console.log(`  Settings: ${hookResult.settingsPath}`);
+    }
+    return;
+  }
+
   const rlhfDir = path.join(CWD, '.rlhf');
   const configPath = path.join(rlhfDir, 'config.json');
 
@@ -384,6 +409,22 @@ function init() {
   }
 
   if (configured === 0) console.log('  All detected platforms already configured.');
+
+  // Auto-wire hooks if --agent flag is provided (or auto-detect)
+  if (args.agent || args['wire-hooks']) {
+    const { wireHooks } = require(path.join(PKG_ROOT, 'scripts', 'auto-wire-hooks'));
+    const hookResult = wireHooks({ agent: args.agent, dryRun: args['dry-run'] });
+    if (hookResult.error) {
+      console.log(`  Hook wiring: ${hookResult.error}`);
+    } else if (!hookResult.changed) {
+      console.log(`  Hooks: already wired for ${hookResult.agent}`);
+    } else {
+      const prefix = args['dry-run'] ? '[DRY RUN] Would add' : 'Wired';
+      for (const h of hookResult.added) {
+        console.log(`  ${prefix} ${h.lifecycle} hook: ${h.command}`);
+      }
+    }
+  }
 
   // .gitignore
   const gitignorePath = path.join(CWD, '.gitignore');
@@ -671,6 +712,12 @@ function pulse() {
   showPulse();
 }
 
+function gateStats() {
+  const { calculateStats, formatStats } = require(path.join(PKG_ROOT, 'scripts', 'gate-stats'));
+  const stats = calculateStats();
+  console.log('\n' + formatStats(stats) + '\n');
+}
+
 function optimize() {
   const { optimize: doOptimize } = require(path.join(PKG_ROOT, 'scripts', 'optimize-context'));
   doOptimize();
@@ -712,6 +759,20 @@ function installMcp() {
   doInstall(flags);
 }
 
+function dashboard() {
+  const { generateDashboard, printDashboard } = require(path.join(PKG_ROOT, 'scripts', 'dashboard'));
+  const { getFeedbackPaths } = require(path.join(PKG_ROOT, 'scripts', 'feedback-loop'));
+  const { FEEDBACK_DIR } = getFeedbackPaths();
+  const data = generateDashboard(FEEDBACK_DIR);
+  printDashboard(data);
+}
+
+function gateStats() {
+  const { calculateStats, formatStats } = require(path.join(PKG_ROOT, 'scripts', 'gate-stats'));
+  const stats = calculateStats();
+  console.log('\n' + formatStats(stats) + '\n');
+}
+
 function startApi() {
   const serverPath = path.join(PKG_ROOT, 'src', 'api', 'server.js');
   try {
@@ -727,6 +788,9 @@ function help() {
   console.log('');
   console.log('Commands:');
   console.log('  init                  Scaffold .rlhf/ config + MCP server in current project');
+  console.log('    --agent=NAME        Wire PreToolUse hooks for agent (claude-code|codex|gemini)');
+  console.log('    --wire-hooks        Wire hooks only (auto-detect agent, skip scaffolding)');
+  console.log('    --dry-run           Preview hook changes without writing');
   console.log('  install-mcp           Install RLHF MCP server into Claude Code settings (--project for local)');
   console.log('  serve                 Start MCP server (stdio) — for claude/codex/gemini mcp add');
   console.log('  capture [flags]       Capture feedback (--feedback=up|down --context="..." --tags="...")');
@@ -743,8 +807,10 @@ function help() {
   console.log('  prove [--target=X]    Run proof harness (adapters|automation|attribution|lancedb|local-intelligence|...)');
   console.log('  watch [flags]           Watch .rlhf/ for external signals and ingest through pipeline (--once, --source=X)');
   console.log('  status                  Show feedback tracking dashboard — approval trend + failure domains');
+  console.log('  dashboard               Full RLHF dashboard — approval rate, gate stats, prevention impact');
   console.log('  funnel                  Show marketing & revenue conversion funnel analytics');
   console.log('  pulse                   Show real-time GTM velocity and Mission Control summary');
+  console.log('  gate-stats              Show gate statistics — active gates, blocks, warns, time saved');
   console.log('  start-api             Start the Memory Gateway HTTPS API server');
   console.log('  help                  Show this help message');
   console.log('');
@@ -822,6 +888,12 @@ switch (COMMAND) {
     break;
   case 'pulse':
     pulse();
+    break;
+  case 'gate-stats':
+    gateStats();
+    break;
+  case 'dashboard':
+    dashboard();
     break;
   case 'start-api':
     startApi();
