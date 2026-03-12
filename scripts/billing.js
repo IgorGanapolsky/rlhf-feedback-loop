@@ -148,6 +148,7 @@ async function createCheckoutSession({ successUrl, cancelUrl, customerEmail, ins
     success_url: successUrl,
     cancel_url: cancelUrl,
     customer_email: customerEmail,
+    payment_method_types: ['card', 'link'],
     mode: metadata.oneTime ? 'payment' : 'subscription',
     line_items: [{ price: metadata.oneTime ? CONFIG.STRIPE_ONE_TIME_PRICE_ID : CONFIG.STRIPE_PRICE_ID, quantity: 1 }],
     metadata: checkoutMetadata,
