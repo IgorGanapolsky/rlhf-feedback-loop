@@ -8,11 +8,27 @@ This document is the source of truth for product, pricing, traction, and proof c
 ## What is true today
 
 - The open-source `mcp-memory-gateway` package is free and MIT licensed.
-- The current public self-serve commercial offer is **Pro at $29/mo recurring**.
-- Free tier includes: feedback capture, recall, prevention rules, 5 built-in gates, dashboard CLI, and DPO/KTO export.
-- Pro tier includes: **Hosted Dashboard Access**, auto-gate promotion, unlimited custom gates, multi-repo sync, CI webhook auto-ingest, and priority support.
-- Hosted Context Gateway access exists as a pilot/by-request workflow layer. It is not a public self-serve recurring subscription.
+- The current public self-serve commercial offer is **Pro at $29/mo recurring**, hosted on Cloudflare Workers.
 - Engineering verification is strong and should be cited through `docs/VERIFICATION_EVIDENCE.md` and machine-readable proof reports.
+
+## Product Tiers
+
+### Free (local, `npx mcp-memory-gateway serve`)
+
+- 500 memories, 100 retrievals/day
+- 5 built-in gates
+- Single user, single machine
+- DPO/KTO export for fine-tuning
+- CLI dashboard
+
+### Pro ($29/mo, hosted on Cloudflare Workers)
+
+- Cloud-synced memories accessible from any machine
+- Unlimited memories and retrievals
+- Team sharing of prevention rules
+- Usage dashboard (memories, retrievals, cache hits, cost savings)
+- Unlimited custom gates with auto-gate promotion
+- Priority support
 
 ## What we must not claim
 

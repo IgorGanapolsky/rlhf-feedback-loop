@@ -9,7 +9,7 @@ Production-grade RLHF operations for AI coding agents — a plugin that any deve
 **$100/day after-tax** — sustainable, recurring revenue from the RLHF platform.
 
 That's ~$3,000/month gross (~$3,650/month pre-tax assuming ~18% effective rate).
-Path: 62 customers × $49/mo Context Gateway, or 25 mixed (20 × $49 + 5 × $299 Enterprise).
+Path: 104 customers x $29/mo Pro, or mixed (80 x $29 Pro + organic free-to-pro conversion).
 
 ## Core Value
 
@@ -36,11 +36,15 @@ Every feature must have tests, pass CI, and produce verification evidence — no
 - ✓ REST API (11 endpoints) + MCP stdio server
 - ✓ 314 tests, 12 proof reports, $0 budget spent
 
-### Active — v3.0: Commercialization
+### Active — v3.0: Commercialization (Cloudflare Workers Architecture)
 
-- [ ] Dockerfile + hosted deployment (Railway/Fly.io)
-- [ ] Stripe billing (checkout, API key provisioning, usage metering)
-- [ ] npm package for instant `npx` install
+- [ ] Cloudflare Workers deployment for Pro tier (cloud-synced memories, unlimited usage)
+- [ ] Free tier enforcement: 500 memories, 100 retrievals/day limits in local `npx mcp-memory-gateway serve`
+- [ ] Stripe billing ($29/mo Pro checkout, API key provisioning)
+- [ ] npm package for instant `npx mcp-memory-gateway serve` install
+- [ ] Cloud sync API (memories, prevention rules, gate configs)
+- [ ] Usage dashboard (memories, retrievals, cache hits, cost savings)
+- [ ] Team sharing of prevention rules (Pro)
 - [ ] Claude Code skill plugin (one-command install)
 - [ ] Codex MCP plugin (config.toml ready)
 - [ ] Gemini extension plugin (function declarations ready)
@@ -67,7 +71,7 @@ Every feature must have tests, pass CI, and produce verification evidence — no
 
 ## Constraints
 
-- **Budget**: $5/mo hosting (Railway free tier → $5 starter) + $0 Stripe (free until revenue)
+- **Budget**: $5/mo hosting (Cloudflare Workers free tier → $5 paid) + $0 Stripe (free until revenue)
 - **No tech debt**: Tests for everything, proof for everything
 - **Speed**: First dollar > perfect architecture
 - **Plugin-first**: Every platform must have a one-command install story
@@ -76,14 +80,14 @@ Every feature must have tests, pass CI, and produce verification evidence — no
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Railway over AWS/GCP | Cheapest path to deployed API ($5/mo vs $20+) | — Pending |
-| Stripe Token Billing | Auto price-sync across LLM providers, margin control | — Pending |
-| npm package for distribution | `npx rlhf-feedback-loop init` is the universal install | — Pending |
+| Cloudflare Workers over Railway/Fly.io | Edge deployment, generous free tier, global low-latency | — Active |
+| Free/Pro split at $29/mo | Free local with limits (500 mem, 100 ret/day) + cloud Pro unlimited | — Active |
+| npm package for distribution | `npx mcp-memory-gateway serve` is the universal install | — Pending |
 | Plugin-per-platform | Each AI tool gets native install experience | — Pending |
 
 ## Current Milestone: v3.0 Commercialization
 
-**Goal:** Deploy hosted API, add Stripe billing, publish plugins to all 5 platforms, get first paying customer.
+**Goal:** Deploy Pro tier on Cloudflare Workers, enforce free tier limits, add Stripe billing at $29/mo, publish plugins to all 5 platforms, get first paying customer.
 
 ---
 *Last updated: 2026-03-04 after v3.0 milestone start*

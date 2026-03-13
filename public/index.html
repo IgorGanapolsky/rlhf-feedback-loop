@@ -26,7 +26,7 @@
         "@type": "Offer",
         "price": "0",
         "priceCurrency": "USD",
-        "description": "Free open-source tier with feedback capture, recall, prevention rules, 5 built-in gates, and CLI dashboard."
+        "description": "Free local tier: 500 memories, 100 retrievals/day, 5 built-in gates, single user, DPO/KTO export, CLI dashboard."
       },
       {
         "@type": "Offer",
@@ -38,7 +38,7 @@
           "priceCurrency": "USD",
           "billingDuration": "P1M"
         },
-        "description": "Pro plan with auto-gate promotion, unlimited custom gates, multi-repo sync, CI webhook auto-ingest, and priority support."
+        "description": "Pro plan hosted on Cloudflare Workers: cloud-synced memories, unlimited memories and retrievals, team sharing, usage dashboard, unlimited custom gates with auto-gate promotion, priority support."
       }
     ],
     "sameAs": [
@@ -737,32 +737,31 @@
       <div class="wrap">
         <div class="section-label">Pricing</div>
         <div class="section-title">Free forever. Pro when you need it.</div>
-        <div class="section-desc">The OSS core handles most use cases. Pro unlocks auto-promotion, multi-repo sync, and CI integration.</div>
+        <div class="section-desc">The local CLI handles single-machine use. Pro syncs your memories to the cloud via Cloudflare Workers so your whole team benefits.</div>
         <div class="pricing-grid">
           <div class="price-card">
-            <div class="tier-label">Open Source</div>
-            <h3>Free</h3>
+            <div class="tier-label">Free</div>
+            <h3>Local</h3>
             <div class="price-amount">$0 <small>/ forever</small></div>
             <ul>
-              <li>Feedback capture and recall</li>
-              <li>Prevention rules engine</li>
+              <li>500 memories, 100 retrievals/day</li>
               <li>5 built-in gates</li>
+              <li>Single user, single machine</li>
+              <li>DPO/KTO export for fine-tuning</li>
               <li>CLI dashboard</li>
-              <li>DPO export for fine-tuning</li>
-              <li>Local SQLite + LanceDB</li>
             </ul>
             <a class="btn btn-secondary" href="https://github.com/IgorGanapolsky/mcp-memory-gateway#quick-start" target="_blank" rel="noreferrer">Get Started</a>
           </div>
           <div class="price-card pro">
             <div class="tier-label">Pro</div>
-            <h3>Pro</h3>
+            <h3>Cloud</h3>
             <div class="price-amount">$29 <small>/ month</small></div>
             <ul>
-              <li>Everything in Free</li>
-              <li>Auto-gate promotion (3+ failures become blocking rules)</li>
-              <li>Unlimited custom gates</li>
-              <li>Multi-repo sync</li>
-              <li>CI webhook auto-ingest</li>
+              <li>Cloud-synced memories from any machine</li>
+              <li>Unlimited memories and retrievals</li>
+              <li>Team sharing of prevention rules</li>
+              <li>Usage dashboard (memories, retrievals, cache hits, cost savings)</li>
+              <li>Unlimited custom gates with auto-gate promotion</li>
               <li>Priority support</li>
             </ul>
             <a class="btn btn-primary" href="https://iganapolsky.gumroad.com/l/tjovof" target="_blank" rel="noreferrer">Get Pro &mdash; $29/mo</a>
