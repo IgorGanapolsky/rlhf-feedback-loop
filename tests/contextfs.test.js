@@ -175,7 +175,7 @@ test('constructMemexPack builds pack via index then dereference', () => {
   assert.ok(Array.isArray(pack.items));
   assert.ok(pack.usedChars <= pack.maxChars, 'respects char budget');
   pack.items.forEach((item) => {
-    assert.ok(item.content, 'dereferenced items have full content');
+    assert.ok(item.structuredContext && item.structuredContext.rawContent !== undefined, 'dereferenced items have structured context');
   });
 });
 
