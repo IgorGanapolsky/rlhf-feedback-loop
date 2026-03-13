@@ -9,10 +9,10 @@ The final repo-state totals include `main` changes merged during the audit windo
 
 ```text
 Files scanned: 557
-Issues found: 9
-Issues fixed: 9
+Issues found: 10
+Issues fixed: 10
 Files deleted: 6
-Lines removed: 166 net
+Lines removed: 1154 net
 RAG entries cleaned: 6 deleted, exact duplicates now deduped on write
 ```
 
@@ -20,11 +20,11 @@ RAG entries cleaned: 6 deleted, exact duplicates now deduped on write
 
 ```text
 Tracked files before: 557
-Tracked files after: 562
+Tracked files after: 561
 Tracked lines before: 89658
-Tracked lines after: 88447
+Tracked lines after: 88504
 Coverage before: 82.07% lines / 68.96% branches / 85.52% functions (coverage job failed on 4 regressions)
-Coverage after: 82.56% lines / 68.81% branches / 85.07% functions
+Coverage after: 82.42% lines / 68.76% branches / 85.10% functions
 CI before: PASSING on main at 57a7498e42578270a2dc1421c1bfd8d06f07dded
 CI after: verified locally before PR merge; GitHub Actions link added after merge
 ```
@@ -39,7 +39,8 @@ CI after: verified locally before PR merge; GitHub Actions link added after merg
 6. `tests/contextfs.test.js`: added a regression proving duplicate lessons reuse the same ContextFS object.
 7. `src/api/server.js`: removed a duplicate dead `/healthz` route.
 8. `.github/workflows/ci.yml`: added worker install/test coverage to CI.
-9. `workers/*`: aligned the Stripe API version and removed the direct `wrangler` dependency so the worker package is audit-clean while still using the globally installed Wrangler CLI documented in `workers/README.md`.
+9. `workers/src/billing.ts`: aligned the Stripe API version with the current SDK release line.
+10. `workers/package.json`, `workers/package-lock.json`, `workers/README.md`, and `CLAUDE.md`: removed the direct `wrangler` dependency and codified the global-CLI policy so the worker package is audit-clean without stale local tooling.
 
 ## Deleted Files
 
@@ -56,7 +57,7 @@ These tracked files were removed because they were duplicate RLHF memory entries
 
 ```text
 Before: 82.07% line coverage (job failed on 4 regressions)
-After: 82.56% line coverage
+After: 82.42% line coverage
 New tests added: 2
 Existing tests hardened: 3 recall-limit cases
 Gaps remaining: adapters/mcp/server-stdio.js, bin/cli.js, scripts/feedback-inbox-read.js, scripts/feedback-to-memory.js, scripts/gate-satisfy.js, scripts/pr-manager.js, scripts/autoresearch-runner.js

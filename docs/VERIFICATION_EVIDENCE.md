@@ -58,8 +58,8 @@ wrangler deploy --dry-run
 Observed result:
 
 - `npm test` passed end-to-end after the audit changes.
-- `npm run test:coverage` passed with `963` passed, `0` failed, `1` skipped.
-- Current coverage summary on the final audit head: `82.56%` lines, `68.81%` branches, `85.07%` functions.
+- `npm run test:coverage` passed with `968` passed, `0` failed, `1` skipped.
+- Current coverage summary on the final audit head: `82.42%` lines, `68.76%` branches, `85.10%` functions.
 - `npm run test:gates`, `node --test tests/contextfs.test.js`, `RLHF_API_KEY=ci-secret node --test tests/recall-limit.test.js`, and `node --test tests/mcp-server.test.js tests/api-server.test.js` all passed.
 - `RLHF_API_KEY=ci-secret npm run test:api` passed, proving the recall-limit regression is fixed under the same hosted-key environment GitHub Actions uses.
 - `npm run test:workers` passed after the worker package gained a dedicated type-check test script.
