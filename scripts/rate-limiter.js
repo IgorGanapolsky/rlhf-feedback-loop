@@ -15,7 +15,8 @@ const FREE_TIER_MAX_GATES = 5;
 
 const UPGRADE_MESSAGE = 'Free tier limit reached. Upgrade to Pro ($29/mo) for unlimited: https://rlhf-feedback-loop-production.up.railway.app';
 
-function isProTier() {
+function isProTier(authContext) {
+  if (authContext && authContext.tier === 'pro') return true;
   return !!(process.env.RLHF_API_KEY || process.env.RLHF_PRO_MODE === '1' || process.env.RLHF_NO_RATE_LIMIT === '1');
 }
 
@@ -48,8 +49,8 @@ function todayKey() {
  * Check and increment usage for a given action.
  * Returns { allowed: true } or { allowed: false, message: string }
  */
-function checkLimit(action) {
-  if (isProTier()) return { allowed: true };
+function checkLimit(action, authContext) {
+  if (isProTier(authContext)) return { allowed: true };
 
   const limit = FREE_TIER_LIMITS[action];
   if (limit == null) return { allowed: true }; // no limit for this action
@@ -80,8 +81,8 @@ function checkLimit(action) {
 /**
  * Get current usage without incrementing.
  */
-function getUsage(action) {
-  if (isProTier()) return { count: 0, limit: Infinity, remaining: Infinity };
+function getUsage(action, authContext) {
+  if (isProTier(authContext)) return { count: 0, limit: Infinity, remaining: Infinity };
 
   const limit = FREE_TIER_LIMITS[action] || Infinity;
   const usage = loadUsage();
