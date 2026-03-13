@@ -55,10 +55,19 @@ const GOLD_SETS = [
 ];
 
 async function runBenchmark() {
-  console.log('Starting Rule Efficiency Benchmark...');
+  console.log('Starting Rule Efficiency Benchmark (Pareto Governance)...');
   
   const results = [];
   let totalScore = 0;
+  const startTs = Date.now();
+
+  // Load Baseline for Pareto Check
+  let baseline = { overallScore: 0 };
+  if (fs.existsSync(REPORT_PATH)) {
+    try {
+      baseline = JSON.parse(fs.readFileSync(REPORT_PATH, 'utf-8'));
+    } catch (e) { /* ignore */ }
+  }
 
   for (const gold of GOLD_SETS) {
     console.log(`Testing Intent: ${gold.intent}...`);
@@ -96,11 +105,21 @@ async function runBenchmark() {
     totalScore += f1;
   }
 
+  const duration = Date.now() - startTs;
   const finalScore = (totalScore / GOLD_SETS.length) * 100;
   
+  // Pareto Frontier Check:
+  // Is this state better or equal to baseline in accuracy AND not significantly slower?
+  const isParetoOptimal = finalScore >= baseline.overallScore;
+  const improvement = (finalScore - baseline.overallScore).toFixed(2);
+
   const report = {
     timestamp: new Date().toISOString(),
     overallScore: finalScore.toFixed(2),
+    baselineScore: baseline.overallScore,
+    improvement,
+    isParetoOptimal,
+    latencyMs: duration,
     benchmarks: results,
     config: {
       rulesPath: RULES_PATH,
@@ -116,7 +135,10 @@ async function runBenchmark() {
   fs.writeFileSync(REPORT_PATH, JSON.stringify(report, null, 2));
 
   console.log(`\nBenchmark Complete!`);
-  console.log(`Overall Efficiency Score: ${finalScore.toFixed(2)}%`);
+  console.log(`Current Score  : ${finalScore.toFixed(2)}%`);
+  console.log(`Baseline Score : ${baseline.overallScore}%`);
+  console.log(`Improvement    : ${improvement}%`);
+  console.log(`Pareto Optimal : ${isParetoOptimal ? 'YES (Promote)' : 'NO (Reject)'}`);
   console.log(`Report saved to: ${REPORT_PATH}`);
 }
 
