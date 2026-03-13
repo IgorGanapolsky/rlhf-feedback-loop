@@ -16,20 +16,21 @@
     "url": "__APP_ORIGIN__",
     "operatingSystem": "Node.js, Cross-platform",
     "applicationCategory": "DeveloperApplication",
-    "description": "Local-first memory and feedback pipeline for AI agents using Model Context Protocol (MCP). Captures RLHF thumbs-up/down signals, promotes reusable memories, and generates prevention rules.",
-    "keywords": "MCP Memory Gateway, RLHF, DPO, KTO, AI agent memory, context engineering, prevention rules, Veto Layer",
+    "description": "Local-first memory, feedback pipeline, and Pre-Action Gates for AI agents using Model Context Protocol (MCP). Captures RLHF thumbs-up/down signals, promotes reusable memories, generates prevention rules, and blocks dangerous tool calls before they execute.",
+    "keywords": "MCP Memory Gateway, RLHF, DPO, KTO, AI agent memory, context engineering, prevention rules, Pre-Action Gates, Veto Layer",
     "offers": {
       "@type": "Offer",
-      "price": "9",
-      "priceCurrency": "USD"
+      "price": "10",
+      "priceCurrency": "USD",
+      "billingIncrement": "P1M"
     },
     "sameAs": [
       "https://github.com/IgorGanapolsky/mcp-memory-gateway",
-      "__VERIFICATION_URL__",
-      "__COMPATIBILITY_REPORT_URL__",
-      "__AUTOMATION_REPORT_URL__"
+      "https://smithery.ai/server/mcp-memory-gateway",
+      "https://www.npmjs.com/package/mcp-memory-gateway"
     ],
     "featureList": [
+      "Pre-Action Gates",
       "RLHF thumbs-up/down capture",
       "MCP reusable memories and prompts",
       "Auto-prevention rules from failures",
@@ -594,17 +595,17 @@
           <p>Start where pain is already real: lead-to-meeting, onboarding, or internal ops. Context Gateway is the hosted Veto Layer behind that workflow, not another dashboard full of vague AI claims.</p>
           <div class='hero-proof'>
             <span class='proof-pill'>North Star: one workflow live and auditable</span>
-            <span class='proof-pill'>Self-serve offer: $9 one-time Pro Pack</span>
+            <span class='proof-pill'>Self-serve offer: Pro at $10/mo</span>
             <span class='proof-pill'>Versioned proof: v__PACKAGE_VERSION__</span>
             <span class='proof-pill'>Hosted onboarding at https://rlhf-feedback-loop-production.up.railway.app</span>
           </div>
           <div class='cta-row'>
-            <a class='button primary' href='https://iganapolsky.gumroad.com/l/tjovof?utm_source=landing_page&utm_medium=cta_button&utm_campaign=pro_pack' target='_blank' rel='noreferrer'>Get Pro Pack — $9 one-time</a>
+            <a class='button primary' href='https://iganapolsky.gumroad.com/l/tjovof?utm_source=landing_page&utm_medium=cta_button&utm_campaign=pro_pack' target='_blank' rel='noreferrer'>Get Pro — $10/mo</a>
             <a class='button secondary' href='https://github.com/IgorGanapolsky/mcp-memory-gateway/blob/main/docs/COMMERCIAL_TRUTH.md'>Current commercial truth</a>
             <a class='button secondary' href='https://rlhf-feedback-loop-production.up.railway.app'>View hosted demo</a>
           </div>
           <p class='note'>Early-stage product. Engineering proof is real, but GitHub stars, npm downloads, and solo-maintainer activity are not customer proof.</p>
-          <p class='note'>Hosted Context Gateway access is pilot/by-request. The public self-serve commercial SKU today is the $9 one-time Pro Pack.</p>
+          <p class='note'>Hosted Context Gateway access is pilot/by-request. The public self-serve commercial SKU today is Pro at $10/mo.</p>
         </div>
 
         <div class='panel hero-card'>
@@ -630,7 +631,7 @@
             </div>
             <div class='mini'>
               <strong>What is public today</strong>
-              OSS remains free, the Pro Pack is $9 one-time, and hosted pilots are sold directly rather than through a public monthly plan.
+              OSS remains free with 5 built-in gates. Pro is $10/mo for auto-gate promotion, unlimited custom gates, and multi-repo sync.
             </div>
           </div>
         </div>
@@ -782,37 +783,38 @@
       <div class='section-inner'>
         <div class='section-head'>
           <span class='eyebrow'>Pricing</span>
-          <h2>Keep the public offer honest: free OSS plus a $9 Pro Pack.</h2>
-          <p>The repo remains free. The only current public self-serve commercial SKU is the $9 one-time Pro Pack. Hosted workflow rollouts are pilot/by-request, not a public recurring subscription.</p>
+          <h2>Keep the public offer honest: free OSS plus Pro at $10/mo.</h2>
+          <p>The repo remains free. The public self-serve commercial offer is Pro at $10/mo recurring. Hosted workflow rollouts are pilot/by-request.</p>
         </div>
         <div class='pricing-grid'>
           <div class='card'>
             <h3>OSS core</h3>
             <div class='price'>$0 <small>/ forever</small></div>
             <ul>
-              <li>Local MCP server and CLI</li>
-              <li>Feedback capture and prevention rules</li>
-              <li>DPO export and local memory</li>
-              <li>Self-hosted by default</li>
+              <li>Feedback capture and recall</li>
+              <li>Prevention rules</li>
+              <li>5 built-in gates</li>
+              <li>Dashboard CLI</li>
+              <li>DPO/KTO export</li>
             </ul>
             <a class='button secondary' href='__GITHUB_URL__'>Use the open-source package</a>
           </div>
           <div class='card featured'>
             <span class='badge'>Self-serve</span>
-            <h3>Pro Pack</h3>
-            <div class='price'>$9 <small>/ one-time</small></div>
-          <p style='margin:0 0 8px;font-size:13px;color:var(--muted);'>Curated production configs for teams that want faster setup without inventing their own guardrails.</p>
+            <h3>Pro</h3>
+            <div class='price'>$10 <small>/ month</small></div>
+          <p style='margin:0 0 8px;font-size:13px;color:var(--muted);'>Pre-Action Gates engine with auto-promotion, unlimited custom gates, and multi-repo sync for teams.</p>
             <ul>
-              <li>Curated prevention rules</li>
-              <li>Thompson Sampling presets</li>
-              <li>Hook templates and reminder packs</li>
-              <li>Commercial license for the pack contents</li>
-              <li>No recurring subscription required</li>
+              <li>Auto-gate promotion</li>
+              <li>Unlimited custom gates</li>
+              <li>Multi-repo sync</li>
+              <li>CI webhook auto-ingest</li>
+              <li>Priority support</li>
             </ul>
-            <a class='button primary' href='https://iganapolsky.gumroad.com/l/tjovof?utm_source=landing_page&utm_medium=cta_button&utm_campaign=pro_pack' target='_blank' rel='noreferrer'>Buy Pro Pack — $9</a>
+            <a class='button primary' href='https://iganapolsky.gumroad.com/l/tjovof?utm_source=landing_page&utm_medium=cta_button&utm_campaign=pro_pack' target='_blank' rel='noreferrer'>Get Pro — $10/mo</a>
           </div>
         </div>
-        <p class='note'>Need hosted team workflows? Evaluate the demo or request a pilot. Do not describe hosted access as a public recurring subscription until that is actually live.</p>
+        <p class='note'>Need hosted team workflows? Evaluate the demo or request a pilot.</p>
       </div>
     </section>
   </main>
