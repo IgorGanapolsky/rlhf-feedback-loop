@@ -175,9 +175,17 @@ async function runProof(options = {}) {
   const previousFeedbackDir = process.env.RLHF_FEEDBACK_DIR;
   const previousApiKey = process.env.RLHF_API_KEY;
   const previousMcpProfile = process.env.RLHF_MCP_PROFILE;
+  const previousCodegraphStub = process.env.RLHF_CODEGRAPH_STUB_RESPONSE;
   process.env.RLHF_FEEDBACK_DIR = tmpFeedbackDir;
   process.env.RLHF_API_KEY = 'proof-key';
   process.env.RLHF_MCP_PROFILE = 'default';
+  process.env.RLHF_CODEGRAPH_STUB_RESPONSE = JSON.stringify({
+    source: 'stub',
+    symbols: ['planIntent'],
+    callers: ['src/api/server.js -> planIntent', 'adapters/mcp/server-stdio.js -> planIntent'],
+    callees: ['rankActions', 'decomposeActions'],
+    deadCode: ['legacyIntentPlanner'],
+  });
 
   const report = {
     generatedAt: new Date().toISOString(),
@@ -242,6 +250,31 @@ async function runProof(options = {}) {
       const body = await res.json();
       check(body.status === 'checkpoint_required', 'intent plan should require checkpoint when not approved');
       addResult('api.intents.plan', true, { status: body.status, risk: body.intent.risk });
+    }
+
+    {
+      currentCheck = 'api.intents.plan.codegraph';
+      const res = await fetchWithRetry(`${baseUrl}/v1/intents/plan`, {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer proof-key',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          intentId: 'incident_postmortem',
+          context: 'Refactor `planIntent` in scripts/intent-router.js',
+          mcpProfile: 'default',
+          repoPath: ROOT,
+        }),
+      });
+      check(res.status === 200, `intent plan with codegraph expected 200, got ${res.status}`);
+      const body = await res.json();
+      check(body.codegraphImpact && body.codegraphImpact.enabled === true, 'api intent plan should include codegraph impact');
+      check(body.codegraphImpact.evidence.deadCodeCount >= 1, 'api intent plan should carry dead-code evidence');
+      addResult('api.intents.plan.codegraph', true, {
+        source: body.codegraphImpact.source,
+        impactScore: body.codegraphImpact.evidence.impactScore,
+      });
     }
 
     {
@@ -442,6 +475,51 @@ async function runProof(options = {}) {
     }
 
     {
+      currentCheck = 'mcp.tools.call.plan_intent.codegraph';
+      const call = await handleRequest({
+        jsonrpc: '2.0',
+        id: 34,
+        method: 'tools/call',
+        params: {
+          name: 'plan_intent',
+          arguments: {
+            intentId: 'incident_postmortem',
+            context: 'Refactor `planIntent` in scripts/intent-router.js',
+            mcpProfile: 'default',
+            repoPath: ROOT,
+          },
+        },
+      });
+      const plan = JSON.parse(call.content[0].text);
+      check(plan.codegraphImpact && plan.codegraphImpact.enabled === true, 'mcp plan_intent should include codegraph impact');
+      check(plan.codegraphImpact.evidence.deadCodeCount >= 1, 'mcp plan_intent should include dead-code evidence');
+      addResult('mcp.tools.call.plan_intent.codegraph', true, {
+        impactScore: plan.codegraphImpact.evidence.impactScore,
+      });
+    }
+
+    {
+      currentCheck = 'mcp.tools.call.recall.codegraph';
+      const call = await handleRequest({
+        jsonrpc: '2.0',
+        id: 35,
+        method: 'tools/call',
+        params: {
+          name: 'recall',
+          arguments: {
+            query: 'Refactor `planIntent` in scripts/intent-router.js',
+            repoPath: ROOT,
+          },
+        },
+      });
+      check(/## Code Graph Impact/.test(call.content[0].text), 'mcp recall should include code graph impact section');
+      check(/Potential dead code/.test(call.content[0].text), 'mcp recall should include dead-code evidence');
+      addResult('mcp.tools.call.recall.codegraph', true, {
+        contentLength: call.content[0].text.length,
+      });
+    }
+
+    {
       currentCheck = 'mcp.tools.call.capture_feedback.rubric_gate';
       const call = await handleRequest({
         jsonrpc: '2.0',
@@ -579,6 +657,8 @@ async function runProof(options = {}) {
     else process.env.RLHF_API_KEY = previousApiKey;
     if (previousMcpProfile === undefined) delete process.env.RLHF_MCP_PROFILE;
     else process.env.RLHF_MCP_PROFILE = previousMcpProfile;
+    if (previousCodegraphStub === undefined) delete process.env.RLHF_CODEGRAPH_STUB_RESPONSE;
+    else process.env.RLHF_CODEGRAPH_STUB_RESPONSE = previousCodegraphStub;
   }
 
   if (writeArtifacts) {

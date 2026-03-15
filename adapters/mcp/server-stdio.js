@@ -41,6 +41,10 @@ const {
 const {
   generateSkills,
 } = require('../../scripts/skill-generator');
+const {
+  analyzeCodeGraphImpact,
+  formatCodeGraphRecallSection,
+} = require('../../scripts/codegraph-context');
 
 const {
   loadStats: loadGateStats,
@@ -158,6 +162,7 @@ const TOOLS = [
         bundleId: { type: 'string' },
         partnerProfile: { type: 'string' },
         approved: { type: 'boolean' },
+        repoPath: { type: 'string' },
       },
     },
   },
@@ -259,6 +264,7 @@ const TOOLS = [
       properties: {
         query: { type: 'string', description: 'Describe the current task or context to find relevant past feedback' },
         limit: { type: 'number', description: 'Max memories to return (default 5)' },
+        repoPath: { type: 'string', description: 'Optional repository path for structural impact analysis on coding tasks' },
       },
     },
   },
@@ -459,6 +465,10 @@ async function callToolInner(name, args = {}) {
     const query = args.query || '';
     const limit = Number(args.limit || 5);
     const parts = [];
+    const codegraphImpact = analyzeCodeGraphImpact({
+      context: query,
+      repoPath: args.repoPath,
+    });
 
     // 1. Vector search for similar past feedback with confidence scores
     try {
@@ -491,6 +501,12 @@ async function callToolInner(name, args = {}) {
         }
       }
     } catch (_) {}
+
+    const codegraphSection = formatCodeGraphRecallSection(codegraphImpact);
+    if (codegraphSection) {
+      parts.push(codegraphSection);
+      parts.push('');
+    }
 
     // 3. Recent feedback summary
     try {
@@ -640,6 +656,7 @@ async function callToolInner(name, args = {}) {
       bundleId: args.bundleId,
       partnerProfile: args.partnerProfile,
       approved: args.approved === true,
+      repoPath: args.repoPath,
     });
     return { content: [{ type: 'text', text: toText(result) }] };
   }

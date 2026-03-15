@@ -29,8 +29,8 @@ test('adapter proof: zero failures', () => {
   assert.equal(report.summary.failed, 0);
 });
 
-test('adapter proof: at least 24 checks pass', () => {
-  assert.ok(report.summary.passed >= 24, `expected >= 24 passed, got ${report.summary.passed}`);
+test('adapter proof: at least 27 checks pass', () => {
+  assert.ok(report.summary.passed >= 27, `expected >= 27 passed, got ${report.summary.passed}`);
 });
 
 test('adapter proof: report.json written', () => {
@@ -47,6 +47,7 @@ const requiredChecks = [
   'api.auth.required',
   'api.intents.catalog',
   'api.intents.plan',
+  'api.intents.plan.codegraph',
   'api.capture_feedback',
   'api.capture_feedback.clarification',
   'api.capture_feedback.rubric_gate',
@@ -59,6 +60,8 @@ const requiredChecks = [
   'mcp.tools.list',
   'mcp.tools.call.feedback_summary',
   'mcp.tools.call.plan_intent',
+  'mcp.tools.call.plan_intent.codegraph',
+  'mcp.tools.call.recall.codegraph',
   'mcp.tools.call.capture_feedback.clarification',
   'mcp.tools.call.capture_feedback.rubric_gate',
   'mcp.policy.locked_profile_denies_write_tool',
@@ -105,6 +108,22 @@ test('adapter proof: vague API feedback requires clarification', () => {
 test('adapter proof: vague MCP feedback requires clarification', () => {
   const check = getCheck('mcp.tools.call.capture_feedback.clarification');
   assert.equal(check.details.status, 'clarification_required');
+});
+
+test('adapter proof: API intent plan includes codegraph evidence', () => {
+  const check = getCheck('api.intents.plan.codegraph');
+  assert.equal(check.details.source, 'stub');
+  assert.ok(check.details.impactScore > 0);
+});
+
+test('adapter proof: MCP intent plan includes codegraph evidence', () => {
+  const check = getCheck('mcp.tools.call.plan_intent.codegraph');
+  assert.ok(check.details.impactScore > 0);
+});
+
+test('adapter proof: MCP recall includes codegraph evidence', () => {
+  const check = getCheck('mcp.tools.call.recall.codegraph');
+  assert.ok(check.details.contentLength > 0);
 });
 
 test('adapter proof: gemini has >= 3 tools', () => {

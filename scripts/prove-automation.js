@@ -56,9 +56,17 @@ async function runAutomationProof(options = {}) {
   if (writeArtifacts) ensureDir(proofDir);
 
   const tmpFeedbackDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rlhf-automation-proof-'));
+  const previousCodegraphStub = process.env.RLHF_CODEGRAPH_STUB_RESPONSE;
   process.env.RLHF_FEEDBACK_DIR = tmpFeedbackDir;
   process.env.RLHF_API_KEY = 'automation-proof-key';
   process.env.RLHF_MCP_PROFILE = 'default';
+  process.env.RLHF_CODEGRAPH_STUB_RESPONSE = JSON.stringify({
+    source: 'stub',
+    symbols: ['planIntent'],
+    callers: ['src/api/server.js -> planIntent', 'adapters/mcp/server-stdio.js -> planIntent'],
+    callees: ['rankActions', 'decomposeActions'],
+    deadCode: ['legacyIntentPlanner'],
+  });
 
   const report = {
     generatedAt: new Date().toISOString(),
@@ -273,7 +281,29 @@ async function runAutomationProof(options = {}) {
       });
     }
 
-    // 11) context evaluate stores rubric evaluation
+    // 11) coding workflows include structural impact evidence and dead-code checks
+    {
+      currentCheck = 'intent.codegraph_impact';
+      const plan = planIntent({
+        intentId: 'incident_postmortem',
+        context: 'Refactor `planIntent` in scripts/intent-router.js',
+        mcpProfile: 'default',
+        repoPath: ROOT,
+      });
+      check(plan.codegraphImpact.enabled === true, 'expected codegraph impact to be enabled');
+      check(plan.codegraphImpact.evidence.deadCodeCount >= 1, 'expected dead-code candidates in codegraph evidence');
+      check(
+        plan.partnerStrategy.recommendedChecks.some((item) => /dead code/i.test(item)),
+        'expected structural verification checks to be appended',
+      );
+      addResult('intent.codegraph_impact', true, {
+        source: plan.codegraphImpact.source,
+        impactScore: plan.codegraphImpact.evidence.impactScore,
+        deadCodeCount: plan.codegraphImpact.evidence.deadCodeCount,
+      });
+    }
+
+    // 12) context evaluate stores rubric evaluation
     {
       currentCheck = 'context.evaluate.construct';
       const construct = await fetchWithRetry(`${baseUrl}/v1/context/construct`, {
@@ -311,7 +341,7 @@ async function runAutomationProof(options = {}) {
       addResult('context.evaluate.rubric', true, { rubricId: evalBody.rubricEvaluation.rubricId });
     }
 
-    // 12) semantic cache hit on equivalent query
+    // 13) semantic cache hit on equivalent query
     {
       currentCheck = 'context.semantic_cache.hit.first';
       fs.rmSync(path.join(CONTEXTFS_ROOT, NAMESPACES.provenance, 'semantic-cache.jsonl'), { force: true });
@@ -346,7 +376,7 @@ async function runAutomationProof(options = {}) {
       });
     }
 
-    // 13) self-healing helpers produce healthy reports in baseline state
+    // 14) self-healing helpers produce healthy reports in baseline state
     {
       const health = collectHealthReport({
         checks: [
@@ -366,7 +396,7 @@ async function runAutomationProof(options = {}) {
       });
     }
 
-    // 14) code reasoning traces verify DPO pair quality
+    // 15) code reasoning traces verify DPO pair quality
     {
       const { MEMORY_LOG_PATH } = getFeedbackPaths();
       const memories = readJSONL(MEMORY_LOG_PATH);
@@ -387,7 +417,7 @@ async function runAutomationProof(options = {}) {
       }
     }
 
-    // 15) code reasoning traces attached to proof checks
+    // 16) code reasoning traces attached to proof checks
     {
       const proofTraces = report.checks.map((chk) => traceForProofCheck(chk));
       const aggregate = aggregateTraces(proofTraces);
@@ -412,6 +442,8 @@ async function runAutomationProof(options = {}) {
     await new Promise((resolve) => server.close(resolve));
     await waitForBackgroundSideEffects();
     fs.rmSync(tmpFeedbackDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+    if (previousCodegraphStub === undefined) delete process.env.RLHF_CODEGRAPH_STUB_RESPONSE;
+    else process.env.RLHF_CODEGRAPH_STUB_RESPONSE = previousCodegraphStub;
   }
 
   if (writeArtifacts) {

@@ -605,7 +605,7 @@ function createApiServer() {
                 id: msg.id,
                 result: {
                   tools: [
-                    { name: 'recall', description: 'Recall relevant past feedback for current task', inputSchema: { type: 'object', properties: { query: { type: 'string' } }, required: ['query'] } },
+                    { name: 'recall', description: 'Recall relevant past feedback for current task', inputSchema: { type: 'object', properties: { query: { type: 'string' }, repoPath: { type: 'string' } }, required: ['query'] } },
                     { name: 'capture_feedback', description: 'Capture an up/down signal plus one line of why', inputSchema: { type: 'object', properties: { signal: { type: 'string', enum: ['up', 'down'] }, context: { type: 'string' }, whatWentWrong: { type: 'string' }, whatToChange: { type: 'string' }, whatWorked: { type: 'string' } }, required: ['signal', 'context'] } },
                     { name: 'feedback_stats', description: 'Feedback analytics', inputSchema: { type: 'object', properties: {} } },
                     { name: 'feedback_summary', description: 'Human-readable feedback summary', inputSchema: { type: 'object', properties: {} } },
@@ -615,7 +615,7 @@ function createApiServer() {
                     { name: 'evaluate_context_pack', description: 'Record context pack outcome', inputSchema: { type: 'object', properties: { packId: { type: 'string' }, outcome: { type: 'string' } }, required: ['packId', 'outcome'] } },
                     { name: 'context_provenance', description: 'Audit trail of context decisions', inputSchema: { type: 'object', properties: {} } },
                     { name: 'list_intents', description: 'Available action plans', inputSchema: { type: 'object', properties: { mcpProfile: { type: 'string' }, bundleId: { type: 'string' }, partnerProfile: { type: 'string' } } } },
-                    { name: 'plan_intent', description: 'Generate execution plan', inputSchema: { type: 'object', properties: { intentId: { type: 'string' }, context: { type: 'string' }, mcpProfile: { type: 'string' }, bundleId: { type: 'string' }, partnerProfile: { type: 'string' }, approved: { type: 'boolean' } }, required: ['intentId'] } },
+                    { name: 'plan_intent', description: 'Generate execution plan', inputSchema: { type: 'object', properties: { intentId: { type: 'string' }, context: { type: 'string' }, mcpProfile: { type: 'string' }, bundleId: { type: 'string' }, partnerProfile: { type: 'string' }, approved: { type: 'boolean' }, repoPath: { type: 'string' } }, required: ['intentId'] } },
                   ],
                 },
               });
@@ -1036,6 +1036,7 @@ function createApiServer() {
             bundleId: body.bundleId,
             partnerProfile: body.partnerProfile,
             approved: body.approved === true,
+            repoPath: body.repoPath,
           });
           sendJson(res, 200, plan);
         } catch (err) {

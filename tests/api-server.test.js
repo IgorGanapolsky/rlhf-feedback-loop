@@ -232,6 +232,38 @@ test('intent plan returns partner-aware strategy metadata', async () => {
   assert.ok(Array.isArray(body.actionScores));
 });
 
+test('intent plan returns codegraph impact for coding workflows', async () => {
+  const previous = process.env.RLHF_CODEGRAPH_STUB_RESPONSE;
+  process.env.RLHF_CODEGRAPH_STUB_RESPONSE = JSON.stringify({
+    source: 'stub',
+    symbols: ['planIntent'],
+    callers: ['src/api/server.js -> planIntent'],
+    callees: ['rankActions'],
+    deadCode: ['legacyIntentPlanner'],
+  });
+
+  try {
+    const res = await fetch('http://localhost:8790/v1/intents/plan', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', ...authHeader },
+      body: JSON.stringify({
+        intentId: 'incident_postmortem',
+        context: 'Refactor `planIntent` in scripts/intent-router.js',
+        mcpProfile: 'default',
+      }),
+    });
+
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.codegraphImpact.enabled, true);
+    assert.equal(body.codegraphImpact.evidence.deadCodeCount, 1);
+    assert.ok(body.partnerStrategy.recommendedChecks.some((check) => /dead code/i.test(check)));
+  } finally {
+    if (previous === undefined) delete process.env.RLHF_CODEGRAPH_STUB_RESPONSE;
+    else process.env.RLHF_CODEGRAPH_STUB_RESPONSE = previous;
+  }
+});
+
 test('summary endpoint returns markdown text payload', async () => {
   const res = await fetch('http://localhost:8790/v1/feedback/summary?recent=10', { headers: authHeader });
   assert.equal(res.status, 200);

@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { getActiveMcpProfile, getAllowedTools } = require('./mcp-policy');
 const { loadModel, samplePosteriors } = require('./thompson-sampling');
+const { analyzeCodeGraphImpact } = require('./codegraph-context');
 const {
   buildPartnerStrategy,
   getPartnerActionBias,
@@ -137,6 +138,10 @@ function decomposeActions(actions) {
   }));
 }
 
+function mergeUnique(values = []) {
+  return Array.from(new Set(values.filter(Boolean)));
+}
+
 function planIntent(options = {}) {
   const bundle = loadPolicyBundle(options.bundleId);
   const profile = assertKnownMcpProfile(options.mcpProfile || getActiveMcpProfile());
@@ -169,11 +174,24 @@ function planIntent(options = {}) {
     ? intent.actions
     : rankedActions.ranked;
   const phases = decomposeActions(plannedActions);
+  const codegraphImpact = analyzeCodeGraphImpact({
+    intentId,
+    context,
+    repoPath: options.repoPath,
+  });
+  const partnerChecks = mergeUnique([
+    ...partnerStrategy.recommendedChecks,
+    ...codegraphImpact.verificationHints,
+  ]);
+  const enrichedPartnerStrategy = {
+    ...partnerStrategy,
+    recommendedChecks: partnerChecks,
+  };
 
   return {
     bundleId: bundle.bundleId,
     mcpProfile: profile,
-    partnerProfile: partnerStrategy.profile,
+    partnerProfile: enrichedPartnerStrategy.profile,
     generatedAt: new Date().toISOString(),
     status: checkpointRequired ? 'checkpoint_required' : 'ready',
     intent: {
@@ -193,9 +211,10 @@ function planIntent(options = {}) {
       : null,
     actions: plannedActions,
     phases,
-    tokenBudget: partnerStrategy.tokenBudget || tokenBudget,
-    partnerStrategy,
+    tokenBudget: enrichedPartnerStrategy.tokenBudget || tokenBudget,
+    partnerStrategy: enrichedPartnerStrategy,
     actionScores: rankedActions.scores,
+    codegraphImpact,
   };
 }
 
