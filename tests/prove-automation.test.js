@@ -29,8 +29,8 @@ test('automation proof: zero failures', () => {
   assert.equal(report.summary.failed, 0);
 });
 
-test('automation proof: at least 15 checks pass', () => {
-  assert.ok(report.summary.passed >= 15, `expected >= 15 passed, got ${report.summary.passed}`);
+test('automation proof: at least 16 checks pass', () => {
+  assert.ok(report.summary.passed >= 16, `expected >= 16 passed, got ${report.summary.passed}`);
 });
 
 test('automation proof: report.json written', () => {
@@ -53,6 +53,7 @@ const requiredChecks = [
   'mcp.rubric_gate',
   'intent.checkpoint_enforcement',
   'intent.partner_strategy',
+  'intent.codegraph_impact',
   'context.evaluate.rubric',
   'context.semantic_cache.hit',
   'self_healing.helpers',
@@ -122,6 +123,13 @@ test('automation proof: partner strategy exposed in intent plan', () => {
   assert.equal(check.details.partnerProfile, 'strict_reviewer');
   assert.equal(check.details.verificationMode, 'evidence_first');
   assert.ok(check.details.contextPack > 6000);
+});
+
+test('automation proof: codegraph impact adds structural evidence', () => {
+  const check = getCheck('intent.codegraph_impact');
+  assert.equal(check.details.source, 'stub');
+  assert.ok(check.details.impactScore > 0);
+  assert.ok(check.details.deadCodeCount >= 1);
 });
 
 test('automation proof: semantic cache hit on equivalent query', () => {

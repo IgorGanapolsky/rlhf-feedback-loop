@@ -237,6 +237,37 @@ test('planIntent applies partner-aware token budget and action scoring', () => {
   }
 });
 
+test('planIntent adds codegraph impact and structural verification checks for coding workflows', () => {
+  const previous = process.env.RLHF_CODEGRAPH_STUB_RESPONSE;
+  process.env.RLHF_CODEGRAPH_STUB_RESPONSE = JSON.stringify({
+    source: 'stub',
+    symbols: ['planIntent'],
+    callers: ['src/api/server.js -> planIntent'],
+    callees: ['rankActions'],
+    deadCode: ['legacyIntentPlanner'],
+  });
+
+  try {
+    const plan = planIntent({
+      bundleId: 'default-v1',
+      mcpProfile: 'default',
+      intentId: 'incident_postmortem',
+      context: 'Refactor `planIntent` in scripts/intent-router.js',
+    });
+
+    assert.equal(plan.codegraphImpact.enabled, true);
+    assert.equal(plan.codegraphImpact.source, 'stub');
+    assert.equal(plan.codegraphImpact.evidence.deadCodeCount, 1);
+    assert.ok(
+      plan.partnerStrategy.recommendedChecks.some((check) => /dead code/i.test(check)),
+      'expected structural dead-code verification check',
+    );
+  } finally {
+    if (previous === undefined) delete process.env.RLHF_CODEGRAPH_STUB_RESPONSE;
+    else process.env.RLHF_CODEGRAPH_STUB_RESPONSE = previous;
+  }
+});
+
 /* ── Token Budget Tests ────────────────────────────────────────── */
 
 test('resolveTokenBudget returns defaults when no overrides', () => {

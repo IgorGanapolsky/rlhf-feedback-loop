@@ -139,6 +139,71 @@ test('plan_intent exposes partner-aware strategy over MCP', async () => {
   assert.ok(Array.isArray(plan.actionScores));
 });
 
+test('plan_intent includes codegraph impact for coding workflows', async () => {
+  const previous = process.env.RLHF_CODEGRAPH_STUB_RESPONSE;
+  process.env.RLHF_CODEGRAPH_STUB_RESPONSE = JSON.stringify({
+    source: 'stub',
+    symbols: ['planIntent'],
+    callers: ['src/api/server.js -> planIntent'],
+    callees: ['rankActions'],
+    deadCode: ['legacyIntentPlanner'],
+  });
+
+  try {
+    const planResult = await handleRequest({
+      jsonrpc: '2.0',
+      id: 26,
+      method: 'tools/call',
+      params: {
+        name: 'plan_intent',
+        arguments: {
+          intentId: 'incident_postmortem',
+          context: 'Refactor `planIntent` in scripts/intent-router.js',
+          mcpProfile: 'default',
+        },
+      },
+    });
+    const plan = JSON.parse(planResult.content[0].text);
+    assert.equal(plan.codegraphImpact.enabled, true);
+    assert.equal(plan.codegraphImpact.evidence.deadCodeCount, 1);
+    assert.ok(plan.partnerStrategy.recommendedChecks.some((check) => /dead code/i.test(check)));
+  } finally {
+    if (previous === undefined) delete process.env.RLHF_CODEGRAPH_STUB_RESPONSE;
+    else process.env.RLHF_CODEGRAPH_STUB_RESPONSE = previous;
+  }
+});
+
+test('recall includes code graph impact section for coding workflows', async () => {
+  const previous = process.env.RLHF_CODEGRAPH_STUB_RESPONSE;
+  process.env.RLHF_CODEGRAPH_STUB_RESPONSE = JSON.stringify({
+    source: 'stub',
+    symbols: ['planIntent'],
+    callers: ['src/api/server.js -> planIntent'],
+    callees: ['rankActions'],
+    deadCode: ['legacyIntentPlanner'],
+  });
+
+  try {
+    const result = await handleRequest({
+      jsonrpc: '2.0',
+      id: 27,
+      method: 'tools/call',
+      params: {
+        name: 'recall',
+        arguments: {
+          query: 'Refactor `planIntent` in scripts/intent-router.js',
+        },
+      },
+    });
+
+    assert.match(result.content[0].text, /## Code Graph Impact/);
+    assert.match(result.content[0].text, /Potential dead code/);
+  } finally {
+    if (previous === undefined) delete process.env.RLHF_CODEGRAPH_STUB_RESPONSE;
+    else process.env.RLHF_CODEGRAPH_STUB_RESPONSE = previous;
+  }
+});
+
 test('prevention_rules blocks external output paths', async () => {
   await assert.rejects(async () => {
     await handleRequest({
