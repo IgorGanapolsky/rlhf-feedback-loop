@@ -1,3 +1,44 @@
+## March 16, 2026: Databricks post-merge safety follow-up
+
+Scope:
+
+- Fixed the merged Databricks analytics export so its default output root now uses `getFeedbackPaths()` instead of a legacy `.claude` fallback, keeping implicit bundle writes inside the same safe data boundary used by the API and MCP adapters.
+- Normalized Databricks bundle-relative paths to POSIX separators before embedding them in `manifest.json` and `load_databricks.sql`, preventing Windows-hosted exports from generating backslash-separated paths that Databricks SQL cannot read.
+- Added regression coverage for:
+  - default export-path selection when `.rlhf/` is present
+  - API default export path behavior
+  - MCP default export path behavior
+  - bundle-relative path normalization
+
+Commands run in the dedicated worktree at `/Users/ganapolsky_i/workspace/git/igor/rlhf-databricks-followup`:
+
+```bash
+npm ci
+node --test tests/databricks-export.test.js tests/api-server.test.js tests/mcp-server.test.js
+npm test
+npm run test:coverage
+env RLHF_PROOF_DIR="$(mktemp -d)" npm run prove:adapters
+env RLHF_PROOF_DIR="$(mktemp -d)" npm run prove:automation
+npm run self-heal:check
+```
+
+Observed result:
+
+- `npm ci` completed with `0` vulnerabilities.
+- Targeted Databricks regressions passed: `51` tests passed, `0` failed.
+- `npm test` passed end-to-end on the follow-up branch after the post-merge fixes were applied.
+- `npm run test:coverage` passed with `1041` tests, `1040` passed, `0` failed, `1` skipped.
+- All-files coverage on the follow-up branch: `83.47%` lines, `69.70%` branches, `86.40%` functions.
+- `env RLHF_PROOF_DIR="$(mktemp -d)" npm run prove:adapters`: `46` passed, `0` failed.
+- `env RLHF_PROOF_DIR="$(mktemp -d)" npm run prove:automation`: `47` passed, `0` failed.
+- `npm run self-heal:check`: `Overall: HEALTHY` with `4/4` healthy checks.
+
+Requirements verified:
+
+- The Databricks export no longer escapes the safe feedback root when no explicit `outputPath` is provided.
+- The Databricks SQL bootstrap always uses forward-slash bundle-relative paths, including on Windows-originated exports.
+- API and MCP default exports now inherit the same root-selection behavior as the shared RLHF feedback pipeline.
+
 ## March 16, 2026: Databricks analytics bundle export
 
 Scope:

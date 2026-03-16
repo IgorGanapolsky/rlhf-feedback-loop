@@ -4,9 +4,9 @@
 const fs = require('fs');
 const path = require('path');
 
+const { getFeedbackPaths } = require('./feedback-loop');
+
 const PROJECT_ROOT = path.join(__dirname, '..');
-const DEFAULT_FEEDBACK_DIR = process.env.RLHF_FEEDBACK_DIR
-  || path.join(PROJECT_ROOT, '.claude', 'memory', 'feedback');
 const DEFAULT_PROOF_DIR = process.env.RLHF_PROOF_DIR
   || path.join(PROJECT_ROOT, 'proof');
 
@@ -55,6 +55,18 @@ function writeJSONL(filePath, rows) {
   fs.writeFileSync(filePath, content ? `${content}\n` : '');
 }
 
+function getDefaultFeedbackDir() {
+  return getFeedbackPaths().FEEDBACK_DIR;
+}
+
+function toBundleRelativePath(...segments) {
+  return path.posix.join(...segments);
+}
+
+function normalizeBundleRelativePath(relativePath) {
+  return String(relativePath || '').replace(/\\/g, '/');
+}
+
 function walkJsonFiles(dirPath, acc = []) {
   if (!fs.existsSync(dirPath)) return acc;
   const entries = fs.readdirSync(dirPath, { withFileTypes: true });
@@ -87,7 +99,7 @@ function collectProofReports(proofDir, exportedAt) {
       bundleExportedAt: exportedAt,
       reportId: path.basename(filePath, '.json'),
       reportCategory: path.basename(path.dirname(filePath)),
-      reportPath: path.relative(proofDir, filePath),
+      reportPath: normalizeBundleRelativePath(path.relative(proofDir, filePath)),
       report: readJSON(filePath),
     }))
     .filter((row) => row.report);
@@ -105,7 +117,7 @@ function buildSqlTemplate(manifest) {
   for (const table of manifest.tables) {
     lines.push(`CREATE OR REPLACE TABLE __CATALOG__.__SCHEMA__.${table.tableName} AS`);
     lines.push('SELECT *, _metadata.file_path AS source_file');
-    lines.push(`FROM read_files('__BUNDLE_ROOT__/${table.relativePath}', format => 'json');`);
+    lines.push(`FROM read_files('__BUNDLE_ROOT__/${normalizeBundleRelativePath(table.relativePath)}', format => 'json');`);
     lines.push('');
   }
 
@@ -116,8 +128,8 @@ function timestampSlug() {
   return new Date().toISOString().replace(/[:.]/g, '-');
 }
 
-function exportDatabricksBundle(feedbackDir = DEFAULT_FEEDBACK_DIR, outputPath, options = {}) {
-  const resolvedFeedbackDir = path.resolve(feedbackDir || DEFAULT_FEEDBACK_DIR);
+function exportDatabricksBundle(feedbackDir = getDefaultFeedbackDir(), outputPath, options = {}) {
+  const resolvedFeedbackDir = path.resolve(feedbackDir || getDefaultFeedbackDir());
   const resolvedProofDir = path.resolve(options.proofDir || DEFAULT_PROOF_DIR);
   const exportedAt = new Date().toISOString();
   const bundlePath = path.resolve(outputPath || path.join(
@@ -158,8 +170,9 @@ function exportDatabricksBundle(feedbackDir = DEFAULT_FEEDBACK_DIR, outputPath, 
       path.basename(dataset.sourcePath),
       exportedAt,
     );
-    const relativePath = path.join('tables', `${dataset.tableName}.jsonl`);
-    writeJSONL(path.join(bundlePath, relativePath), rows);
+    const fileName = `${dataset.tableName}.jsonl`;
+    const relativePath = toBundleRelativePath('tables', fileName);
+    writeJSONL(path.join(tablesDir, fileName), rows);
     return {
       tableName: dataset.tableName,
       relativePath,
@@ -169,8 +182,8 @@ function exportDatabricksBundle(feedbackDir = DEFAULT_FEEDBACK_DIR, outputPath, 
   });
 
   const proofRows = collectProofReports(resolvedProofDir, exportedAt);
-  const proofRelativePath = path.join('tables', 'proof_reports.jsonl');
-  writeJSONL(path.join(bundlePath, proofRelativePath), proofRows);
+  const proofRelativePath = toBundleRelativePath('tables', 'proof_reports.jsonl');
+  writeJSONL(path.join(tablesDir, 'proof_reports.jsonl'), proofRows);
   tables.push({
     tableName: 'proof_reports',
     relativePath: proofRelativePath,
@@ -209,12 +222,13 @@ function exportDatabricksBundle(feedbackDir = DEFAULT_FEEDBACK_DIR, outputPath, 
 }
 
 module.exports = {
-  DEFAULT_FEEDBACK_DIR,
   DEFAULT_PROOF_DIR,
   buildSqlTemplate,
   collectProofReports,
   exportDatabricksBundle,
+  getDefaultFeedbackDir,
   readJSONL,
+  toBundleRelativePath,
 };
 
 if (require.main === module) {

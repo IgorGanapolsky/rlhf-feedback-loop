@@ -296,6 +296,22 @@ test('export_databricks_bundle writes manifest and sql template over MCP', async
   assert.ok(payload.tables.some((table) => table.tableName === 'proof_reports'));
 });
 
+test('export_databricks_bundle defaults bundle path inside SAFE_DATA_DIR', async () => {
+  const result = await handleRequest({
+    jsonrpc: '2.0',
+    id: 30,
+    method: 'tools/call',
+    params: {
+      name: 'export_databricks_bundle',
+      arguments: {},
+    },
+  });
+
+  const payload = JSON.parse(result.content[0].text);
+  assert.match(payload.bundlePath, new RegExp(`^${path.join(SAFE_DATA_DIR, 'analytics').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
+  assert.equal(fs.existsSync(path.join(payload.bundlePath, 'manifest.json')), true);
+});
+
 test('construct/evaluate context pack tools work', async () => {
   const construct = await handleRequest({
     jsonrpc: '2.0',
