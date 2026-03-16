@@ -118,6 +118,24 @@ test('analyzeFeedback trend is stable when rates are similar', () => {
   fs.rmSync(tmp, { recursive: true });
 });
 
+test('analyzeFeedback treats an empty 7d window as stable, not degrading', () => {
+  const tmp = makeTmpDir();
+  const logPath = path.join(tmp, 'feedback-log.jsonl');
+  const now = new Date();
+
+  for (let i = 0; i < 4; i++) {
+    const ts = new Date(now - 15 * 24 * 60 * 60 * 1000 - i * 60 * 1000);
+    appendJSONL(logPath, { signal: 'positive', tags: [], timestamp: ts.toISOString() });
+  }
+
+  const stats = analyzeFeedback(logPath);
+  assert.strictEqual(stats.windows['7d'].total, 0);
+  assert.strictEqual(stats.windows['30d'].rate, 1);
+  assert.strictEqual(stats.trend, 'stable');
+
+  fs.rmSync(tmp, { recursive: true });
+});
+
 // =============================================================================
 // #202: Time-weighted decay in prevention rules
 // =============================================================================
@@ -190,6 +208,32 @@ test('buildPreventionRules header mentions half-life', () => {
   try {
     const rules = buildPreventionRules(1, { decayHalfLifeDays: 14 });
     assert.ok(rules.includes('half-life: 14d'), 'header should mention half-life');
+  } finally {
+    delete process.env.RLHF_FEEDBACK_DIR;
+    fs.rmSync(tmp, { recursive: true });
+  }
+});
+
+test('buildPreventionRules keeps default threshold behavior for two recent mistakes', () => {
+  const tmp = makeTmpDir();
+  const memLogPath = path.join(tmp, 'memory-log.jsonl');
+  const now = new Date();
+
+  for (let i = 0; i < 2; i++) {
+    const ts = new Date(now - 1 * 24 * 60 * 60 * 1000 - i * 60 * 1000);
+    appendJSONL(memLogPath, {
+      category: 'error',
+      tags: ['recent-pattern'],
+      title: 'MISTAKE: recent error',
+      content: 'How to avoid: verify before push',
+      timestamp: ts.toISOString(),
+    });
+  }
+
+  process.env.RLHF_FEEDBACK_DIR = tmp;
+  try {
+    const rules = buildPreventionRules(2, { decayHalfLifeDays: 7 });
+    assert.ok(rules.includes('recent-pattern'), 'two recent mistakes should still meet the default threshold');
   } finally {
     delete process.env.RLHF_FEEDBACK_DIR;
     fs.rmSync(tmp, { recursive: true });
