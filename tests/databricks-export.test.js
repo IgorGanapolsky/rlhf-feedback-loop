@@ -8,6 +8,7 @@ const path = require('path');
 
 const {
   exportDatabricksBundle,
+  toBundleRelativePath,
 } = require('../scripts/export-databricks-bundle');
 
 function writeJsonl(filePath, rows) {
@@ -68,5 +69,39 @@ describe('exportDatabricksBundle', () => {
     const result = exportDatabricksBundle(feedbackDir, outputDir, { proofDir: path.join(tmpDir, 'missing-proof') });
     const manifest = JSON.parse(fs.readFileSync(result.manifestPath, 'utf8'));
     assert.equal(manifest.tables.every((table) => table.rowCount === 0), true);
+  });
+
+  it('defaults to the active feedback directory discovery logic when feedbackDir is omitted', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rlhf-dbx-default-'));
+    const projectDir = path.join(tmpDir, 'project');
+    const proofDir = path.join(tmpDir, 'proof');
+    const previousCwd = process.cwd();
+    const previousFeedbackDir = process.env.RLHF_FEEDBACK_DIR;
+    const previousProofDir = process.env.RLHF_PROOF_DIR;
+
+    fs.mkdirSync(path.join(projectDir, '.rlhf'), { recursive: true });
+    fs.mkdirSync(path.join(projectDir, '.claude', 'memory', 'feedback'), { recursive: true });
+    fs.mkdirSync(proofDir, { recursive: true });
+
+    delete process.env.RLHF_FEEDBACK_DIR;
+    delete process.env.RLHF_PROOF_DIR;
+
+    try {
+      process.chdir(projectDir);
+      const result = exportDatabricksBundle(undefined, undefined, { proofDir });
+      assert.match(result.bundlePath, new RegExp(`[\\\\/]\\.rlhf[\\\\/]analytics[\\\\/]databricks-`));
+    } finally {
+      process.chdir(previousCwd);
+      if (previousFeedbackDir === undefined) delete process.env.RLHF_FEEDBACK_DIR;
+      else process.env.RLHF_FEEDBACK_DIR = previousFeedbackDir;
+      if (previousProofDir === undefined) delete process.env.RLHF_PROOF_DIR;
+      else process.env.RLHF_PROOF_DIR = previousProofDir;
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it('normalizes bundle-relative paths to POSIX separators', () => {
+    assert.equal(toBundleRelativePath('tables', 'feedback_events.jsonl'), 'tables/feedback_events.jsonl');
+    assert.equal(toBundleRelativePath('tables', 'nested', 'proof_reports.jsonl'), 'tables/nested/proof_reports.jsonl');
   });
 });

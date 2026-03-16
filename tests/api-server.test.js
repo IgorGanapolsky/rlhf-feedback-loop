@@ -309,6 +309,19 @@ test('databricks export endpoint writes analytics bundle', async () => {
   assert.ok(body.tables.some((table) => table.tableName === 'proof_reports'));
 });
 
+test('databricks export endpoint defaults bundle path inside the safe feedback dir', async () => {
+  const res = await fetch('http://localhost:8790/v1/analytics/databricks/export', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', ...authHeader },
+    body: JSON.stringify({}),
+  });
+
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.match(body.bundlePath, new RegExp(`^${path.join(tmpFeedbackDir, 'analytics').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
+  assert.equal(fs.existsSync(path.join(body.bundlePath, 'manifest.json')), true);
+});
+
 test('context construct/evaluate/provenance endpoints work', async () => {
   const constructRes = await fetch('http://localhost:8790/v1/context/construct', {
     method: 'POST',
