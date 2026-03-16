@@ -813,8 +813,10 @@ function analyzeFeedback(logPath) {
   const rate30d = windowStats['30d'].total > 0
     ? Math.round((windowStats['30d'].positive / windowStats['30d'].total) * 1000) / 1000 : 0;
   const TREND_THRESHOLD = 0.05;
-  const trend = rate7d > rate30d + TREND_THRESHOLD ? 'improving'
-    : rate7d < rate30d - TREND_THRESHOLD ? 'degrading' : 'stable';
+  const hasTrendData = windowStats['7d'].total > 0 && windowStats['30d'].total > 0;
+  const trend = !hasTrendData ? 'stable'
+    : rate7d > rate30d + TREND_THRESHOLD ? 'improving'
+      : rate7d < rate30d - TREND_THRESHOLD ? 'degrading' : 'stable';
   const windows = {
     '7d': { ...windowStats['7d'], rate: rate7d },
     '30d': { ...windowStats['30d'], rate: rate30d },
@@ -959,7 +961,8 @@ function buildPreventionRules(minOccurrences = 2, options = {}) {
   Object.entries(buckets)
     .sort((a, b) => b[1].weightedCount - a[1].weightedCount)
     .forEach(([domain, { items, weightedCount }]) => {
-      if (weightedCount < minOccurrences) return;
+      const effectiveOccurrences = Math.round(weightedCount);
+      if (effectiveOccurrences < minOccurrences) return;
       const latest = items[items.length - 1];
       const avoid = (latest.content || '').split('\n').find((l) => l.toLowerCase().startsWith('how to avoid:')) || 'How to avoid: Investigate and prevent recurrence';
       lines.push('');
