@@ -862,6 +862,37 @@ Artifacts updated:
 - `proof/automation/report.json`
 - `proof/automation/report.md`
 
+## 2026-03-17 AI Reliability Social Asset Verification
+
+Scope:
+
+- Repositioned the active social launch copy from a generic memory tool toward an AI reliability system for coding agents.
+- Added a canonical operator kit for LinkedIn, X, and Reddit under `docs/marketing/`.
+- Added local/private SVG source assets for a six-slide LinkedIn carousel and an X summary card under `docs/marketing/assets/`.
+- Added a regression test to keep the new positioning and asset inventory from drifting.
+
+Commands run:
+
+```bash
+node --test tests/social-marketing-assets.test.js
+npm run test:workflow
+git diff --check
+```
+
+Observed results:
+
+- `tests/social-marketing-assets.test.js`: pass
+- `npm run test:workflow`: pass
+- `git diff --check`: clean
+
+Behavioral proof points:
+
+- `docs/marketing/social-posts.md` is now the canonical social launch kit and points to current LinkedIn, X, and Reddit assets instead of older memory-first launch copy.
+- `docs/marketing/linkedin-ai-reliability-post.md` contains the current long-form founder post plus the six-slide carousel script and first-comment CTA.
+- `docs/marketing/x-launch-thread.md` contains the current nine-post thread focused on reliability, not just memory.
+- `docs/marketing/reddit-posts.md` contains the current `r/ClaudeCode` post plus a showcase-safe `r/ClaudeAI` variant.
+- `docs/marketing/assets/` contains local/private export-ready SVG assets for LinkedIn and X, avoiding shared-workspace dependency for final posting assets.
+
 ## March 17, 2026: Cursor Marketplace packaging
 
 Scope:
