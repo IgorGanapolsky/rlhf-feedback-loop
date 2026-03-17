@@ -72,7 +72,8 @@ test('root serves the landing page by default', async () => {
 
   const body = await res.text();
   assert.match(body, /mcp.memory.gateway/i);
-  assert.match(body, /Pre.Action Gates/i);
+  assert.match(body, /Keep agents from looping/i);
+  assert.match(body, /control plane/i);
   assert.match(body, /\$29\/mo/);
   assert.match(body, /plausible\.io\/js\/script\.js/);
   assert.match(body, /\/v1\/billing\/checkout/);

@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>mcp-memory-gateway | Pre-Action Gates for AI Agents</title>
-  <meta name="description" content="Pre-action gates that physically block known failure patterns. Auto-generated from your feedback. Works with Claude, Codex, Gemini." />
-  <meta name="keywords" content="AI agent guardrails, MCP server, Claude Code, Codex, Gemini CLI, feedback loop, prevention rules, pre-action gates" />
-  <meta property="og:title" content="mcp-memory-gateway — Stop your AI agent from repeating mistakes" />
-  <meta property="og:description" content="Pre-action gates that physically block known failure patterns. Auto-generated from your feedback." />
+  <title>mcp-memory-gateway | AI Agent Memory and Pre-Action Gates</title>
+  <meta name="description" content="Resume AI coding sessions without re-explaining context. mcp-memory-gateway recalls decisions, injects relevant history, and blocks known failure patterns before agents repeat them." />
+  <meta name="keywords" content="AI agent guardrails, AI coding memory, MCP server, Claude Code, Codex, Gemini CLI, feedback loop, prevention rules, pre-action gates, project continuity" />
+  <meta property="og:title" content="mcp-memory-gateway — Resume AI work faster. Repeat fewer mistakes." />
+  <meta property="og:description" content="Use any continuity workflow to regain context, then let mcp-memory-gateway act as the control plane for recall, prevention rules, and pre-action gates." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://rlhf-feedback-loop-production.up.railway.app" />
   <link rel="canonical" href="https://rlhf-feedback-loop-production.up.railway.app" />
@@ -20,8 +20,8 @@
     "url": "https://rlhf-feedback-loop-production.up.railway.app",
     "operatingSystem": "Cross-platform",
     "applicationCategory": "DeveloperApplication",
-    "description": "Pre-action gates that physically block known AI agent failure patterns. Auto-generated from your feedback. Works with Claude Code, Codex, Gemini CLI, and Amp.",
-    "keywords": "AI agent guardrails, MCP server, pre-action gates, feedback loop, prevention rules, Thompson Sampling",
+    "description": "Resume AI coding sessions without re-explaining context. mcp-memory-gateway recalls decisions, injects relevant history, and blocks known failure patterns before agents repeat them.",
+    "keywords": "AI agent guardrails, AI coding memory, MCP server, pre-action gates, feedback loop, prevention rules, Thompson Sampling, project continuity",
     "offers": [
       {
         "@type": "Offer",
@@ -51,6 +51,7 @@
       "Auto-gate promotion from repeated feedback",
       "Thompson Sampling for adaptive steering",
       "Works with Claude Code, Codex, Gemini CLI, and Amp",
+      "Pairs with continuity tools and IDE re-entry workflows",
       "Local-first, MIT licensed, no cloud required"
     ]
   }
@@ -82,6 +83,14 @@
         "acceptedAnswer": {
           "@type": "Answer",
           "text": "The strongest first fit is a repeated coding or operations workflow where the same mistakes recur and a Veto Layer can block them before they waste more engineering time."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I pair it with editor continuity tools or resume assistants?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Use continuity tools to regain project context quickly, then let mcp-memory-gateway act as the control plane for recall, prevention rules, and pre-action gates. External tools can also append structured JSONL events for watcher-based ingestion."
         }
       }
     ]
@@ -727,8 +736,8 @@
     <!-- ── Hero ── -->
     <section class="hero">
       <div class="wrap">
-        <h1>Your AI agent keeps making the same mistakes. <em>We fix that.</em></h1>
-        <p class="sub">Pre-action gates that physically block known failure patterns. Auto-generated from your feedback. Works with Claude, Codex, Gemini.</p>
+        <h1>Resume AI work faster. <em>Keep agents from looping.</em></h1>
+        <p class="sub">Use any continuity workflow to get back into context. mcp-memory-gateway becomes the control plane: it recalls past decisions, injects relevant history, and blocks known failure patterns before they execute. Works with Claude, Codex, Gemini, and Amp.</p>
         <div class="campaign-banner" id="campaign-banner" hidden>
           <strong>Coming from Reddit?</strong>
           <span id="campaign-banner-copy">Self-hosted is free. If this thread includes an early-access code, it will flow through checkout attribution automatically.</span>
@@ -738,8 +747,9 @@
           <a class="btn btn-secondary" data-cta-id="hero_pricing" data-cta-placement="hero" data-plan-id="pro" href="#pricing">See Pro Plan</a>
         </div>
         <div class="badges">
-          <span class="badge"><span class="dot"></span> 935 tests, 0 failures</span>
+          <span class="badge"><span class="dot"></span> CI + proof artifacts published</span>
           <span class="badge">Claude Code / Codex / Gemini / Amp</span>
+          <span class="badge">Pairs with continuity tools</span>
           <span class="badge">MIT Licensed</span>
           <span class="badge">Local-first, no cloud required</span>
         </div>
@@ -750,8 +760,8 @@
     <section>
       <div class="wrap">
         <div class="section-label">The Problem</div>
-        <div class="section-title">Your agent loops. Your time burns.</div>
-        <div class="section-desc">Without gates, every known failure pattern gets repeated until a human catches it. Gates make the agent catch it first.</div>
+        <div class="section-title">Resuming is not enough if the agent still repeats the same mistake.</div>
+        <div class="section-desc">Continuity gets you back into the project. Gates, recall, and verification keep the resumed session from burning the same time twice.</div>
         <div class="ba-grid">
           <div class="ba-card before">
             <span class="ba-tag">Before</span>
@@ -857,6 +867,7 @@
         <span class="proof-item"><strong>Verification</strong> evidence published</span>
         <span class="proof-item"><strong>CLI + API + MCP</strong> same control plane</span>
         <span class="proof-item"><strong>Claude, Codex, Gemini, Amp</strong> supported</span>
+        <span class="proof-item"><strong>Continuity tools</strong> pair cleanly upstream</span>
         <span class="proof-item"><strong>MIT</strong> licensed</span>
         <span class="proof-item"><strong>Local-first</strong> or hosted Pro</span>
       </div>
