@@ -15,6 +15,8 @@ test('public landing page keeps FAQPage JSON-LD parity for SEO and GEO', () => {
   assert.match(landingPage, /"@type": "SoftwareApplication"/);
   assert.match(landingPage, /"@type": "FAQPage"/);
   assert.match(landingPage, /Who should upgrade to Pro\?/);
+  assert.match(landingPage, /Can I pair it with editor continuity tools or resume assistants\?/);
+  assert.match(landingPage, /control plane for recall, prevention rules, and pre-action gates/i);
 });
 
 test('public landing page uses the injected checkout fallback token', () => {
@@ -60,4 +62,13 @@ test('public landing page includes a Reddit campaign banner and subreddit-aware 
   assert.match(landingPage, /parseRedditCommunity/);
   assert.match(landingPage, /utmSource !== 'reddit'/);
   assert.match(landingPage, /Use code/);
+});
+
+test('public landing page positions the gateway as a continuity-friendly control plane', () => {
+  const landingPage = readLandingPage();
+
+  assert.match(landingPage, /Resume AI work faster\./);
+  assert.match(landingPage, /Use any continuity workflow to get back into context\./);
+  assert.match(landingPage, /Pairs with continuity tools/);
+  assert.match(landingPage, /Continuity tools.*pair cleanly upstream/);
 });
