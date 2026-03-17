@@ -4,14 +4,16 @@
 const fs = require('fs');
 const path = require('path');
 
-const USAGE_FILE = path.join(process.env.HOME || '/tmp', '.rlhf', 'usage-limits.json');
+const { PATHS, CONSTANTS } = require('./config-loader');
+
+const USAGE_FILE = PATHS.USAGE_FILE;
 
 const FREE_TIER_LIMITS = {
-  capture_feedback: 5,
-  recall: 5,
+  capture_feedback: CONSTANTS.FREE_TIER_LIMIT,
+  recall: CONSTANTS.FREE_TIER_LIMIT,
 };
 
-const FREE_TIER_MAX_GATES = 5;
+const FREE_TIER_MAX_GATES = CONSTANTS.FREE_TIER_LIMIT;
 
 const UPGRADE_MESSAGE = 'Free tier limit reached. Upgrade to Pro ($29/mo) for unlimited: https://rlhf-feedback-loop-production.up.railway.app';
 

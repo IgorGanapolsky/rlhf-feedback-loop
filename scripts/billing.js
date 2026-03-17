@@ -10,6 +10,7 @@ const path = require('path');
 const crypto = require('crypto');
 const Stripe = require('stripe');
 const { createTraceId } = require('./hosted-config');
+const { PATHS } = require('./config-loader');
 
 // ---------------------------------------------------------------------------
 // Config
@@ -22,16 +23,16 @@ const CONFIG = {
   GITHUB_MARKETPLACE_PLAN_PRICES_JSON: process.env.RLHF_GITHUB_MARKETPLACE_PLAN_PRICES_JSON || '',
   STRIPE_PRICE_ID: process.env.STRIPE_PRICE_ID || 'price_1RNdUBGGBpd520QYG1A9SWF4',
   get API_KEYS_PATH() {
-    return process.env._TEST_API_KEYS_PATH || path.resolve(__dirname, '../.claude/memory/feedback/api-keys.json');
+    return process.env._TEST_API_KEYS_PATH || PATHS.API_KEYS_PATH;
   },
   get FUNNEL_LEDGER_PATH() {
-    return process.env._TEST_FUNNEL_LEDGER_PATH || process.env.RLHF_FUNNEL_LEDGER_PATH || path.resolve(__dirname, '../.claude/memory/feedback/funnel-events.jsonl');
+    return process.env._TEST_FUNNEL_LEDGER_PATH || process.env.RLHF_FUNNEL_LEDGER_PATH || PATHS.FUNNEL_LEDGER_PATH;
   },
   get REVENUE_LEDGER_PATH() {
-    return process.env._TEST_REVENUE_LEDGER_PATH || process.env.RLHF_REVENUE_LEDGER_PATH || path.resolve(__dirname, '../.claude/memory/feedback/revenue-events.jsonl');
+    return process.env._TEST_REVENUE_LEDGER_PATH || process.env.RLHF_REVENUE_LEDGER_PATH || PATHS.REVENUE_LEDGER_PATH;
   },
   get LOCAL_CHECKOUT_SESSIONS_PATH() {
-    return process.env._TEST_LOCAL_CHECKOUT_SESSIONS_PATH || path.resolve(__dirname, '../.claude/memory/feedback/local-checkout-sessions.json');
+    return process.env._TEST_LOCAL_CHECKOUT_SESSIONS_PATH || PATHS.LOCAL_CHECKOUT_SESSIONS_PATH;
   }
 };
 

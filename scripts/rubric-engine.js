@@ -202,6 +202,22 @@ function buildRubricEvaluation({ rubricScores, guardrails } = {}) {
   };
 }
 
+function calculateFitnessScore(evaluation) {
+  if (!evaluation || typeof evaluation !== 'object') return 0;
+  
+  // Base score is the weighted average (0-1)
+  let score = evaluation.weightedScore || 0;
+  
+  // Penalty for critical failures
+  const failingCriteriaCount = (evaluation.failingCriteria || []).length;
+  const failingGuardrailsCount = (evaluation.failingGuardrails || []).length;
+  
+  // Exponential decay for failures
+  const penalty = Math.pow(0.8, failingCriteriaCount + failingGuardrailsCount);
+  
+  return Math.round(score * penalty * 1000) / 1000;
+}
+
 module.exports = {
   DEFAULT_RUBRIC_PATH,
   getRubricPath,
@@ -211,6 +227,7 @@ module.exports = {
   evaluateGuardrails,
   evaluateJudgeAgreement,
   buildRubricEvaluation,
+  calculateFitnessScore,
 };
 
 if (require.main === module) {

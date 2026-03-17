@@ -14,8 +14,9 @@
 
 const path = require('path');
 const { loadModel, getReliability } = require('./thompson-sampling');
-const { readJSONL, getFeedbackPaths, inferDomain } = require('./feedback-loop');
+const { readJSONL, inferDomain } = require('./feedback-loop');
 const { extractDomainKeys } = require('./export-dpo-pairs');
+const { PATHS } = require('./config-loader');
 
 // ---------------------------------------------------------------------------
 // Domain → Thompson category mapping

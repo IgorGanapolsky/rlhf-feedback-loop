@@ -12,10 +12,12 @@ const {
 } = require('./secret-scanner');
 const { getAutoGatesPath } = require('./auto-promote-gates');
 
-const DEFAULT_CONFIG_PATH = path.join(__dirname, '..', 'config', 'gates', 'default.json');
-const STATE_PATH = path.join(process.env.HOME || '/tmp', '.rlhf', 'gate-state.json');
-const CONSTRAINTS_PATH = path.join(process.env.HOME || '/tmp', '.rlhf', 'session-constraints.json');
-const STATS_PATH = path.join(process.env.HOME || '/tmp', '.rlhf', 'gate-stats.json');
+const { PATHS } = require('./config-loader');
+
+const DEFAULT_CONFIG_PATH = PATHS.GATES_CONFIG;
+const STATE_PATH = path.join(PATHS.FEEDBACK_DIR, 'gate-state.json');
+const CONSTRAINTS_PATH = path.join(PATHS.FEEDBACK_DIR, 'session-constraints.json');
+const STATS_PATH = path.join(PATHS.FEEDBACK_DIR, 'gate-stats.json');
 const TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 // ---------------------------------------------------------------------------

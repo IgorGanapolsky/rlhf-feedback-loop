@@ -24,6 +24,14 @@ const { execSync } = require('child_process');
 const COMMAND = process.argv[2];
 const CWD = process.cwd();
 const PKG_ROOT = path.join(__dirname, '..');
+const { PATHS, CONSTANTS } = require(path.join(PKG_ROOT, 'scripts', 'config-loader'));
+
+const ARGS = parseArgs(process.argv.slice(3));
+const PACK_DIR = ARGS.pack ? path.resolve(CWD, ARGS.pack) : null;
+
+if (PACK_DIR) {
+  process.env.RLHF_FEEDBACK_DIR = PACK_DIR;
+}
 
 const PRO_URL = 'https://rlhf-feedback-loop-production.up.railway.app';
 
@@ -678,7 +686,7 @@ function exportDatabricks() {
 function rules() {
   const args = parseArgs(process.argv.slice(3));
   const { writePreventionRules } = require(path.join(PKG_ROOT, 'scripts', 'feedback-loop'));
-  const outPath = args.output || path.join(CWD, '.rlhf', 'prevention-rules.md');
+  const outPath = args.output || PATHS.PREVENTION_RULES_PATH;
   const result = writePreventionRules(outPath, Number(args.min || 2));
   console.log(`Wrote prevention rules to ${result.path}`);
 }
@@ -755,6 +763,11 @@ function optimize() {
 }
 
 function serve() {
+  const args = parseArgs(process.argv.slice(3));
+  if (args.pack) {
+    process.env.RLHF_FEEDBACK_DIR = path.resolve(CWD, args.pack);
+  }
+
   // Start MCP server over stdio
   const mcpServer = path.join(PKG_ROOT, 'adapters', 'mcp', 'server-stdio.js');
   const { startStdioServer } = require(mcpServer);
@@ -815,44 +828,75 @@ function startApi() {
 
 function help() {
   const v = pkgVersion();
-  console.log(`mcp-memory-gateway v${v}`);
-  console.log('');
-  console.log('Commands:');
-  console.log('  init                  Scaffold .rlhf/ config + MCP server in current project');
-  console.log('    --agent=NAME        Wire PreToolUse hooks for agent (claude-code|codex|gemini)');
-  console.log('    --wire-hooks        Wire hooks only (auto-detect agent, skip scaffolding)');
-  console.log('    --dry-run           Preview hook changes without writing');
-  console.log('  install-mcp           Install RLHF MCP server into Claude Code settings (--project for local)');
-  console.log('  serve                 Start MCP server (stdio) — for claude/codex/gemini mcp add');
-  console.log('  capture [flags]       Capture feedback (--feedback=up|down --context="..." --tags="...")');
-  console.log('  stats                 Show feedback analytics + Revenue-at-Risk');
-  console.log('  cfo                   Show local operational billing summary as JSON');
-  console.log('  summary               Human-readable feedback summary');
-  console.log('  model-fit             Detect the current local embedding profile and write evidence report');
-  console.log('  risk [flags]          Train or query the boosted local risk scorer');
-  console.log('  export-dpo            Export DPO training pairs (prompt/chosen/rejected JSONL)');
-  console.log('  export-databricks     Export RLHF logs + proof artifacts as a Databricks-ready analytics bundle');
-  console.log('  rules                 Generate prevention rules from repeated failures');
-  console.log('  optimize              [PRO] Prune CLAUDE.md and migrate manual rules to Veto Layer');
-  console.log('  self-heal             Run self-healing check and auto-fix');
-  console.log('  pro                   Show Pro plan ($29/mo) + hosted pilot info');
-  console.log('  prove [--target=X]    Run proof harness (adapters|automation|attribution|lancedb|local-intelligence|...)');
-  console.log('  watch [flags]           Watch .rlhf/ for external signals and ingest through pipeline (--once, --source=X)');
-  console.log('  status                  Show feedback tracking dashboard — approval trend + failure domains');
-  console.log('  dashboard               Full RLHF dashboard — approval rate, gate stats, prevention impact');
-  console.log('  funnel                  Show marketing & revenue conversion funnel analytics');
-  console.log('  pulse                   Show real-time GTM velocity and Mission Control summary');
-  console.log('  gate-stats              Show gate statistics — active gates, blocks, warns, time saved');
-  console.log('  start-api             Start the Memory Gateway HTTPS API server');
-  console.log('  help                  Show this help message');
-  console.log('');
-  console.log('Examples:');
-  console.log('  npx mcp-memory-gateway init');
-  console.log('  npx mcp-memory-gateway stats');
-  console.log('  npx mcp-memory-gateway cfo');
-  console.log('  npx mcp-memory-gateway model-fit');
-  console.log('  npx mcp-memory-gateway risk');
-  console.log('  npx mcp-memory-gateway pro');
+  const title = `MCP Memory Gateway v${v}`;
+  const bar = '─'.repeat(title.length);
+
+  process.stdout.write(`\n${title}\n${bar}\n\n`);
+
+  const categories = [
+    {
+      name: 'LIFECYCLE',
+      commands: [
+        { cmd: 'init', desc: 'Initialize .rlhf config and scaffold MCP server' },
+        { cmd: 'install', desc: 'Install as a global MCP skill for all agents' },
+        { cmd: 'serve', desc: 'Start the Stdio MCP server (headless mode)' },
+      ]
+    },
+    {
+      name: 'FEEDBACK & MEMORY',
+      commands: [
+        { cmd: 'capture', desc: 'Capture RLHF signal (--feedback=up|down --context="...")' },
+        { cmd: 'rules', desc: 'Generate autonomous prevention rules from history' },
+        { cmd: 'summary', desc: 'Generate a human-readable feedback summary' },
+        { cmd: 'risk', desc: 'Query the local risk scorer for a specific context' },
+        { cmd: 'model-fit', desc: 'Report hardware-optimized local model suitability' },
+      ]
+    },
+    {
+      name: 'ANALYTICS & BILLING',
+      commands: [
+        { cmd: 'stats', desc: 'Show feedback trends and Revenue-at-Risk ($)' },
+        { cmd: 'pulse', desc: 'Show real-time GTM velocity and system health' },
+        { cmd: 'cfo', desc: 'Local operational billing and spend summary' },
+        { cmd: 'funnel', desc: 'Analyze conversion funnel and marketing impact' },
+      ]
+    },
+    {
+      name: 'ADVANCED & PRO',
+      commands: [
+        { cmd: 'evolve', desc: 'Optimize Experience Pack via Evolution Strategies (ES)' },
+        { cmd: 'optimize', desc: '[PRO] Prune context and migrate to Veto Layer' },
+        { cmd: 'self-heal', desc: 'Run automated self-healing and auto-fix loop' },
+        { cmd: 'export-dpo', desc: 'Export DPO training pairs for local fine-tuning' },
+        { cmd: 'export-databricks', desc: 'Export Databricks-ready analytics bundle' },
+        { cmd: 'prove', desc: 'Run the complete technical proof harness' },
+      ]
+    },
+    {
+      name: 'UTILITIES',
+      commands: [
+        { cmd: 'start-api', desc: 'Start the HTTPS API server (default port 3000)' },
+        { cmd: 'watch', desc: 'Watch for external signals and ingest via pipeline' },
+        { cmd: 'status', desc: 'Show high-level feedback tracking dashboard' },
+        { cmd: 'help', desc: 'Show this help message' },
+      ]
+    }
+  ];
+
+  for (const cat of categories) {
+    process.stdout.write(`\x1b[1m${cat.name}\x1b[0m\n`);
+    for (const c of cat.commands) {
+      const padding = ' '.repeat(20 - c.cmd.length);
+      process.stdout.write(`  ${c.cmd}${padding}${c.desc}\n`);
+    }
+    process.stdout.write('\n');
+  }
+
+  process.stdout.write('EXAMPLES\n');
+  process.stdout.write('  npx mcp-memory-gateway init --agent=claude-code\n');
+  process.stdout.write('  npx mcp-memory-gateway capture --feedback=up --context="Clean diff"\n');
+  process.stdout.write('  npx mcp-memory-gateway stats\n\n');
+
   proNudge();
 }
 
@@ -900,6 +944,14 @@ switch (COMMAND) {
     break;
   case 'rules':
     rules();
+    break;
+  case 'evolve':
+    const { evolvePack } = require(path.join(PKG_ROOT, 'scripts', 'evoskill'));
+    const packToEvolve = ARGS.pack || process.env.RLHF_FEEDBACK_DIR || CWD;
+    evolvePack(path.resolve(CWD, packToEvolve)).catch(err => {
+      console.error(err.message);
+      process.exit(1);
+    });
     break;
   case 'optimize':
     optimize();

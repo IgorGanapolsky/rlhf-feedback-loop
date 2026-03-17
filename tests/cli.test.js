@@ -698,7 +698,11 @@ describe('bin/cli.js', () => {
     const result = spawnSync(
       process.execPath,
       [CLI, 'capture', '--feedback=up', '--context=cli test verification'],
-      { encoding: 'utf8', cwd: isolatedDir }
+      { 
+        encoding: 'utf8', 
+        cwd: isolatedDir,
+        env: { ...process.env, RLHF_NO_RATE_LIMIT: '1' }
+      }
     );
     fs.rmSync(isolatedDir, { recursive: true, force: true });
     // Exit 0 (promoted) or 2 (signal logged only) are both valid
@@ -710,7 +714,11 @@ describe('bin/cli.js', () => {
     const result = spawnSync(
       process.execPath,
       [CLI, 'capture', '--feedback=down', '--context=test failure', '--what-went-wrong=broke it'],
-      { encoding: 'utf8', cwd: isolatedDir }
+      { 
+        encoding: 'utf8', 
+        cwd: isolatedDir,
+        env: { ...process.env, RLHF_NO_RATE_LIMIT: '1' }
+      }
     );
     fs.rmSync(isolatedDir, { recursive: true, force: true });
     assert.notEqual(result.status, 1, `capture should not exit 1:\n${result.stderr}`);
