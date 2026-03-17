@@ -104,7 +104,7 @@ test('runtime hosted billing config defaults to the live pro price label', () =>
   try {
     const runtimeConfig = resolveHostedBillingConfig();
     assert.equal(runtimeConfig.proPriceLabel, '$49 one-time');
-    assert.equal(runtimeConfig.proPriceDollars, 29);
+    assert.equal(runtimeConfig.proPriceDollars, 49);
     assert.equal(runtimeConfig.checkoutFallbackUrl, DEFAULT_CHECKOUT_FALLBACK_URL);
     assert.equal(runtimeConfig.gaMeasurementId, '');
     assert.equal(runtimeConfig.googleSiteVerification, '');
