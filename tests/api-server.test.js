@@ -19,6 +19,8 @@ process.env.STRIPE_SECRET_KEY = '';
 process.env.STRIPE_PRICE_ID = '';
 process.env.RLHF_PUBLIC_APP_ORIGIN = 'https://app.example.com';
 process.env.RLHF_BILLING_API_BASE_URL = 'https://billing.example.com';
+process.env.RLHF_GA_MEASUREMENT_ID = 'G-TEST1234';
+process.env.RLHF_GOOGLE_SITE_VERIFICATION = 'test-verification-token';
 
 const { startServer, __test__ } = require('../src/api/server');
 const billing = require('../scripts/billing');
@@ -76,6 +78,9 @@ test('root serves the landing page by default', async () => {
   assert.match(body, /same agent session|same reliability layer|No orchestration tax/i);
   assert.match(body, /\$29\/mo/);
   assert.match(body, /plausible\.io\/js\/script\.js/);
+  assert.match(body, /googletagmanager\.com\/gtag\/js\?id=G-TEST1234/);
+  assert.match(body, /google-site-verification" content="test-verification-token"/);
+  assert.match(body, /gtag\('config', 'G-TEST1234', \{ send_page_view: false \}\)/);
   assert.match(body, /\/v1\/billing\/checkout/);
 });
 

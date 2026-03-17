@@ -4,14 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>mcp-memory-gateway | AI Agent Reliability Without Orchestration Tax</title>
-  <meta name="description" content="Keep one sharp AI agent. Resume sessions faster, recall project decisions, and block repeated mistakes without adding orchestration or handoff overhead." />
-  <meta name="keywords" content="AI agent reliability, AI agent guardrails, AI coding memory, MCP server, Claude Code, Codex, Gemini CLI, feedback loop, prevention rules, pre-action gates, project continuity" />
+  <meta name="description" content="Keep one sharp AI agent. Add recall, reliability rules, and verification without adding orchestration or handoff overhead." />
+  <meta name="keywords" content="AI reliability system, AI agent reliability, AI agent guardrails, MCP server, Claude Code, Codex, Gemini CLI, feedback loop, prevention rules, pre-action gates, AI workflow reliability" />
   <meta property="og:title" content="mcp-memory-gateway — Keep one sharp agent. Repeat fewer mistakes." />
-  <meta property="og:description" content="Use any continuity workflow to regain context, then let mcp-memory-gateway add recall, prevention rules, and pre-action gates in the same agent loop without another orchestration layer." />
+  <meta property="og:description" content="Use any continuity workflow to regain context, then let mcp-memory-gateway add recall, reliability rules, and verification in the same agent loop without another orchestration layer." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://rlhf-feedback-loop-production.up.railway.app" />
   <link rel="canonical" href="https://rlhf-feedback-loop-production.up.railway.app" />
   <script defer data-domain="rlhf-feedback-loop-production.up.railway.app" src="https://plausible.io/js/script.js"></script>
+__GOOGLE_SITE_VERIFICATION_META__
+__GA_BOOTSTRAP__
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -20,8 +22,8 @@
     "url": "https://rlhf-feedback-loop-production.up.railway.app",
     "operatingSystem": "Cross-platform",
     "applicationCategory": "DeveloperApplication",
-    "description": "Keep one sharp AI agent. Resume sessions faster, recall project decisions, and block repeated mistakes without adding orchestration or handoff overhead.",
-    "keywords": "AI agent reliability, AI agent guardrails, AI coding memory, MCP server, pre-action gates, feedback loop, prevention rules, Thompson Sampling, project continuity",
+    "description": "Keep one sharp AI agent. Add recall, reliability rules, and verification without adding orchestration or handoff overhead.",
+    "keywords": "AI reliability system, AI agent reliability, AI agent guardrails, MCP server, pre-action gates, feedback loop, prevention rules, Thompson Sampling, AI workflow reliability",
     "offers": [
       {
         "@type": "Offer",
@@ -67,7 +69,7 @@
         "name": "What does mcp-memory-gateway stop?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "It stops known AI agent failure patterns before they execute by turning repeated negative feedback into Pre-Action Gates."
+          "text": "It turns repeated failures into reliability rules and Pre-Action Gates that block known AI agent mistakes before they execute."
         }
       },
       {
@@ -83,7 +85,7 @@
         "name": "What is the first workflow this product fits?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "The strongest first fit is a repeated coding or operations workflow where the same mistakes recur and a Veto Layer can block them before they waste more engineering time."
+          "text": "The strongest first fit is a repeated coding or operations workflow where the same mistakes recur and the Veto Layer can block them before they waste more engineering time."
         }
       },
       {
@@ -91,7 +93,7 @@
         "name": "Can I pair it with editor continuity tools or resume assistants?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Yes. Continuity tools are optional context inputs, not a required orchestration layer. mcp-memory-gateway adds recall, prevention rules, and pre-action gates in the same agent session. External tools can also append structured JSONL events for watcher-based ingestion."
+          "text": "Yes. Continuity tools are optional context inputs, not a required orchestration layer. mcp-memory-gateway adds recall, reliability rules, and pre-action gates in the same agent session. External tools can also append structured JSONL events for watcher-based ingestion."
         }
       },
       {
@@ -746,7 +748,7 @@
     <section class="hero">
       <div class="wrap">
         <h1>Resume AI work faster. <em>Keep one sharp agent.</em></h1>
-        <p class="sub">Use any continuity workflow to get back into context. mcp-memory-gateway adds recall, prevention rules, and pre-action gates without introducing another orchestration layer or subagent handoff tax. Works with Claude, Codex, Gemini, and Amp.</p>
+        <p class="sub">Use any continuity workflow to get back into context. mcp-memory-gateway adds recall, reliability rules, and verification without introducing another orchestration layer or subagent handoff tax. Works with Claude, Codex, Gemini, and Amp.</p>
         <div class="campaign-banner" id="campaign-banner" hidden>
           <strong>Coming from Reddit?</strong>
           <span id="campaign-banner-copy">Self-hosted is free. If this thread includes an early-access code, it will flow through checkout attribution automatically.</span>
@@ -814,7 +816,7 @@
     <section>
       <div class="wrap">
         <div class="section-label">Why It Lands</div>
-        <div class="section-title">Reliability layer, not orchestration layer.</div>
+        <div class="section-title">AI reliability system, not orchestration layer.</div>
         <div class="section-desc">Keep the base agent that already feels sharp. Put continuity upstream, let the Gateway sit underneath the session, and only intervene when repeated failures prove the pattern is real.</div>
         <div class="steps-grid">
           <div class="step">
@@ -825,7 +827,7 @@
           <div class="step">
             <div class="step-num">2</div>
             <h3>Pair continuity upstream</h3>
-            <p>Use your editor or resume assistant to reload context. The Gateway consumes that context and turns it into actionable recall and prevention.</p>
+            <p>Use your editor or resume assistant to reload context. The Gateway consumes that context and turns it into actionable recall, reliability rules, and proof.</p>
           </div>
           <div class="step">
             <div class="step-num">3</div>
@@ -1043,10 +1045,46 @@
         return null;
       }
 
+      function inferSearchSurface(referrerHost) {
+        if (!referrerHost) return null;
+        const normalizedHost = referrerHost.toLowerCase();
+        if (/(^|\.)reddit\.com$/.test(normalizedHost) || normalizedHost === 'redd.it') return 'reddit';
+        if (/(^|\.)google\.com$/.test(normalizedHost)) return 'google_search';
+        if (/(^|\.)bing\.com$/.test(normalizedHost)) return 'bing_search';
+        if (/(^|\.)duckduckgo\.com$/.test(normalizedHost)) return 'duckduckgo_search';
+        if (/(^|\.)search\.yahoo\.com$/.test(normalizedHost)) return 'yahoo_search';
+        if (/(^|\.)search\.brave\.com$/.test(normalizedHost)) return 'brave_search';
+        if (/(^|\.)ecosia\.org$/.test(normalizedHost)) return 'ecosia_search';
+        if (/(^|\.)perplexity\.ai$/.test(normalizedHost)) return 'perplexity';
+        if (normalizedHost === 'chat.openai.com' || normalizedHost === 'chatgpt.com' || /(^|\.)chatgpt\.com$/.test(normalizedHost)) return 'chatgpt';
+        if (normalizedHost === 'claude.ai' || /(^|\.)claude\.ai$/.test(normalizedHost)) return 'claude';
+        if (normalizedHost === 'gemini.google.com' || /(^|\.)gemini\.google\.com$/.test(normalizedHost)) return 'gemini';
+        return null;
+      }
+
       function inferSource(referrerHost) {
-        if (!referrerHost) return 'website';
-        if (/(^|\.)reddit\.com$/.test(referrerHost) || referrerHost === 'redd.it') return 'reddit';
+        const surface = inferSearchSurface(referrerHost);
+        if (surface === 'reddit') return 'reddit';
+        if (surface && /_search$/.test(surface)) return 'organic_search';
+        if (surface) return 'ai_search';
         return 'website';
+      }
+
+      function inferSearchQuery(referrer) {
+        if (!referrer) return null;
+        try {
+          const ref = new URL(referrer);
+          const keys = ['q', 'query', 'p'];
+          for (const key of keys) {
+            const value = ref.searchParams.get(key);
+            if (value && value.trim()) {
+              return value.trim().slice(0, 160);
+            }
+          }
+        } catch (err) {
+          return null;
+        }
+        return null;
       }
 
       function getAttributionValue(params, key, fallbackValue) {
@@ -1058,6 +1096,7 @@
         const params = new URLSearchParams(window.location.search);
         const referrer = document.referrer || null;
         const referrerHost = parseReferrerHost(referrer);
+        const seoSurface = inferSearchSurface(referrerHost);
         const inferredSource = inferSource(referrerHost);
         const utmSource = getAttributionValue(params, 'utm_source', inferredSource);
         const community = getAttributionValue(
@@ -1079,9 +1118,24 @@
           offerCode: getAttributionValue(params, 'offer_code', null),
           referrer: referrer,
           referrerHost: referrerHost,
+          seoSurface: getAttributionValue(params, 'seo_surface', seoSurface),
+          seoQuery: getAttributionValue(params, 'seo_query', inferSearchQuery(referrer)),
           landingPath: window.location.pathname,
           ctaId: ctaId
         };
+      }
+
+      const gaMeasurementId = '__GA_MEASUREMENT_ID__';
+
+      function trackGaEvent(eventName, payload) {
+        if (!gaMeasurementId || typeof window.gtag !== 'function') {
+          return;
+        }
+
+        window.gtag('event', eventName, Object.assign({
+          page_path: window.location.pathname,
+          page_title: document.title
+        }, payload || {}));
       }
 
       function sendTelemetry(eventName, extra) {
@@ -1156,6 +1210,11 @@
           reasonText: reasonText && reasonText.trim() ? reasonText.trim() : null,
           traceId: activeCheckoutTraceId
         });
+        trackGaEvent('reason_not_buying', {
+          reason_code: reasonCode || 'unspecified',
+          reason_detail: reasonText && reasonText.trim() ? reasonText.trim().slice(0, 120) : null,
+          cta_id: checkoutCta && checkoutCta.dataset ? checkoutCta.dataset.ctaId || 'pricing_pro' : 'pricing_pro'
+        });
 
         if (window.plausible) {
           window.plausible('Buyer Feedback Submitted', {
@@ -1190,6 +1249,10 @@
               ctaId: checkoutCta && checkoutCta.dataset ? checkoutCta.dataset.ctaId || 'pricing_pro' : 'pricing_pro',
               reasonCode: selectedLossReason
             });
+            trackGaEvent('pricing_interest', {
+              reason_code: selectedLossReason || 'unspecified',
+              cta_id: checkoutCta && checkoutCta.dataset ? checkoutCta.dataset.ctaId || 'pricing_pro' : 'pricing_pro'
+            });
             if (buyerFeedbackStatus) {
               buyerFeedbackStatus.textContent = 'Selected: ' + selectedLossReason.replace(/_/g, ' ') + '. Add optional context and send.';
             }
@@ -1213,6 +1276,21 @@
       const landingAttribution = buildAttribution(null);
       updateCampaignBanner(landingAttribution);
       sendTelemetry('landing_page_view', landingAttribution);
+      trackGaEvent('landing_page_view', {
+        traffic_channel: landingAttribution.source || 'website',
+        seo_surface: landingAttribution.seoSurface || null,
+        community: landingAttribution.community || null
+      });
+      if (landingAttribution.source === 'organic_search' || landingAttribution.source === 'ai_search') {
+        sendTelemetry('seo_landing_view', {
+          seoSurface: landingAttribution.seoSurface || landingAttribution.source,
+          seoQuery: landingAttribution.seoQuery || null
+        });
+        trackGaEvent('seo_landing_view', {
+          seo_surface: landingAttribution.seoSurface || landingAttribution.source,
+          seo_query: landingAttribution.seoQuery || null
+        });
+      }
       if (!checkoutCta) return;
 
       const originalLabel = checkoutCta.textContent;
@@ -1235,6 +1313,14 @@
           ctaPlacement: ctaPlacement,
           planId: planId,
           traceId: checkoutTraceId
+        });
+        trackGaEvent('begin_checkout', {
+          currency: 'USD',
+          value: Number('__PRO_PRICE_DOLLARS__'),
+          cta_id: ctaId,
+          cta_placement: ctaPlacement,
+          plan_id: planId,
+          traffic_channel: attribution.source || 'website'
         });
 
         if (window.plausible) {
@@ -1295,11 +1381,23 @@
             failureCode: err && err.message ? err.message : 'checkout_api_failed',
             httpStatus: err && err.httpStatus ? err.httpStatus : null
           });
+          trackGaEvent('checkout_api_failed', {
+            cta_id: ctaId,
+            cta_placement: ctaPlacement,
+            plan_id: planId,
+            failure_code: err && err.message ? err.message : 'checkout_api_failed',
+            http_status: err && err.httpStatus ? err.httpStatus : null
+          });
           sendTelemetry('checkout_fallback_redirect', {
             ctaId: ctaId,
             ctaPlacement: ctaPlacement,
             planId: planId,
             traceId: checkoutTraceId
+          });
+          trackGaEvent('checkout_fallback_redirect', {
+            cta_id: ctaId,
+            cta_placement: ctaPlacement,
+            plan_id: planId
           });
           window.location.assign(fallbackUrl);
         } finally {

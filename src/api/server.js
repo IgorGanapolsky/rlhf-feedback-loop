@@ -329,8 +329,30 @@ function fillTemplate(template, replacements) {
   return output;
 }
 
+function escapeHtmlAttribute(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('"', '&quot;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;');
+}
+
 function loadLandingPageHtml(runtimeConfig) {
   const template = fs.readFileSync(LANDING_PAGE_PATH, 'utf-8');
+  const googleSiteVerificationMeta = runtimeConfig.googleSiteVerification
+    ? `  <meta name="google-site-verification" content="${escapeHtmlAttribute(runtimeConfig.googleSiteVerification)}" />`
+    : '';
+  const gaBootstrap = runtimeConfig.gaMeasurementId
+    ? [
+      `  <script async src="https://www.googletagmanager.com/gtag/js?id=${runtimeConfig.gaMeasurementId}"></script>`,
+      '  <script>',
+      '    window.dataLayer = window.dataLayer || [];',
+      '    function gtag(){dataLayer.push(arguments);}',
+      "    gtag('js', new Date());",
+      `    gtag('config', '${runtimeConfig.gaMeasurementId}', { send_page_view: false });`,
+      '  </script>',
+    ].join('\n')
+    : '';
   return fillTemplate(template, {
     '__PACKAGE_VERSION__': pkg.version,
     '__APP_ORIGIN__': runtimeConfig.appOrigin,
@@ -338,6 +360,9 @@ function loadLandingPageHtml(runtimeConfig) {
     '__CHECKOUT_FALLBACK_URL__': runtimeConfig.checkoutFallbackUrl,
     '__PRO_PRICE_DOLLARS__': runtimeConfig.proPriceDollars,
     '__PRO_PRICE_LABEL__': runtimeConfig.proPriceLabel,
+    '__GA_MEASUREMENT_ID__': runtimeConfig.gaMeasurementId || '',
+    '__GA_BOOTSTRAP__': gaBootstrap,
+    '__GOOGLE_SITE_VERIFICATION_META__': googleSiteVerificationMeta,
     '__VERIFICATION_URL__': 'https://github.com/IgorGanapolsky/mcp-memory-gateway/blob/main/docs/VERIFICATION_EVIDENCE.md',
     '__COMPATIBILITY_REPORT_URL__': 'https://github.com/IgorGanapolsky/mcp-memory-gateway/blob/main/proof/compatibility/report.json',
     '__AUTOMATION_REPORT_URL__': 'https://github.com/IgorGanapolsky/mcp-memory-gateway/blob/main/proof/automation/report.json',
