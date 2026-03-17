@@ -357,7 +357,7 @@ describe('bin/cli.js', () => {
   test('pro command prints truthful commercial offer info', () => {
     const result = spawnSync(process.execPath, [CLI, 'pro'], { encoding: 'utf8' });
     assert.strictEqual(result.status, 0, `Expected exit 0, got ${result.status}\n${result.stderr}`);
-    assert.match(result.stdout, /Pro \(\$29\/mo recurring\)/);
+    assert.match(result.stdout, /Pro \(\$49\/mo recurring\)/);
     assert.match(result.stdout, /pilot\/by-request/);
     assert.match(result.stdout, /COMMERCIAL_TRUTH\.md/);
     assert.doesNotMatch(result.stdout, /\$10\/mo|38 spots remaining|first 50 users|Founding Member/i);
@@ -386,7 +386,7 @@ describe('bin/cli.js', () => {
     const result = spawnSync(process.execPath, [CLI, 'pro'], { encoding: 'utf8' });
     assert.strictEqual(result.status, 0);
     assert.ok(result.stdout.includes('railway.app'), 'Pro command should include hosted URL');
-    assert.ok(result.stdout.includes('$29/mo'), 'Pro command should include current price');
+    assert.ok(result.stdout.includes('$49/mo'), 'Pro command should include current price');
   });
 
   test('RLHF_NO_TELEMETRY=1 prevents telemetry ping on init', () => {
