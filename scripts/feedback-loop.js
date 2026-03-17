@@ -670,7 +670,7 @@ function captureFeedback(params) {
     const { updateBelief, shouldPrune } = require('./belief-update');
     const existingMemories = readJSONL(MEMORY_LOG_PATH);
     const similarMemory = existingMemories.slice().reverse().find(m => 
-      m.tags.some(t => memoryRecord.tags.includes(t) && !GENERIC_TAGS.has(t))
+      m.tags && m.tags.some(t => memoryRecord.tags.includes(t) && !GENERIC_TAGS.has(t))
     );
 
     if (similarMemory && similarMemory.bayesian) {

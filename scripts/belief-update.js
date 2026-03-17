@@ -25,8 +25,9 @@ function updateBelief(belief, likelihood) {
   // Here we use a simpler recursive update for multi-turn interaction
   const newPrior = (prior * n + likelihood) / (n + 1);
   
-  // Uncertainty decays as observations increase, but increases if likelihood contradicts prior
-  const contradiction = Math.abs(newPrior - prior);
+  // Sentry fix: Contradiction should be based on raw difference between likelihood and prior
+  // to ensure strong contradictions increase uncertainty regardless of n.
+  const contradiction = Math.abs(likelihood - prior);
   const newUncertainty = (belief.uncertainty * n + contradiction) / (n + 1);
 
   return {
