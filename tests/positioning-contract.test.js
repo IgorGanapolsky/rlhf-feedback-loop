@@ -24,11 +24,12 @@ test('package metadata leads with reliability instead of generic memory-layer ph
 test('README explains the product as one-agent reliability instead of more orchestration', () => {
   const readme = readText('README.md');
 
-  assert.match(readme, /Local-first reliability layer for AI coding agents\./);
+  assert.match(readme, /Local-first AI reliability system for coding agents\./);
   assert.match(readme, /Keeps one sharp agent on task/i);
   assert.match(readme, /without adding orchestration or subagent handoff overhead/i);
   assert.match(readme, /without another planner or swarm/i);
   assert.match(readme, /Use MCP Memory Gateway as the reliability layer for recall, gates, and proof\./);
+  assert.match(readme, /reliability rules/i);
 });
 
 test('continuity guide frames the gateway as downstream reliability, not a new orchestrator', () => {

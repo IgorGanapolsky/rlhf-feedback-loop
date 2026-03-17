@@ -9,7 +9,7 @@
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/igorganapolsky)
 [![Pro Pack](https://img.shields.io/badge/Pro%20Pack-Gumroad-FF90E8?logo=gumroad)](https://iganapolsky.gumroad.com/l/tjovof)
 
-**Local-first reliability layer for AI coding agents.** Keeps one sharp agent on task: persist decisions, surface prevention rules, and inject relevant history without adding orchestration or subagent handoff overhead.
+**Local-first AI reliability system for coding agents.** Keeps one sharp agent on task: persist decisions, surface reliability rules, and inject relevant history without adding orchestration or subagent handoff overhead.
 
 > **Honest disclaimer:** This is a **context injection system**, not RLHF. LLM weights are not updated by thumbs-up/down signals. What actually happens: feedback is validated, promoted to searchable memory, and recalled at session start so agents have project history they'd otherwise lose. That's genuinely valuable — but it's context engineering, not reinforcement learning.
 
@@ -17,7 +17,7 @@ Works with any MCP-compatible agent: Claude, Codex, Gemini, Amp, Cursor.
 
 Verification evidence for shipped features lives in [docs/VERIFICATION_EVIDENCE.md](docs/VERIFICATION_EVIDENCE.md).
 
-Continuity tools help you resume work. MCP Memory Gateway keeps the resumed session sharper: recall, prevention rules, pre-action gates, and verification layered on top of that continuity workflow without another planner or swarm.
+Continuity tools help you resume work. MCP Memory Gateway keeps the resumed session sharper: recall, reliability rules, pre-action gates, and verification layered on top of that continuity workflow without another planner or swarm.
 
 ## Cursor Marketplace
 
@@ -27,7 +27,7 @@ This repo now ships a submission-ready Cursor plugin bundle:
 - Plugin directory: `plugins/cursor-marketplace/`
 - Plugin MCP config: `plugins/cursor-marketplace/.mcp.json`
 
-That package keeps the Cursor review surface intentionally small: one MCP server bundle for the **Agentic Feedback Studio**, **Veto Layer**, **DPO** export, and **Thompson Sampling** feedback loop. Until the public listing is approved, Cursor users can still install locally with `npx mcp-memory-gateway init`.
+That package keeps the Cursor review surface intentionally small: one MCP server bundle for the **Agentic Feedback Studio** reliability system, **Veto Layer** guardrails, **DPO** export, and **Thompson Sampling** feedback loop. Until the public listing is approved, Cursor users can still install locally with `npx mcp-memory-gateway init`.
 
 ## Visual Demo: Experience the Magic
 
@@ -269,6 +269,22 @@ npx mcp-memory-gateway export-databricks # Export Databricks-ready analytics bun
 npx mcp-memory-gateway risk              # Train/query boosted risk scorer
 npx mcp-memory-gateway self-heal         # Run self-healing diagnostics
 ```
+
+### Hosted growth tracking
+
+The landing page ships first-party telemetry plus optional GA4 and Google Search Console hooks.
+
+```bash
+export RLHF_PUBLIC_APP_ORIGIN='https://rlhf-feedback-loop-production.up.railway.app'
+export RLHF_BILLING_API_BASE_URL='https://rlhf-feedback-loop-production.up.railway.app'
+export RLHF_GA_MEASUREMENT_ID='G-XXXXXXXXXX'          # optional
+export RLHF_GOOGLE_SITE_VERIFICATION='token-value'    # optional
+```
+
+- Plausible stays on by default for lightweight page analytics.
+- GA4 is only injected when `RLHF_GA_MEASUREMENT_ID` is set.
+- Search Console verification meta is only injected when `RLHF_GOOGLE_SITE_VERIFICATION` is set.
+- `npx mcp-memory-gateway dashboard` now shows whether traffic, SEO, funnel, and revenue instrumentation are actually configured and receiving events.
 
 ## JSONL File Watcher
 
