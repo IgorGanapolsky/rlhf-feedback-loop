@@ -862,6 +862,85 @@ Artifacts updated:
 - `proof/automation/report.json`
 - `proof/automation/report.md`
 
+## 2026-03-17 Self-Heal Proof Isolation Verification
+
+Scope:
+
+- Fixed `scripts/self-healing-check.js` so proof-bearing health checks run with an isolated temporary `RLHF_PROOF_DIR`.
+- Prevented `self-heal:check` from failing on clean merge commits due to shared tracked `proof/` artifacts instead of real behavioral regressions.
+- Added regression coverage to prove the health checker both injects and cleans temporary proof directories.
+
+Commands run:
+
+```bash
+git diff --check
+node --test tests/self-healing-check.test.js
+npm ci
+npm test
+npm run test:coverage
+env RLHF_PROOF_DIR="$(mktemp -d)" npm run prove:adapters
+env RLHF_PROOF_DIR="$(mktemp -d)" npm run prove:automation
+npm run self-heal:check
+```
+
+Observed results:
+
+- `git diff --check`: completed cleanly.
+- `node --test tests/self-healing-check.test.js`: `14` passed, `0` failed.
+- `npm ci`: completed successfully; `audited 151 packages` and `found 0 vulnerabilities`.
+- `npm test`: passed.
+- `npm run test:coverage`: `1100` tests, `1099` passed, `0` failed, `1` skipped; coverage `84.40%` lines, `70.77%` branches, `87.18%` functions.
+- `env RLHF_PROOF_DIR="$(mktemp -d)" npm run prove:adapters`: `46` passed, `0` failed.
+- `env RLHF_PROOF_DIR="$(mktemp -d)" npm run prove:automation`: `55` passed, `0` failed.
+- `npm run self-heal:check`: `Overall: HEALTHY` with `4/4` healthy checks.
+
+Behavioral proof points:
+
+- `DEFAULT_CHECKS` now marks both `prove_adapters` and `prove_automation` for proof-directory isolation.
+- `collectHealthReport` provisions a temp `RLHF_PROOF_DIR` per proof check and removes it after execution.
+- The repaired `self-heal:check` now stays healthy under the same heavy `tests + prove_*` workload that failed on merge commit `9b5f5a1`.
+
+Artifacts updated:
+
+- `docs/VERIFICATION_EVIDENCE.md`
+
+## 2026-03-17 Growth Observability + Tracking Readiness Verification
+
+Scope:
+
+- Tighten the public category from generic memory phrasing to an AI reliability system for one sharp agent.
+- Add optional GA4 and Google Search Console support alongside the existing Plausible + first-party telemetry stack.
+- Auto-record SEO landing views from organic and AI-search referrers.
+- Surface instrumentation readiness directly in the dashboard so traffic, funnel, revenue, and attribution gaps are explicit.
+
+Commands run in the implementation worktree:
+
+```bash
+npm ci
+npm test
+npm run test:coverage
+env RLHF_PROOF_DIR="$(mktemp -d)" npm run prove:adapters
+env RLHF_PROOF_DIR="$(mktemp -d)" npm run prove:automation
+npm run self-heal:check
+```
+
+Observed results:
+
+- `npm ci`: passed, `150` packages installed, `0` vulnerabilities.
+- `npm test`: passed on `feat/growth-observability`.
+- `npm run test:coverage`: passed with overall coverage `84.37%` lines / `70.58%` branches / `87.17%` functions.
+- `npm run prove:adapters`: passed, `46/46`.
+- `npm run prove:automation`: passed, `55/55`.
+- `npm run self-heal:check`: `Overall: HEALTHY`, `4/4` healthy.
+- `git diff --check`: clean before commit.
+
+Behavioral proof points:
+
+- The landing page keeps Plausible and first-party telemetry, and now injects GA4 and Search Console only when explicit env vars are set.
+- Search and AI-search referrers now produce `seo_landing_view` telemetry instead of hiding in generic landing-page traffic.
+- The dashboard now reports whether traffic analytics, SEO verification, buyer-loss capture, and revenue attribution are configured and actually receiving events.
+- Public and active product copy now lead with AI reliability without orchestration tax instead of drifting back toward generic memory-layer framing.
+
 ## 2026-03-17 AI Reliability Social Asset Verification
 
 Scope:
