@@ -1,0 +1,19 @@
+{
+  "id": "1773752993953_mistake-violated-tw-minimal-01-constraint-never-use-emojis-or-conv",
+  "title": "MISTAKE: Violated TW-MINIMAL-01 constraint: 'NEVER use emojis or conv",
+  "content": "What went wrong: Violated TW-MINIMAL-01 constraint: 'NEVER use emojis or conversational filler'\nHow to avoid: Maintain ultra-concise, technical tone without fluff",
+  "tags": [
+    "feedback",
+    "negative",
+    "brand-compliance",
+    "personality"
+  ],
+  "source": "feedback-memory",
+  "ttl": null,
+  "metadata": {
+    "category": "error",
+    "sourceFeedbackId": "fb_1773752993937_c42v35"
+  },
+  "createdAt": "2026-03-17T13:09:53.953Z",
+  "lastUsedAt": null
+}

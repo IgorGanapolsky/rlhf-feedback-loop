@@ -21,6 +21,7 @@ const CONFIG = {
   GITHUB_MARKETPLACE_WEBHOOK_SECRET: process.env.GITHUB_MARKETPLACE_WEBHOOK_SECRET || '',
   GITHUB_MARKETPLACE_PLAN_PRICES_JSON: process.env.RLHF_GITHUB_MARKETPLACE_PLAN_PRICES_JSON || '',
   STRIPE_PRICE_ID: process.env.STRIPE_PRICE_ID || 'price_1RNdUBGGBpd520QYG1A9SWF4',
+  STARTER_PACK_PRICE_ID: process.env.STRIPE_STARTER_PACK_PRICE_ID || 'price_1starter_pack_placeholder',
   get API_KEYS_PATH() {
     return process.env._TEST_API_KEYS_PATH || path.resolve(__dirname, '../.claude/memory/feedback/api-keys.json');
   },
@@ -33,6 +34,16 @@ const CONFIG = {
   get LOCAL_CHECKOUT_SESSIONS_PATH() {
     return process.env._TEST_LOCAL_CHECKOUT_SESSIONS_PATH || path.resolve(__dirname, '../.claude/memory/feedback/local-checkout-sessions.json');
   }
+};
+
+const CREDIT_PACKS = {
+  starter: {
+    id: 'starter',
+    name: 'Mistake-Free Starter Pack',
+    credits: 500,
+    priceCents: 4900,
+    priceId: CONFIG.STARTER_PACK_PRICE_ID,
+  },
 };
 
 let _stripeClient = null;
@@ -708,9 +719,9 @@ function saveKeyStore(store) {
 // Core Exports
 // ---------------------------------------------------------------------------
 
-async function createCheckoutSession({ successUrl, cancelUrl, customerEmail, installId, traceId, metadata = {} } = {}) {
+async function createCheckoutSession({ successUrl, cancelUrl, customerEmail, installId, traceId, packId, metadata = {} } = {}) {
   const resolvedTraceId = traceId || metadata.traceId || createTraceId('checkout');
-  const checkoutMetadata = sanitizeMetadata({ ...metadata, installId: installId || 'unknown', traceId: resolvedTraceId });
+  const checkoutMetadata = sanitizeMetadata({ ...metadata, installId: installId || 'unknown', traceId: resolvedTraceId, packId: packId || null });
 
   if (LOCAL_MODE()) {
     const localSessionId = `test_session_${crypto.randomBytes(8).toString('hex')}`;
@@ -730,13 +741,16 @@ async function createCheckoutSession({ successUrl, cancelUrl, customerEmail, ins
   }
 
   const stripe = getStripeClient();
+  const pack = packId ? CREDIT_PACKS[packId] : null;
+  const isOneTime = !!pack;
+
   const session = await stripe.checkout.sessions.create({
     success_url: successUrl,
     cancel_url: cancelUrl,
     customer_email: customerEmail,
     payment_method_types: ['card', 'link'],
-    mode: 'subscription',
-    line_items: [{ price: CONFIG.STRIPE_PRICE_ID, quantity: 1 }],
+    mode: isOneTime ? 'payment' : 'subscription',
+    line_items: [{ price: pack ? pack.priceId : CONFIG.STRIPE_PRICE_ID, quantity: 1 }],
     metadata: serializeStripeMetadata(checkoutMetadata),
   });
 
@@ -756,7 +770,7 @@ async function getCheckoutSessionStatus(sessionId) {
     const store = loadLocalCheckoutSessions();
     const session = store.sessions[sessionId];
     if (!session) return { found: false };
-    const provisioned = provisionApiKey(session.customer, { installId: session.metadata?.installId, source: 'local_checkout_lookup' });
+    const provisioned = provisionApiKey(session.customer, { installId: session.metadata?.installId, packId: session.metadata?.packId, source: 'local_checkout_lookup' });
     return {
       found: true,
       localMode: true,
@@ -766,6 +780,7 @@ async function getCheckoutSessionStatus(sessionId) {
       status: 'complete',
       customerId: session.customer,
       installId: session.metadata?.installId,
+      packId: session.metadata?.packId || null,
       traceId: session.metadata?.traceId || null,
       acquisitionId: session.metadata?.acquisitionId || null,
       visitorId: session.metadata?.visitorId || null,
@@ -788,7 +803,8 @@ async function getCheckoutSessionStatus(sessionId) {
     if (!isPaid) return { found: true, localMode: false, sessionId, paid: false, paymentStatus: session.payment_status, status: session.status };
 
     const installId = session.metadata?.installId || null;
-    const provisioned = provisionApiKey(session.customer, { installId, source: 'stripe_checkout_session_lookup' });
+    const packId = session.metadata?.packId || null;
+    const provisioned = provisionApiKey(session.customer, { installId, packId, source: 'stripe_checkout_session_lookup' });
 
     return {
       found: true,
@@ -799,6 +815,7 @@ async function getCheckoutSessionStatus(sessionId) {
       customerId: session.customer,
       customerEmail: session.customer_details?.email || '',
       installId,
+      packId,
       traceId,
       acquisitionId: session.metadata?.acquisitionId || null,
       visitorId: session.metadata?.visitorId || null,
@@ -820,16 +837,33 @@ function provisionApiKey(customerId, opts = {}) {
   const store = loadKeyStore();
   const existing = Object.entries(store.keys).find(([, m]) => m.customerId === customerId && m.active);
 
+  const pack = opts.packId ? CREDIT_PACKS[opts.packId] : null;
+  const initialCredits = pack ? pack.credits : null;
+
   if (existing) {
-    if (opts.installId && !existing[1].installId) { existing[1].installId = opts.installId; saveKeyStore(store); }
-    return { key: existing[0], customerId, createdAt: existing[1].createdAt, installId: existing[1].installId || null, reused: true };
+    const [key, meta] = existing;
+    if (opts.installId && !meta.installId) { meta.installId = opts.installId; }
+    if (initialCredits !== null) {
+      meta.remainingCredits = (meta.remainingCredits || 0) + initialCredits;
+    }
+    saveKeyStore(store);
+    return { key, customerId, createdAt: meta.createdAt, installId: meta.installId || null, remainingCredits: meta.remainingCredits, reused: true };
   }
 
   const key = `rlhf_${crypto.randomBytes(16).toString('hex')}`;
   const createdAt = new Date().toISOString();
-  store.keys[key] = { customerId, active: true, usageCount: 0, createdAt, installId: opts.installId || null, source: opts.source || 'provision' };
+  store.keys[key] = {
+    customerId,
+    active: true,
+    usageCount: 0,
+    remainingCredits: initialCredits,
+    unlimited: !pack,
+    createdAt,
+    installId: opts.installId || null,
+    source: opts.source || 'provision',
+  };
   saveKeyStore(store);
-  return { key, customerId, createdAt, installId: opts.installId || null };
+  return { key, customerId, createdAt, installId: opts.installId || null, remainingCredits: initialCredits };
 }
 
 function rotateApiKey(oldKey) {
@@ -841,7 +875,17 @@ function rotateApiKey(oldKey) {
   meta.active = false;
   meta.disabledAt = new Date().toISOString();
   const newKey = `rlhf_${crypto.randomBytes(16).toString('hex')}`;
-  store.keys[newKey] = { customerId: meta.customerId, active: true, usageCount: 0, createdAt: new Date().toISOString(), installId: meta.installId, source: 'rotation', replacedKey: oldKey };
+  store.keys[newKey] = {
+    customerId: meta.customerId,
+    active: true,
+    usageCount: 0,
+    remainingCredits: meta.remainingCredits,
+    unlimited: meta.unlimited,
+    createdAt: new Date().toISOString(),
+    installId: meta.installId,
+    source: 'rotation',
+    replacedKey: oldKey,
+  };
   saveKeyStore(store);
   return { rotated: true, key: newKey, oldKey };
 }
@@ -851,10 +895,17 @@ function validateApiKey(key) {
   const store = loadKeyStore();
   const meta = store.keys[key];
   if (!meta || !meta.active) return { valid: false };
+
+  if (meta.unlimited === false && (meta.remainingCredits === null || meta.remainingCredits <= 0)) {
+    return { valid: false, reason: 'out_of_credits', customerId: meta.customerId };
+  }
+
   return {
     valid: true,
     customerId: meta.customerId,
     usageCount: meta.usageCount || 0,
+    remainingCredits: meta.remainingCredits,
+    unlimited: !!meta.unlimited,
     installId: meta.installId || null,
     createdAt: meta.createdAt,
     metadata: meta,
@@ -865,11 +916,29 @@ function recordUsage(key) {
   const store = loadKeyStore();
   const meta = store.keys[key];
   if (meta && meta.active) {
+    if (meta.unlimited === false) {
+      if (meta.remainingCredits === null || meta.remainingCredits <= 0) {
+        return { recorded: false, reason: 'out_of_credits' };
+      }
+      meta.remainingCredits -= 1;
+    }
+
     const oldVal = meta.usageCount || 0;
     meta.usageCount = oldVal + 1;
     if (oldVal === 0) appendFunnelEvent({ stage: 'activation', event: 'api_key_first_usage', installId: meta.installId, evidence: key, metadata: { customerId: meta.customerId } });
+    
+    if (meta.unlimited === false && meta.remainingCredits === 0) {
+      appendFunnelEvent({
+        stage: 'activation',
+        event: 'credits_exhausted',
+        installId: meta.installId,
+        evidence: key,
+        metadata: { customerId: meta.customerId },
+      });
+    }
+
     saveKeyStore(store);
-    return { recorded: true, usageCount: meta.usageCount };
+    return { recorded: true, usageCount: meta.usageCount, remainingCredits: meta.remainingCredits };
   }
   return { recorded: false };
 }
@@ -946,9 +1015,10 @@ async function handleWebhook(rawBody, signature) {
       const session = event.data.object;
       const customerId = session.customer;
       const installId = session.metadata?.installId;
+      const packId = session.metadata?.packId;
       const traceId = session.metadata?.traceId || null;
       const attribution = extractAttribution(session.metadata);
-      const result = provisionApiKey(customerId, { installId, source: 'stripe_webhook_checkout_completed' });
+      const result = provisionApiKey(customerId, { installId, packId, source: 'stripe_webhook_checkout_completed' });
       appendFunnelEvent({
         stage: 'paid',
         event: 'stripe_checkout_completed',
@@ -958,6 +1028,7 @@ async function handleWebhook(rawBody, signature) {
         metadata: {
           customerId,
           subscriptionId: session.subscription,
+          packId,
           traceId,
           ...extractJourneyFields(session.metadata),
           ...attribution,
@@ -1095,7 +1166,7 @@ function handleGithubWebhook(event) {
 }
 
 module.exports = {
-  createCheckoutSession, getCheckoutSessionStatus, provisionApiKey, rotateApiKey, validateApiKey, recordUsage, reportUsageToStripe, disableCustomerKeys, handleWebhook, verifyWebhookSignature, verifyGithubWebhookSignature, handleGithubWebhook, loadKeyStore, appendFunnelEvent, appendRevenueEvent, loadFunnelLedger, loadRevenueLedger, getFunnelAnalytics, getBusinessAnalytics, getBillingSummary,
+  createCheckoutSession, getCheckoutSessionStatus, provisionApiKey, rotateApiKey, validateApiKey, recordUsage, reportUsageToStripe, disableCustomerKeys, handleWebhook, verifyWebhookSignature, verifyGithubWebhookSignature, handleGithubWebhook, loadKeyStore, saveKeyStore, appendFunnelEvent, appendRevenueEvent, loadFunnelLedger, loadRevenueLedger, getFunnelAnalytics, getBusinessAnalytics, getBillingSummary,
   _API_KEYS_PATH: () => CONFIG.API_KEYS_PATH,
   _FUNNEL_LEDGER_PATH: () => CONFIG.FUNNEL_LEDGER_PATH,
   _REVENUE_LEDGER_PATH: () => CONFIG.REVENUE_LEDGER_PATH,

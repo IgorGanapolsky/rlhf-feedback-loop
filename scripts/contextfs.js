@@ -39,13 +39,28 @@ const NAMESPACES = {
   rules: 'rules',
   tools: 'tools',
   provenance: 'provenance',
+  scratchpad: 'scratchpad',
 };
 const DEFAULT_SEARCH_NAMESPACES = [
   NAMESPACES.memoryError,
   NAMESPACES.memoryLearning,
   NAMESPACES.rules,
   NAMESPACES.rawHistory,
+  NAMESPACES.scratchpad,
 ];
+
+/**
+ * Scratchpad: Persist key findings across context boundaries (Task Statement 5.4)
+ */
+function updateScratchpad(title, content, tags = []) {
+  return writeContextObject({
+    namespace: NAMESPACES.scratchpad,
+    title: `scratch_${toSlug(title)}`,
+    content,
+    tags: unique([...tags, 'scratchpad']),
+    source: 'agent-scratchpad',
+  });
+}
 const NAMESPACE_ALIAS_MAP = new Map([
   ...Object.entries(NAMESPACES).map(([key, value]) => [key, value]),
   ...Object.values(NAMESPACES).map((value) => [value, value]),
@@ -772,6 +787,7 @@ module.exports = {
   constructContextPack,
   evaluateContextPack,
   getProvenance,
+  updateScratchpad,
   readJsonl,
   DEFAULT_SEARCH_NAMESPACES,
   tokenizeQuery,

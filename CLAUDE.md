@@ -31,16 +31,11 @@ capture explicit feedback, convert valid memories, prevent repeated failures, an
 
 ## Verification Discipline
 
-- Never use a dirty primary checkout as the source of truth for verification.
-- Use a dedicated git worktree based on `origin/main` or the PR branch before running verification.
-- Run `npm ci` in a fresh verification worktree before `npm test`.
-- When the `workers/` package changes, also run `npm --prefix workers ci`, `npm run test:workers`, and `npm --prefix workers audit --json`.
-- Treat Wrangler as an external global prerequisite for `workers/`; do not reintroduce a repo-local `wrangler` dependency until the npm advisory set has a clean non-conflicting release line.
-- Treat `npm test`, `npm run test:coverage`, `npm run prove:adapters`, `npm run prove:automation`, and `npm run self-heal:check` as the standard verification set unless the task is narrower.
-- If proof scripts support temp output overrides, use them so local verification does not pollute tracked `proof/` artifacts.
-- Archive unique closed-orphan branches before deletion; delete clean redundant worktrees aggressively once verified.
+@import ".claude/rules/testing-standards.md"
 
 ## PR and CI Protocol
+
+@import ".claude/rules/code-review-criteria.md"
 
 - Review open PRs first. Merge only after required CI passes and there are no actionable review comments.
 - After merging, verify the `main` branch CI run on the exact merge commit before reporting completion.

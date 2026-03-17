@@ -28,10 +28,10 @@ MCP Memory Gateway v0.7.0 introduces **Pre-Action Gates** — configurable check
 > We built **Pre-Action Gates** for MCP agents — configurable checkpoints that block dangerous tool calls before they execute.
 >
 > Free: 5 built-in gates + feedback capture + prevention rules
-> Pro ($29/mo): auto-gate promotion, unlimited custom gates, multi-repo sync
+> One-time ($49): 500 verified consolidations + 5 critical rules
 >
 > OSS core: https://github.com/IgorGanapolsky/mcp-memory-gateway
-> Pro: https://iganapolsky.gumroad.com/l/tjovof"
+> Starter Pack: https://iganapolsky.gumroad.com/l/tjovof"
 
 ### LinkedIn
 
@@ -39,7 +39,7 @@ MCP Memory Gateway v0.7.0 introduces **Pre-Action Gates** — configurable check
 >
 > We just shipped Pre-Action Gates in MCP Memory Gateway v0.7.0. Gates fire before every tool call and block dangerous actions based on learned failure patterns.
 >
-> Free OSS core with 5 built-in gates. Pro at $29/mo adds auto-gate promotion, unlimited custom gates, and multi-repo sync.
+> Free OSS core with 5 built-in gates. One-time $49 'Starter Pack' adds 500 verified consolidations and 5 critical prevention rules authored by our reasoning engine.
 >
 > GitHub: https://github.com/IgorGanapolsky/mcp-memory-gateway"
 
@@ -49,9 +49,9 @@ MCP Memory Gateway v0.7.0 introduces **Pre-Action Gates** — configurable check
 >
 > MCP Memory Gateway is an open-source MCP server that captures thumbs-up/down feedback, generates prevention rules from repeated failures, and now ships with Pre-Action Gates — configurable checkpoints that fire before tool calls.
 >
-> Built-in gates block: force-push to protected branches, .env edits, secret commits, destructive git ops, and shell injection patterns. The gates engine learns from your feedback history and auto-promotes new gates in the Pro tier.
+> Built-in gates block: force-push to protected branches, .env edits, secret commits, destructive git ops, and shell injection patterns. The gates engine learns from your feedback history and auto-promotes new gates.
 >
-> Free + MIT licensed. Pro at $29/mo for teams that need auto-gate promotion and multi-repo sync.
+> Free + MIT licensed. $49 'Starter Pack' for teams that need high-fidelity consolidations and cloud-synced rules.
 >
 > https://github.com/IgorGanapolsky/mcp-memory-gateway"
 

@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "algorithm": "adaboost-stumps",
+  "trainedAt": "2026-03-17T13:09:53.982Z",
+  "exampleCount": 1,
+  "highRiskExamples": 1,
+  "baseRate": 1,
+  "featureRegistry": {
+    "topTags": [
+      "brand-compliance",
+      "personality"
+    ],
+    "topSkills": [],
+    "domains": [
+      "general",
+      "testing",
+      "security",
+      "performance",
+      "ui-components",
+      "api-integration",
+      "git-workflow",
+      "documentation",
+      "debugging",
+      "architecture",
+      "data-modeling"
+    ]
+  },
+  "featureNames": [
+    "recentTrend",
+    "sequenceLength",
+    "recentNegativeCount",
+    "recentPositiveCount",
+    "avgTimeGap",
+    "maxTimeGap",
+    "tagCount",
+    "filePathCount",
+    "hasErrorType",
+    "hasRubric",
+    "rubricWeightedScore",
+    "failingCriteriaCount",
+    "failingGuardrailsCount",
+    "judgeDisagreementCount",
+    "actionNegativeRate",
+    "containsRiskWord",
+    "containsVerificationWord",
+    "containsSafetyWord",
+    "containsSuccessWord",
+    "domain:general",
+    "domain:testing",
+    "domain:security",
+    "domain:performance",
+    "domain:ui-components",
+    "domain:api-integration",
+    "domain:git-workflow",
+    "domain:documentation",
+    "domain:debugging",
+    "domain:architecture",
+    "domain:data-modeling",
+    "tag:brand-compliance",
+    "tag:personality"
+  ],
+  "learners": [],
+  "patterns": {
+    "tags": [],
+    "domains": [],
+    "skills": []
+  },
+  "metrics": {
+    "trainingAccuracy": 1,
+    "rounds": 0,
+    "mode": "baseline"
+  }
+}

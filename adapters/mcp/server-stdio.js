@@ -84,10 +84,16 @@ function resolveSafePath(inputPath, { mustExist = false } = {}) {
   const inSafeRoot = resolved === SAFE_DATA_DIR || resolved.startsWith(`${SAFE_DATA_DIR}${path.sep}`);
 
   if (!allowExternal && !inSafeRoot) {
-    throw new Error(`Path must stay within ${SAFE_DATA_DIR}`);
+    const err = new Error(`Path must stay within ${SAFE_DATA_DIR}`);
+    err.errorCategory = 'permission';
+    err.isRetryable = false;
+    throw err;
   }
   if (mustExist && !fs.existsSync(resolved)) {
-    throw new Error(`Path does not exist: ${resolved}`);
+    const err = new Error(`Path does not exist: ${resolved}`);
+    err.errorCategory = 'validation';
+    err.isRetryable = true;
+    throw err;
   }
   return resolved;
 }
@@ -187,8 +193,23 @@ function formatStats() {
   return parts.join('\n');
 }
 
+const {
+  evaluateGates,
+  evaluateSecretGuard,
+} = require('../../scripts/gates-engine');
+
 async function callTool(name, args = {}) {
   assertToolAllowed(name, getActiveMcpProfile());
+
+  // Programmatic Pre-Action Gates (Task Statement 1.4)
+  const preGate = evaluateGates(name, args) || evaluateSecretGuard({ tool_name: name, tool_input: args });
+  if (preGate && preGate.decision === 'deny') {
+    const err = new Error(`Action blocked by gate ${preGate.gate}: ${preGate.message}`);
+    err.errorCategory = 'permission';
+    err.isRetryable = false;
+    err.gate = preGate.gate;
+    throw err;
+  }
 
   // Platform-agnostic auto-capture: detect feedback signals in any tool call
   const textToCheck = args.query || args.context || '';
@@ -218,11 +239,39 @@ async function callTool(name, args = {}) {
     ].join('\n');
     // Prepend the auto-capture report to whatever the tool was going to return
     const toolResult = await callToolInner(name, args);
-    toolResult.content[0].text = autoReport + '\n\n---\n\n' + toolResult.content[0].text;
-    return toolResult;
+    const normalized = normalizeToolResult(name, toolResult);
+    normalized.content[0].text = autoReport + '\n\n---\n\n' + normalized.content[0].text;
+    return normalized;
   }
 
-  return callToolInner(name, args);
+  const result = await callToolInner(name, args);
+  return normalizeToolResult(name, result);
+}
+
+/**
+ * PostToolUse logic: Normalize heterogeneous data formats (Task Statement 1.5)
+ */
+function normalizeToolResult(name, result) {
+  if (!result || !result.content || !result.content[0]) return result;
+  
+  // Example normalization: Ensure all timestamps in results follow ISO 8601
+  if (result.content[0].type === 'text') {
+    let text = result.content[0].text;
+    
+    // Normalize simple Unix timestamps (10+ digits) to ISO 8601
+    text = text.replace(/\b(\d{10,13})\b/g, (match) => {
+      try {
+        const ms = match.length === 10 ? parseInt(match) * 1000 : parseInt(match);
+        const date = new Date(ms);
+        if (!isNaN(date.getTime())) return date.toISOString();
+        return match;
+      } catch { return match; }
+    });
+    
+    result.content[0].text = text;
+  }
+  
+  return result;
 }
 
 async function callToolInner(name, args = {}) {
@@ -566,7 +615,10 @@ async function callToolInner(name, args = {}) {
 
   if (name === 'evaluate_context_pack') {
     if (!args.packId || !args.outcome) {
-      throw new Error('packId and outcome are required');
+      const err = new Error('packId and outcome are required');
+      err.errorCategory = 'validation';
+      err.isRetryable = false;
+      throw err;
     }
     const result = evaluateContextPack({
       packId: args.packId,
@@ -586,6 +638,17 @@ async function callToolInner(name, args = {}) {
   if (name === 'context_provenance') {
     const limit = Number(args.limit || 50);
     const result = getProvenance(Number.isFinite(limit) ? limit : 50);
+    return { content: [{ type: 'text', text: toText(result) }] };
+  }
+
+  if (name === 'update_scratchpad') {
+    if (!args.title || !args.content) {
+      const err = new Error('title and content are required');
+      err.errorCategory = 'validation';
+      err.isRetryable = false;
+      throw err;
+    }
+    const result = updateScratchpad(args.title, args.content, args.tags || []);
     return { content: [{ type: 'text', text: toText(result) }] };
   }
 
@@ -771,6 +834,10 @@ async function onData(chunk) {
         error: {
           code: -32603,
           message: err.message || 'Internal error',
+          data: {
+            errorCategory: err.errorCategory || 'system',
+            isRetryable: err.isRetryable ?? false,
+          },
         },
       }, transport);
     }

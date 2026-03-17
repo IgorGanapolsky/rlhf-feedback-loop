@@ -1,0 +1,17 @@
+{
+  "id": "1773752401116_prevention-rules-2026-03-17",
+  "title": "prevention_rules_2026-03-17",
+  "content": "# Prevention Rules\n\nGenerated from negative feedback memories (time-weighted, half-life: 7d).\n\n## brand-compliance\n- Recurrence count: 1 (weighted: 1.0)\n- Rule: Always use neon high-contrast colors\n- Latest mistake: MISTAKE: Used soft colors which violate the Cyberpunk Brand DNA",
+  "tags": [
+    "rules",
+    "prevention"
+  ],
+  "source": "feedback-loop",
+  "ttl": null,
+  "metadata": {
+    "minOccurrences": 1,
+    "outputPath": "/Users/ganapolsky_i/workspace/git/igor/rlhf/.rlhf/prevention-rules.md"
+  },
+  "createdAt": "2026-03-17T13:00:01.116Z",
+  "lastUsedAt": null
+}

@@ -1,0 +1,27 @@
+{
+  "generatedAt": "2026-03-17T13:00:16.504Z",
+  "source": "auto",
+  "hardware": {
+    "ramGb": 16,
+    "cpuCount": 10,
+    "platform": "darwin",
+    "arch": "arm64",
+    "accelerator": "metal",
+    "ci": false
+  },
+  "selectedProfile": {
+    "id": "balanced",
+    "model": "Xenova/all-MiniLM-L6-v2",
+    "quantized": true,
+    "maxChars": 2048,
+    "rationale": "Default local profile for reliable quantized embedding."
+  },
+  "fallbackProfile": {
+    "id": "fallback",
+    "model": "Xenova/all-MiniLM-L6-v2",
+    "quantized": true,
+    "maxChars": 2048,
+    "rationale": "Default local profile for reliable quantized embedding."
+  },
+  "summary": "balanced profile selected with quantized Xenova/all-MiniLM-L6-v2"
+}

@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "rlhf": {
+      "command": "node",
+      "args": [
+        "/Users/ganapolsky_i/workspace/git/igor/rlhf/adapters/mcp/server-stdio.js"
+      ]
+    }
+  }
+}

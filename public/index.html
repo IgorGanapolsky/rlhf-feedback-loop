@@ -932,18 +932,18 @@ __GA_BOOTSTRAP__
             <a class="btn btn-secondary" data-cta-id="pricing_free" data-cta-placement="pricing" data-plan-id="free" href="https://github.com/IgorGanapolsky/mcp-memory-gateway#quick-start" target="_blank" rel="noreferrer">Get Started</a>
           </div>
           <div class="price-card pro">
-            <div class="tier-label">Pro</div>
+            <div class="tier-label">Starter Pack</div>
             <h3>Cloud</h3>
-            <div class="price-amount">$__PRO_PRICE_DOLLARS__ <small>/ month</small></div>
+            <div class="price-amount">$49.00 <small>/ one-time</small></div>
             <ul>
+              <li>500 Verified Consolidations (ADK dreams)</li>
+              <li>5 Critical Prevention Rules</li>
               <li>Cloud-synced memories from any machine</li>
-              <li>Unlimited memories and retrievals</li>
               <li>Team sharing of prevention rules</li>
-              <li>Usage dashboard (memories, retrievals, cache hits, cost savings)</li>
-              <li>Unlimited custom gates with auto-gate promotion</li>
+              <li>Usage dashboard</li>
               <li>Priority support</li>
             </ul>
-            <a class="btn btn-primary" id="pro-cta" data-cta-id="pricing_pro" data-cta-placement="pricing" data-plan-id="pro" href="__CHECKOUT_FALLBACK_URL__?utm_source=website&utm_medium=cta_button&utm_campaign=pro_pack" target="_blank" rel="noreferrer">Get Pro &mdash; __PRO_PRICE_LABEL__</a>
+            <a class="btn btn-primary" id="pro-cta" data-cta-id="pricing_starter" data-cta-placement="pricing" data-plan-id="starter" href="__CHECKOUT_FALLBACK_URL__?utm_source=website&utm_medium=cta_button&utm_campaign=starter_pack" target="_blank" rel="noreferrer">Get Starter Pack &mdash; $49</a>
           </div>
         </div>
         <div class="buyer-feedback" id="buyer-feedback">
@@ -1316,7 +1316,7 @@ __GA_BOOTSTRAP__
         });
         trackGaEvent('begin_checkout', {
           currency: 'USD',
-          value: Number('__PRO_PRICE_DOLLARS__'),
+          value: planId === 'starter' ? 49.00 : Number('__PRO_PRICE_DOLLARS__'),
           cta_id: ctaId,
           cta_placement: ctaPlacement,
           plan_id: planId,
@@ -1327,7 +1327,7 @@ __GA_BOOTSTRAP__
           window.plausible('Checkout Started', {
             props: {
               source: attribution.source || 'website',
-              campaign: attribution.utmCampaign || 'pro_pack',
+              campaign: attribution.utmCampaign || 'starter_pack',
               ctaId: ctaId
             }
           });
@@ -1345,6 +1345,7 @@ __GA_BOOTSTRAP__
               ctaId: ctaId,
               ctaPlacement: ctaPlacement,
               planId: planId,
+              packId: planId === 'starter' ? 'starter' : null,
               traceId: checkoutTraceId,
               page: window.location.pathname,
               metadata: attribution

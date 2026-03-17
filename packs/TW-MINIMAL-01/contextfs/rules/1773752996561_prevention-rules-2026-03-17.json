@@ -1,0 +1,17 @@
+{
+  "id": "1773752996561_prevention-rules-2026-03-17",
+  "title": "prevention_rules_2026-03-17",
+  "content": "# Prevention Rules\n\nGenerated from negative feedback memories (time-weighted, half-life: 7d).\n\n## brand-compliance\n- Recurrence count: 1 (weighted: 1.0)\n- Rule: Maintain ultra-concise, technical tone without fluff\n- Latest mistake: MISTAKE: Violated TW-MINIMAL-01 constraint: 'NEVER use emojis or conv",
+  "tags": [
+    "rules",
+    "prevention"
+  ],
+  "source": "feedback-loop",
+  "ttl": null,
+  "metadata": {
+    "minOccurrences": 1,
+    "outputPath": "/Users/ganapolsky_i/workspace/git/igor/rlhf/packs/TW-MINIMAL-01/prevention-rules.md"
+  },
+  "createdAt": "2026-03-17T13:09:56.561Z",
+  "lastUsedAt": null
+}

@@ -1,0 +1,17 @@
+{
+  "id": "1773752416380_feedback-negative-fb-1773752416375-q27tq7",
+  "title": "feedback_negative_fb_1773752416375_q27tq7",
+  "content": "{\"id\":\"fb_1773752416375_q27tq7\",\"signal\":\"negative\",\"context\":\"Agent used a soft pastel font\",\"lastAction\":null,\"whatWentWrong\":\"Violated Cyberpunk aggressive typography rules\",\"whatToChange\":\"Always use aggressive monospace fonts\",\"whatWorked\":null,\"reasoning\":null,\"visualEvidence\":null,\"tags\":[\"brand-compliance\",\"ui-components\"],\"skill\":null,\"rubric\":null,\"actionType\":\"store-mistake\",\"actionReason\":null,\"timestamp\":\"2026-03-17T13:00:16.375Z\",\"richContext\":{\"domain\":\"general\",\"filePaths\":[],\"errorType\":null,\"outcomeCategory\":\"standard-failure\"}}",
+  "tags": [
+    "brand-compliance",
+    "ui-components"
+  ],
+  "source": "feedback-event",
+  "ttl": null,
+  "metadata": {
+    "signal": "negative",
+    "actionType": "store-mistake"
+  },
+  "createdAt": "2026-03-17T13:00:16.380Z",
+  "lastUsedAt": null
+}

@@ -1374,12 +1374,10 @@ function createApiServer() {
     if (req.method === 'POST' && pathname === '/v1/billing/checkout') {
       try {
         const body = await parseJsonBody(req);
-        if (body.oneTime === true) {
-          throw createHttpError(400, 'oneTime checkout is no longer supported. The public self-serve offer is recurring Pro only.');
-        }
         const traceId = body.traceId || createTraceId('checkout');
         const responseHeaders = getPublicBillingHeaders(traceId);
         const analyticsMetadata = buildCheckoutAttributionMetadata(body, req, traceId);
+        const packId = body.packId || (body.oneTime === true ? 'starter' : null);
         
         const result = await createCheckoutSession({
           successUrl: body.successUrl || buildCheckoutFallbackUrl(
@@ -1393,13 +1391,14 @@ function createApiServer() {
           customerEmail: body.customerEmail,
           installId: body.installId,
           traceId,
+          packId,
           metadata: analyticsMetadata,
         });
         sendJson(res, 200, {
           ...result,
           traceId: result.traceId || traceId,
-          price: hostedConfig.proPriceDollars,
-          type: 'subscription',
+          price: packId === 'starter' ? '49.00' : hostedConfig.proPriceDollars,
+          type: packId ? 'one_time' : 'subscription',
         }, responseHeaders);
       } catch (err) {
         const fallbackTraceId = createTraceId('checkout_error');

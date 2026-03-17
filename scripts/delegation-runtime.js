@@ -320,7 +320,7 @@ function buildHandoffContract({ plan, delegateProfile, plannedChecks = [] }) {
       'nested handoffs',
       'unapproved scope expansion',
     ],
-    requiredEvidence: ['summary', 'result_context'],
+    requiredEvidence: ['summary', 'result_context', 'root_cause_analysis', 'recommended_actions'],
     requiredChecks,
     contextBudget: profileConfig && profileConfig.context
       ? {
@@ -328,7 +328,7 @@ function buildHandoffContract({ plan, delegateProfile, plannedChecks = [] }) {
         maxChars: profileConfig.context.maxChars,
       }
       : null,
-    completionDefinition: 'Return a concise summary, include result context, and report attempts, violations, and executed checks.',
+    completionDefinition: 'Return a structured summary including: work performed, result context, root cause analysis (if applicable), and recommended next actions.',
   };
 }
 

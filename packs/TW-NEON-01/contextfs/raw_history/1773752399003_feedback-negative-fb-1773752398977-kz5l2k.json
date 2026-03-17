@@ -1,0 +1,17 @@
+{
+  "id": "1773752399003_feedback-negative-fb-1773752398977-kz5l2k",
+  "title": "feedback_negative_fb_1773752398977_kz5l2k",
+  "content": "{\"id\":\"fb_1773752398977_kz5l2k\",\"signal\":\"negative\",\"context\":\"Agent tried to use pastel pink for the stream overlay\",\"lastAction\":null,\"whatWentWrong\":\"Used soft colors which violate the Cyberpunk Brand DNA\",\"whatToChange\":\"Always use neon high-contrast colors\",\"whatWorked\":null,\"reasoning\":null,\"visualEvidence\":null,\"tags\":[\"brand-compliance\",\"ui-components\"],\"skill\":null,\"rubric\":null,\"actionType\":\"store-mistake\",\"actionReason\":null,\"timestamp\":\"2026-03-17T12:59:58.977Z\",\"richContext\":{\"domain\":\"general\",\"filePaths\":[],\"errorType\":null,\"outcomeCategory\":\"standard-failure\"}}",
+  "tags": [
+    "brand-compliance",
+    "ui-components"
+  ],
+  "source": "feedback-event",
+  "ttl": null,
+  "metadata": {
+    "signal": "negative",
+    "actionType": "store-mistake"
+  },
+  "createdAt": "2026-03-17T12:59:59.003Z",
+  "lastUsedAt": null
+}
