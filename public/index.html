@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>mcp-memory-gateway | Claude Workflow Hardening and AI Reliability</title>
-  <meta name="description" content="Harden Claude Code and other AI workflows. Keep one sharp AI agent with recall, reliability rules, pre-action gates, verification evidence, and a workflow fit checker without adding orchestration or handoff overhead." />
-  <meta name="keywords" content="Claude workflow hardening, AI reliability system, AI agent reliability, AI agent guardrails, workflow hardening checker, AI agent reliability checker, MCP server, Claude Code, code modernization, feedback loop, prevention rules, pre-action gates, AI workflow reliability" />
+  <title>mcp-memory-gateway | Claude workflow hardening, Claude Desktop extension, and AI reliability</title>
+  <meta name="description" content="Harden Claude Code and other AI workflows. Install mcp-memory-gateway as a Claude Desktop extension, keep one sharp AI agent with recall, reliability rules, pre-action gates, verification evidence, and a workflow fit checker without orchestration overhead." />
+  <meta name="keywords" content="Claude workflow hardening, Claude Desktop extension, Claude Desktop plugin, AI reliability system, AI agent reliability, AI agent guardrails, workflow hardening checker, AI agent reliability checker, MCP server, Claude Code, code modernization, feedback loop, prevention rules, pre-action gates, AI workflow reliability" />
   <meta property="og:title" content="mcp-memory-gateway - Claude workflow hardening. Keep one sharp agent." />
   <meta property="og:description" content="Use any continuity workflow to regain context, then let mcp-memory-gateway add recall, reliability rules, pre-action gates, and verification evidence in the same agent loop without another orchestration layer." />
   <meta property="og:type" content="website" />
@@ -149,6 +149,14 @@ __GA_BOOTSTRAP__
         "acceptedAnswer": {
           "@type": "Answer",
           "text": "It qualifies whether a workflow is a better fit for the Workflow Hardening Sprint, Pro, or the free OSS path by checking for a repeated blocker, a workflow owner, proof requirements, rollout stage, and cross-machine sync needs. It is a qualification aid, not ROI proof."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I install mcp-memory-gateway as a Claude Desktop extension?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. You can install the local MCP server in Claude Desktop today with the portable npm launcher, and this repo ships Claude-specific plugin metadata, privacy policy, support links, and submission docs. Directory inclusion depends on Anthropic review and should not be claimed before approval."
         }
       },
       {
@@ -1126,9 +1134,10 @@ __GA_BOOTSTRAP__
 <body>
   <nav>
     <div class="nav-inner">
-      <div class="brand">mcp-memory-gateway <span>v0.7.0</span></div>
+      <div class="brand">mcp-memory-gateway <span>v0.7.1</span></div>
       <div class="nav-links">
         <a href="#fit-checker">Fit Check</a>
+        <a href="#claude-desktop">Claude Desktop</a>
         <a href="#use-cases">Use Cases</a>
         <a href="#studio">Studio</a>
         <a href="#offers">Offers</a>
@@ -1161,6 +1170,7 @@ __GA_BOOTSTRAP__
         <div class="badges">
           <span class="badge"><span class="dot"></span> CI + proof artifacts published</span>
           <span class="badge">Claude Code / Codex / Gemini / Amp</span>
+          <span class="badge">Claude Desktop extension path ready</span>
           <span class="badge">Code modernization ready</span>
           <span class="badge">Platform + consultancy fit</span>
           <span class="badge">One workflow, one owner, one proof review</span>
@@ -1267,6 +1277,40 @@ __GA_BOOTSTRAP__
             <p class="fit-status-line" id="fit-checker-status" aria-live="polite">The checker updates live. Click Run Fit Check to record the recommendation in telemetry.</p>
           </div>
         </div>
+      </div>
+    </section>
+
+    <section id="claude-desktop">
+      <div class="wrap">
+        <div class="section-label">Distribution</div>
+        <div class="section-title">Publish the same workflow-hardening story as a Claude Desktop extension.</div>
+        <div class="section-desc">Claude Desktop is now a real discovery surface for Claude-first buyers. This repo already ships the local install path, Claude-specific plugin metadata, privacy policy, support links, and proof-backed docs. Use the extension lane for discoverability, not for fake traction claims.</div>
+        <div class="steps-grid">
+          <div class="step">
+            <div class="step-num">1</div>
+            <h3>Install locally today</h3>
+            <p>Use the portable launcher in Claude Desktop now, without waiting for a marketplace reviewer or changing the product story.</p>
+            <code>claude mcp add rlhf -- npx -y mcp-memory-gateway serve</code>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <h3>Show the trust layer</h3>
+            <p>Point extension evaluators to the proof pack, public privacy policy, and support surface before you claim that the workflow is ready.</p>
+            <code>VERIFICATION_EVIDENCE.md + /privacy + SECURITY.md</code>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <h3>Submit with clean metadata</h3>
+            <p>The repo now carries Claude-specific metadata and install docs so the extension lane stays aligned with workflow hardening, the Veto Layer, and the Agentic Feedback Studio.</p>
+            <code>.claude-plugin/plugin.json + marketplace.json + README.md</code>
+          </div>
+        </div>
+        <div class="cta-row">
+          <a class="btn btn-primary" data-cta-id="claude_desktop_guide" data-cta-placement="claude_desktop" data-plan-id="free" href="https://github.com/IgorGanapolsky/mcp-memory-gateway/blob/main/.claude-plugin/README.md" target="_blank" rel="noreferrer">Review Claude Extension Guide</a>
+          <a class="btn btn-secondary" data-cta-id="claude_desktop_packet" data-cta-placement="claude_desktop" data-plan-id="proof" href="https://github.com/IgorGanapolsky/mcp-memory-gateway/blob/main/docs/CLAUDE_DESKTOP_EXTENSION.md" target="_blank" rel="noreferrer">Review Submission Packet</a>
+          <a class="btn btn-secondary" data-cta-id="claude_desktop_free" data-cta-placement="claude_desktop" data-plan-id="free" href="https://github.com/IgorGanapolsky/mcp-memory-gateway#claude-desktop-extensions" target="_blank" rel="noreferrer">Install Free</a>
+        </div>
+        <p class="fit-note">Directory inclusion depends on Anthropic review. Do not market this as an approved or official Claude listing until that approval is real.</p>
       </div>
     </section>
 
@@ -2252,15 +2296,26 @@ __GA_BOOTSTRAP__
               .replaceAll('>', '&gt;') + '</li>';
           }).join('');
         }
+        function syncFitCtaLink(link, href) {
+          const isExternalLink = /^https?:\/\//.test(href);
+          link.href = href;
+          if (isExternalLink) {
+            link.target = '_blank';
+            link.rel = 'noreferrer';
+            return;
+          }
+          link.removeAttribute('target');
+          link.removeAttribute('rel');
+        }
         if (fitPrimaryCta) {
           fitPrimaryCta.textContent = result.primary.text;
-          fitPrimaryCta.href = result.primary.href;
+          syncFitCtaLink(fitPrimaryCta, result.primary.href);
           fitPrimaryCta.dataset.ctaId = result.primary.ctaId;
           fitPrimaryCta.dataset.planId = result.primary.planId;
         }
         if (fitSecondaryCta) {
           fitSecondaryCta.textContent = result.secondary.text;
-          fitSecondaryCta.href = result.secondary.href;
+          syncFitCtaLink(fitSecondaryCta, result.secondary.href);
           fitSecondaryCta.dataset.ctaId = result.secondary.ctaId;
           fitSecondaryCta.dataset.planId = result.secondary.planId;
         }

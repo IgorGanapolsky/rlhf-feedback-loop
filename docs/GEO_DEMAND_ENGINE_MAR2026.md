@@ -20,6 +20,7 @@ Primary brands and offers:
 - `Pro at $49 one-time`
 - `Reliability Studio`
 - `Workflow Hardening Fit Checker`
+- `Claude Desktop extension`
 
 Current adjacent competitors and substitutes:
 
@@ -42,6 +43,7 @@ Directory and ecosystem pages:
 
 - `bestofthemcp.com`
 - `mcpserverspot.com`
+- Anthropic Claude Desktop extensions directory and help-center submission surfaces
 
 Review and comparison publishers:
 
@@ -78,6 +80,7 @@ Pitch angle:
 - Do not pitch “another memory tool.”
 - Pitch one workflow, one owner, one repeated blocker, and one proof pack.
 - Offer the `Workflow Hardening Fit Checker`, the hosted landing page, and [VERIFICATION_EVIDENCE.md](VERIFICATION_EVIDENCE.md) as the differentiator.
+- For Claude-first buyers, pitch the local install path and extension packet before you pitch directory inclusion.
 
 ## Action Query Matrix
 
@@ -89,6 +92,7 @@ Use the “Can AI fully satisfy this query without a click?” test on every tar
 | `workflow hardening checker` | No | High | Hosted fit checker | Sprint or Pro |
 | `ai agent reliability checker` | No | High | Hosted fit checker | Sprint or Pro |
 | `ai agent guardrails tool` | No | High | Landing page + pricing + proof pack | Pro |
+| `Claude Desktop extension` | No | High | Claude extension guide + landing page + proof pack | Pro or Sprint |
 | `claude code persistent memory` | Partially | Medium | Landing page + comparison content | Pro or free |
 | `best MCP servers for Claude Code` | Partially | Medium | Fan-out inclusion + directory presence | Awareness into Pro |
 | `what is ai agent memory` | Yes | Low | Support content only | Indirect |
@@ -103,6 +107,7 @@ Rule:
 The action asset shipped in this repo is:
 
 - `Workflow Hardening Fit Checker` on the hosted landing page
+- `Claude Desktop extension packet` in `.claude-plugin/` and `docs/CLAUDE_DESKTOP_EXTENSION.md`
 
 Why this asset is the right first move:
 

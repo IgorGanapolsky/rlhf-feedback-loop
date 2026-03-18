@@ -47,6 +47,23 @@ Use these assets in sales and partner conversations:
 - [Anthropic Partner Strategy](docs/ANTHROPIC_MARKETPLACE_STRATEGY.md)
 - [Verification Evidence](docs/VERIFICATION_EVIDENCE.md)
 
+## Claude Desktop Extensions
+
+This repo already ships a Claude Desktop extension lane:
+
+- Claude metadata: `.claude-plugin/plugin.json`
+- Claude marketplace metadata: `.claude-plugin/marketplace.json`
+- Claude extension install and support guide: `.claude-plugin/README.md`
+- Internal submission packet: [docs/CLAUDE_DESKTOP_EXTENSION.md](docs/CLAUDE_DESKTOP_EXTENSION.md)
+
+Install locally today with:
+
+```bash
+claude mcp add rlhf -- npx -y mcp-memory-gateway serve
+```
+
+Treat Anthropic directory inclusion as a discoverability and trust lane, not as revenue proof or partner proof.
+
 ## Cursor Marketplace
 
 This repo now ships a submission-ready Cursor plugin bundle:
