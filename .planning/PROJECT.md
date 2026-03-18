@@ -85,9 +85,17 @@ Every feature must have tests, pass CI, and produce verification evidence — no
 | npm package for distribution | `npx mcp-memory-gateway serve` is the universal install | — Pending |
 | Plugin-per-platform | Each AI tool gets native install experience | — Pending |
 
-## Current Milestone: v3.0 Commercialization
+## Current Milestone: v3.1 First Dollar
 
-**Goal:** Deploy Pro tier on Cloudflare Workers, enforce free tier limits, add Stripe billing at $29/mo, publish plugins to all 5 platforms, get first paying customer.
+**Goal:** Publish to every free distribution channel, post marketing content across developer communities, and close the first paying customer ($49 one-time Pro).
+
+**Target features:**
+- Submit to 15+ MCP directories (MCP.so, Glama, Smithery, LobeHub, etc.)
+- Submit to IDE marketplaces (Cursor Directory, VS Code, JetBrains)
+- Post on r/ClaudeCode (8 thread replies + standalone post), Show HN, DEV.to
+- Submit to awesome-mcp-servers GitHub lists (5 PRs)
+- Verify checkout flow end-to-end ($49 one-time on Railway)
+- Track and attribute first conversion
 
 ---
-*Last updated: 2026-03-04 after v3.0 milestone start*
+*Last updated: 2026-03-18 after v3.1 milestone start*
