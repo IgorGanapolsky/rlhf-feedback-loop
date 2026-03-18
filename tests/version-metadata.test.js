@@ -46,6 +46,9 @@ test('public docs render the current package version', () => {
   assert.match(landingPage, /Reliability Studio/i);
   assert.match(landingPage, /Compare and Deploy/i);
   assert.match(landingPage, /No model fine-tuning required/i);
+  assert.match(landingPage, /Workflow Hardening Fit Checker/i);
+  assert.match(landingPage, /can AI fully satisfy this query without a click\?/i);
+  assert.match(landingPage, /Run the hosted fit checker/i);
   assert.doesNotMatch(landingPage, /billingIncrement/);
   assert.doesNotMatch(landingPage, /P1M/);
   assert.match(mcpSubmission, new RegExp(`## Version\\s+${packageJson.version}`));

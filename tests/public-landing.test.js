@@ -152,3 +152,20 @@ test('public landing page includes Reliability Studio compare-and-deploy positio
   assert.doesNotMatch(landingPage, /500\+ LLMs/i);
   assert.doesNotMatch(landingPage, /GGUF/i);
 });
+
+test('public landing page includes an honest workflow fit checker for action-driven queries', () => {
+  const landingPage = readLandingPage();
+
+  assert.match(landingPage, /Workflow Hardening Fit Checker/i);
+  assert.match(landingPage, /can AI fully satisfy this query without a click\?/i);
+  assert.match(landingPage, /workflow belongs in the Sprint, Pro, or the free OSS path/i);
+  assert.match(landingPage, /Qualification aid only\./i);
+  assert.match(landingPage, /id="fit-checker-run"/);
+  assert.match(landingPage, /fit_check_completed/);
+  assert.match(landingPage, /Best path: Workflow Hardening Sprint/i);
+  assert.match(landingPage, /AI Can Fully Satisfy This Query Without A Click\?/i);
+  assert.match(landingPage, /Review Sprint Scope/i);
+  assert.match(landingPage, /data-cta-id="hero_fit"/);
+  assert.doesNotMatch(landingPage, /live ROI/i);
+  assert.doesNotMatch(landingPage, /customer outcomes/i);
+});

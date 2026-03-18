@@ -74,6 +74,14 @@
           "@type": "Answer",
           "text": "Reliability Studio is the buyer-facing workflow for importing workflow evidence, comparing the baseline agent run against the hardened run, and deploying the resulting rule pack and proof links without requiring model fine-tuning."
         }
+      },
+      {
+        "@type": "Question",
+        "name": "What does the Workflow Hardening Fit Checker do?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "It qualifies whether a workflow is a better fit for the Workflow Hardening Sprint, Pro, or the free OSS path by checking for a repeated blocker, a workflow owner, proof requirements, rollout stage, and cross-machine sync needs."
+        }
       }
     ]
   }
@@ -582,6 +590,7 @@
     <div class='nav-inner'>
       <div class='brand'>RLHF <span>Context Gateway</span></div>
       <div class='nav-links'>
+        <a href='#fit-checker'>Fit check</a>
         <a href='#why'>Why buy</a>
         <a href='#north-star'>North Star</a>
         <a href='#studio'>Studio</a>
@@ -609,6 +618,7 @@
           </div>
           <div class='cta-row'>
             <a class='button primary' href='https://iganapolsky.gumroad.com/l/tjovof?utm_source=landing_page&utm_medium=cta_button&utm_campaign=pro_pack' target='_blank' rel='noreferrer'>Get Pro — $49 one-time</a>
+            <a class='button secondary' href='#fit-checker'>Run fit checker</a>
             <a class='button secondary' href='https://github.com/IgorGanapolsky/mcp-memory-gateway/blob/main/docs/COMMERCIAL_TRUTH.md'>Current commercial truth</a>
             <a class='button secondary' href='https://rlhf-feedback-loop-production.up.railway.app'>View hosted demo</a>
           </div>
@@ -643,6 +653,37 @@
             </div>
           </div>
         </div>
+      </div>
+    </section>
+
+    <section id='fit-checker'>
+      <div class='section-inner'>
+        <div class='section-head'>
+          <span class='eyebrow'>Action query</span>
+          <h2>Workflow Hardening Fit Checker</h2>
+          <p>Use the same AI-search filter that matters commercially: can AI fully satisfy this query without a click? For workflow hardening, the answer is no. The buyer still has to qualify blocker, owner, proof need, and sync scope.</p>
+        </div>
+        <div class='grid-2'>
+          <div class='card'>
+            <h3>What the checker evaluates</h3>
+            <ul>
+              <li>Whether the workflow is already running, in pilot, or still exploratory.</li>
+              <li>Whether there is a repeated blocker instead of a one-off annoyance.</li>
+              <li>Whether one workflow owner can actually carry the rollout.</li>
+              <li>Whether the buyer needs proof, auditability, or cross-machine consistency.</li>
+            </ul>
+          </div>
+          <div class='card'>
+            <h3>How it routes the buyer</h3>
+            <ul>
+              <li><strong>Sprint:</strong> repeated blocker, one owner, and proof needed before wider rollout.</li>
+              <li><strong>Pro:</strong> the main need is shared memory, synced rules, and multi-machine reliability.</li>
+              <li><strong>Free OSS:</strong> the workflow is still educational or too early for a paid path.</li>
+            </ul>
+            <p><a href='__APP_ORIGIN__/#fit-checker'>Run the hosted fit checker</a> and use the result to decide whether to sell the Sprint, point to Pro, or keep the user on the OSS path first.</p>
+          </div>
+        </div>
+        <p class='note'>Qualification aid only. It does not claim measured savings, buyer validation, or conversion evidence.</p>
       </div>
     </section>
 

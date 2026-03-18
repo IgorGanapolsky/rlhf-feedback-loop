@@ -89,6 +89,9 @@ test('root serves the landing page by default', async () => {
   assert.match(body, /Reliability Studio/i);
   assert.match(body, /Import\. Compare\. Deploy\./);
   assert.match(body, /No model fine-tuning required/i);
+  assert.match(body, /Workflow Hardening Fit Checker/i);
+  assert.match(body, /can AI fully satisfy this query without a click\?/i);
+  assert.match(body, /Run Fit Check/i);
   assert.match(body, /PR review threads, CI logs, runbooks, JSONL, and CSV/i);
   assert.match(body, /Start Compare &amp; Deploy/);
   assert.match(body, /same agent session|same reliability layer|No orchestration tax/i);
