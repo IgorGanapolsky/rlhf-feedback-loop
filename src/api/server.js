@@ -1450,9 +1450,6 @@ function createApiServer() {
     if (req.method === 'POST' && pathname === '/v1/billing/checkout') {
       try {
         const body = await parseJsonBody(req);
-        if (body.oneTime === true) {
-          throw createHttpError(400, 'oneTime checkout is no longer supported. The public self-serve offer is recurring Pro only.');
-        }
         const traceId = body.traceId || createTraceId('checkout');
         const responseHeaders = getPublicBillingHeaders(traceId);
         const analyticsMetadata = buildCheckoutAttributionMetadata(body, req, traceId);
@@ -1475,7 +1472,7 @@ function createApiServer() {
           ...result,
           traceId: result.traceId || traceId,
           price: hostedConfig.proPriceDollars,
-          type: 'subscription',
+          type: 'payment',
         }, responseHeaders);
       } catch (err) {
         const fallbackTraceId = createTraceId('checkout_error');
@@ -1922,7 +1919,7 @@ function createApiServer() {
         return;
       }
 
-      // POST /v1/billing/rotate-key — rotate the authenticated key, preserving subscription
+      // POST /v1/billing/rotate-key — rotate the authenticated key, preserving customer access
       if (req.method === 'POST' && pathname === '/v1/billing/rotate-key') {
         const currentKey = extractBearerToken(req);
         if (!currentKey) {
