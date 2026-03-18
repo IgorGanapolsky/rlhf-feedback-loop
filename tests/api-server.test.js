@@ -43,6 +43,13 @@ function readJsonl(filePath) {
     .map((line) => JSON.parse(line));
 }
 
+function extractCookieValue(setCookies, name) {
+  const target = setCookies.find((cookie) => cookie.startsWith(`${name}=`));
+  if (!target) return null;
+  const match = target.match(new RegExp(`^${name}=([^;]+)`));
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
 test.before(async () => {
   handle = await startServer({ port: 0 });
   apiOrigin = `http://localhost:${handle.port}`;
@@ -92,6 +99,79 @@ test('root serves the landing page by default', async () => {
   assert.doesNotMatch(body, /mailto:/i);
 });
 
+test('root seeds journey cookies, injects server telemetry IDs, and records landing telemetry server-side', async () => {
+  const res = await fetch(apiUrl('/'));
+  assert.equal(res.status, 200);
+
+  const setCookies = typeof res.headers.getSetCookie === 'function'
+    ? res.headers.getSetCookie()
+    : [];
+  const visitorId = extractCookieValue(setCookies, 'rlhf_visitor_id');
+  const sessionId = extractCookieValue(setCookies, 'rlhf_session_id');
+  const acquisitionId = extractCookieValue(setCookies, 'rlhf_acquisition_id');
+  assert.match(String(visitorId), /^visitor_/);
+  assert.match(String(sessionId), /^session_/);
+  assert.match(String(acquisitionId), /^acq_/);
+
+  const body = await res.text();
+  assert.match(body, new RegExp(`const serverVisitorId = '${visitorId}';`));
+  assert.match(body, new RegExp(`const serverSessionId = '${sessionId}';`));
+  assert.match(body, new RegExp(`const serverAcquisitionId = '${acquisitionId}';`));
+  assert.match(body, /const serverTelemetryCaptured = 'true' === 'true';/);
+
+  const telemetryEvents = readJsonl(path.join(tmpFeedbackDir, 'telemetry-pings.jsonl'));
+  const landingEvent = telemetryEvents.find((entry) => (
+    entry.eventType === 'landing_page_view' &&
+    entry.visitorId === visitorId &&
+    entry.sessionId === sessionId &&
+    entry.acquisitionId === acquisitionId &&
+    entry.page === '/'
+  ));
+  assert.ok(landingEvent);
+  assert.equal(landingEvent.source, 'website');
+});
+
+test('root reuses journey cookies and records SEO landing telemetry from search referrers', async () => {
+  const cookieHeader = [
+    'rlhf_visitor_id=visitor_seeded',
+    'rlhf_session_id=session_seeded',
+    'rlhf_acquisition_id=acq_seeded',
+  ].join('; ');
+  const res = await fetch(apiUrl('/'), {
+    headers: {
+      cookie: cookieHeader,
+      referer: 'https://www.google.com/search?q=workflow+hardening+sprint',
+    },
+  });
+  assert.equal(res.status, 200);
+
+  const setCookies = typeof res.headers.getSetCookie === 'function'
+    ? res.headers.getSetCookie()
+    : [];
+  assert.equal(setCookies.length, 0);
+
+  const telemetryEvents = readJsonl(path.join(tmpFeedbackDir, 'telemetry-pings.jsonl'));
+  const landingEvent = telemetryEvents.find((entry) => (
+    entry.eventType === 'landing_page_view' &&
+    entry.visitorId === 'visitor_seeded' &&
+    entry.sessionId === 'session_seeded' &&
+    entry.acquisitionId === 'acq_seeded' &&
+    entry.referrerHost === 'www.google.com'
+  ));
+  assert.ok(landingEvent);
+  assert.equal(landingEvent.source, 'organic_search');
+
+  const seoEvent = telemetryEvents.find((entry) => (
+    entry.eventType === 'seo_landing_view' &&
+    entry.visitorId === 'visitor_seeded' &&
+    entry.sessionId === 'session_seeded' &&
+    entry.acquisitionId === 'acq_seeded'
+  ));
+  assert.ok(seoEvent);
+  assert.equal(seoEvent.seoSurface, 'google_search');
+  assert.equal(seoEvent.seoQuery, 'workflow hardening sprint');
+});
+
 test('robots and sitemap endpoints publish crawl metadata for the canonical app origin', async () => {
   const robotsRes = await fetch(apiUrl('/robots.txt'));
   assert.equal(robotsRes.status, 200);
@@ -136,6 +216,41 @@ test('root still serves JSON status when explicitly requested', async () => {
   const body = await res.json();
   assert.equal(body.name, 'mcp-memory-gateway');
   assert.equal(body.status, 'ok');
+});
+
+test('root JSON mode does not emit landing telemetry or journey cookies', async () => {
+  const beforeTelemetryCount = readJsonl(path.join(tmpFeedbackDir, 'telemetry-pings.jsonl')).length;
+  const res = await fetch(apiUrl('/?format=json'), {
+    headers: { accept: 'application/json' },
+  });
+
+  assert.equal(res.status, 200);
+  const setCookies = typeof res.headers.getSetCookie === 'function'
+    ? res.headers.getSetCookie()
+    : [];
+  assert.equal(setCookies.length, 0);
+
+  const afterTelemetry = readJsonl(path.join(tmpFeedbackDir, 'telemetry-pings.jsonl'));
+  assert.equal(afterTelemetry.length, beforeTelemetryCount);
+});
+
+test('journey cookies are marked secure on forwarded HTTPS requests', async () => {
+  const res = await fetch(apiUrl('/'), {
+    headers: {
+      'x-forwarded-proto': 'https',
+    },
+  });
+
+  assert.equal(res.status, 200);
+  const setCookies = typeof res.headers.getSetCookie === 'function'
+    ? res.headers.getSetCookie()
+    : [];
+  assert.ok(setCookies.length >= 3);
+  for (const cookie of setCookies) {
+    assert.match(cookie, /Secure/);
+    assert.match(cookie, /HttpOnly/);
+    assert.match(cookie, /SameSite=Lax/);
+  }
 });
 
 test('success page serves hosted onboarding shell', async () => {
@@ -242,6 +357,39 @@ test('checkout bootstrap route preserves attribution and records first-party tel
   assert.equal(bootstrapEvent.referrerHost, 'www.reddit.com');
   assert.equal(bootstrapEvent.community, 'ClaudeCode');
   assert.equal(bootstrapEvent.offerCode, 'REDDIT-EARLY');
+});
+
+test('checkout bootstrap falls back to seeded journey cookies when query IDs are absent', async () => {
+  const cookieHeader = [
+    'rlhf_visitor_id=visitor_cookie_checkout',
+    'rlhf_session_id=session_cookie_checkout',
+    'rlhf_acquisition_id=acq_cookie_checkout',
+  ].join('; ');
+  const res = await fetch(
+    apiUrl('/checkout/pro?utm_source=reddit&utm_medium=organic_social&utm_campaign=reddit_launch&cta_id=pricing_pro&cta_placement=pricing&plan_id=pro'),
+    {
+      redirect: 'manual',
+      headers: {
+        cookie: cookieHeader,
+        referer: 'https://www.reddit.com/r/ClaudeCode/comments/1rsudq0/',
+      },
+    }
+  );
+
+  assert.equal(res.status, 302);
+  const location = new URL(res.headers.get('location'));
+  assert.equal(location.searchParams.get('acquisition_id'), 'acq_cookie_checkout');
+  assert.equal(location.searchParams.get('visitor_id'), 'visitor_cookie_checkout');
+  assert.equal(location.searchParams.get('visitor_session_id'), 'session_cookie_checkout');
+
+  const telemetryEvents = readJsonl(path.join(tmpFeedbackDir, 'telemetry-pings.jsonl'));
+  const bootstrapEvent = telemetryEvents.find((entry) => (
+    entry.eventType === 'checkout_bootstrap' &&
+    entry.acquisitionId === 'acq_cookie_checkout' &&
+    entry.visitorId === 'visitor_cookie_checkout' &&
+    entry.sessionId === 'session_cookie_checkout'
+  ));
+  assert.ok(bootstrapEvent);
 });
 
 test('feedback capture accepts valid payload', async () => {
@@ -634,6 +782,135 @@ test('workflow sprint intake endpoint captures a contactable lead', async () => 
 
   const telemetry = readJsonl(path.join(tmpFeedbackDir, 'telemetry-pings.jsonl'));
   assert.ok(telemetry.some((entry) => entry.eventType === 'workflow_sprint_lead_submitted'));
+});
+
+test('workflow sprint intake falls back to journey cookies when IDs are omitted from the payload', async () => {
+  const cookieHeader = [
+    'rlhf_visitor_id=visitor_cookie_lead',
+    'rlhf_session_id=session_cookie_lead',
+    'rlhf_acquisition_id=acq_cookie_lead',
+  ].join('; ');
+
+  const res = await fetch(apiUrl('/v1/intake/workflow-sprint'), {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      cookie: cookieHeader,
+      referer: 'https://www.google.com/search?q=claude+workflow+hardening',
+    },
+    body: JSON.stringify({
+      email: 'ops@example.com',
+      company: 'North Star Systems',
+      workflow: 'Bug triage',
+      owner: 'Platform lead',
+      runtime: 'Claude Code',
+      blocker: 'Unsafe rollout reviews keep stalling the queue.',
+    }),
+  });
+
+  assert.equal(res.status, 201);
+  const leads = readJsonl(path.join(tmpFeedbackDir, 'workflow-sprint-leads.jsonl'));
+  const lead = leads.find((entry) => entry.contact.email === 'ops@example.com');
+  assert.ok(lead);
+  assert.equal(lead.attribution.acquisitionId, 'acq_cookie_lead');
+  assert.equal(lead.attribution.visitorId, 'visitor_cookie_lead');
+  assert.equal(lead.attribution.sessionId, 'session_cookie_lead');
+
+  const telemetry = readJsonl(path.join(tmpFeedbackDir, 'telemetry-pings.jsonl'));
+  const submitted = telemetry.find((entry) => (
+    entry.eventType === 'workflow_sprint_lead_submitted' &&
+    entry.acquisitionId === 'acq_cookie_lead' &&
+    entry.visitorId === 'visitor_cookie_lead' &&
+    entry.sessionId === 'session_cookie_lead'
+  ));
+  assert.ok(submitted);
+});
+
+test('workflow sprint intake accepts form posts, seeds journey cookies, and returns an HTML confirmation page', async () => {
+  const body = new URLSearchParams({
+    email: 'formbuyer@example.com',
+    company: 'HTML Forms Co',
+    workflow: 'Release triage',
+    owner: 'CTO',
+    runtime: 'Claude Code',
+    blocker: 'No-JS buyers need a real intake path.',
+  }).toString();
+
+  const res = await fetch(apiUrl('/v1/intake/workflow-sprint'), {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      referer: 'https://app.example.com/?utm_source=reddit&utm_medium=organic_social&utm_campaign=workflow_hardening_launch&community=ClaudeCode&post_id=1rsudq0&offer_code=EARLY',
+    },
+    body,
+  });
+
+  assert.equal(res.status, 201);
+  assert.match(String(res.headers.get('content-type')), /text\/html/);
+  const setCookies = typeof res.headers.getSetCookie === 'function'
+    ? res.headers.getSetCookie()
+    : [];
+  const visitorId = extractCookieValue(setCookies, 'rlhf_visitor_id');
+  const sessionId = extractCookieValue(setCookies, 'rlhf_session_id');
+  const acquisitionId = extractCookieValue(setCookies, 'rlhf_acquisition_id');
+  assert.match(String(visitorId), /^visitor_/);
+  assert.match(String(sessionId), /^session_/);
+  assert.match(String(acquisitionId), /^acq_/);
+
+  const html = await res.text();
+  assert.match(html, /Workflow sprint intake received/);
+  assert.match(html, /Review Proof Pack/);
+  assert.match(html, /Review Sprint Brief/);
+
+  const leads = readJsonl(path.join(tmpFeedbackDir, 'workflow-sprint-leads.jsonl'));
+  const lead = leads.find((entry) => entry.contact.email === 'formbuyer@example.com');
+  assert.ok(lead);
+  assert.equal(lead.attribution.source, 'reddit');
+  assert.equal(lead.attribution.utmCampaign, 'workflow_hardening_launch');
+  assert.equal(lead.attribution.community, 'ClaudeCode');
+  assert.equal(lead.attribution.postId, '1rsudq0');
+  assert.equal(lead.attribution.offerCode, 'EARLY');
+  assert.equal(lead.attribution.visitorId, visitorId);
+  assert.equal(lead.attribution.sessionId, sessionId);
+  assert.equal(lead.attribution.acquisitionId, acquisitionId);
+
+  const telemetry = readJsonl(path.join(tmpFeedbackDir, 'telemetry-pings.jsonl'));
+  const submitted = telemetry.find((entry) => (
+    entry.eventType === 'workflow_sprint_lead_submitted' &&
+    entry.acquisitionId === acquisitionId &&
+    entry.visitorId === visitorId &&
+    entry.sessionId === sessionId
+  ));
+  assert.ok(submitted);
+});
+
+test('workflow sprint intake validation failure records failure telemetry and writes no lead', async () => {
+  const leadsBefore = readJsonl(path.join(tmpFeedbackDir, 'workflow-sprint-leads.jsonl')).length;
+  const res = await fetch(apiUrl('/v1/intake/workflow-sprint'), {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      referer: 'https://app.example.com/?utm_source=linkedin&utm_campaign=workflow_hardening',
+    },
+    body: JSON.stringify({
+      email: 'invalid-email',
+      workflow: '',
+      owner: 'CTO',
+      runtime: 'Claude Code',
+      blocker: 'Missing required lead fields should fail.',
+    }),
+  });
+
+  assert.equal(res.status, 400);
+  const leadsAfter = readJsonl(path.join(tmpFeedbackDir, 'workflow-sprint-leads.jsonl')).length;
+  assert.equal(leadsAfter, leadsBefore);
+
+  const telemetry = readJsonl(path.join(tmpFeedbackDir, 'telemetry-pings.jsonl'));
+  const failure = [...telemetry].reverse().find((entry) => entry.eventType === 'workflow_sprint_lead_failed');
+  assert.ok(failure);
+  assert.equal(failure.utmSource, 'linkedin');
+  assert.equal(failure.utmCampaign, 'workflow_hardening');
+  assert.equal(failure.ctaId, 'workflow_sprint_intake');
 });
 
 test('billing session endpoint returns provisioned local checkout details', async () => {

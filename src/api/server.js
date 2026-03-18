@@ -89,6 +89,10 @@ const { sendProblem, PROBLEM_TYPES } = require('../../scripts/problem-detail');
 const { TOOLS: MCP_TOOLS } = require('../../scripts/tool-registry');
 
 const LANDING_PAGE_PATH = path.resolve(__dirname, '../../public/index.html');
+const VISITOR_COOKIE_NAME = 'rlhf_visitor_id';
+const SESSION_COOKIE_NAME = 'rlhf_session_id';
+const ACQUISITION_COOKIE_NAME = 'rlhf_acquisition_id';
+const VISITOR_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 90;
 
 function getSafeDataDir() {
   const { FEEDBACK_LOG_PATH } = getFeedbackPaths();
@@ -138,6 +142,244 @@ function parseReferrerHost(referrer) {
   } catch {
     return null;
   }
+}
+
+function parseRedditCommunity(referrer) {
+  const normalized = normalizeNullableText(referrer);
+  if (!normalized) return null;
+  try {
+    const ref = new URL(normalized);
+    const parts = ref.pathname.split('/').filter(Boolean);
+    const index = parts.findIndex((part) => part.toLowerCase() === 'r');
+    return index !== -1 && parts[index + 1] ? parts[index + 1] : null;
+  } catch {
+    return null;
+  }
+}
+
+function inferSearchSurface(referrerHost) {
+  const normalizedHost = normalizeNullableText(referrerHost);
+  if (!normalizedHost) return null;
+  const host = normalizedHost.toLowerCase();
+  if (/(^|\.)reddit\.com$/.test(host) || host === 'redd.it') return 'reddit';
+  if (/(^|\.)google\.com$/.test(host)) return 'google_search';
+  if (/(^|\.)bing\.com$/.test(host)) return 'bing_search';
+  if (/(^|\.)duckduckgo\.com$/.test(host)) return 'duckduckgo_search';
+  if (/(^|\.)search\.yahoo\.com$/.test(host)) return 'yahoo_search';
+  if (/(^|\.)search\.brave\.com$/.test(host)) return 'brave_search';
+  if (/(^|\.)ecosia\.org$/.test(host)) return 'ecosia_search';
+  if (/(^|\.)perplexity\.ai$/.test(host)) return 'perplexity';
+  if (host === 'chat.openai.com' || /(^|\.)chatgpt\.com$/.test(host)) return 'chatgpt';
+  if (/(^|\.)claude\.ai$/.test(host)) return 'claude';
+  if (/(^|\.)gemini\.google\.com$/.test(host)) return 'gemini';
+  return null;
+}
+
+function inferSource(referrerHost) {
+  const surface = inferSearchSurface(referrerHost);
+  if (surface === 'reddit') return 'reddit';
+  if (surface && /_search$/.test(surface)) return 'organic_search';
+  if (surface) return 'ai_search';
+  return 'website';
+}
+
+function inferSearchQuery(referrer) {
+  const normalized = normalizeNullableText(referrer);
+  if (!normalized) return null;
+  try {
+    const ref = new URL(normalized);
+    for (const key of ['q', 'query', 'p']) {
+      const value = ref.searchParams.get(key);
+      if (value && value.trim()) {
+        return value.trim().slice(0, 160);
+      }
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function getAttributionValue(params, key, fallbackValue) {
+  const value = params.get(key);
+  return value && value.trim() ? value.trim() : fallbackValue;
+}
+
+function parseUrlSearchParams(urlValue) {
+  const normalized = normalizeNullableText(urlValue);
+  if (!normalized) return new URLSearchParams();
+  try {
+    return new URL(normalized).searchParams;
+  } catch {
+    return new URLSearchParams();
+  }
+}
+
+function parseCookies(headerValue) {
+  const cookies = {};
+  const raw = normalizeNullableText(headerValue);
+  if (!raw) return cookies;
+  for (const chunk of raw.split(';')) {
+    const [name, ...rest] = chunk.split('=');
+    const key = normalizeNullableText(name);
+    if (!key) continue;
+    const value = normalizeNullableText(rest.join('='));
+    if (!value) continue;
+    try {
+      cookies[key] = decodeURIComponent(value);
+    } catch {
+      cookies[key] = value;
+    }
+  }
+  return cookies;
+}
+
+function serializeCookie(name, value, options = {}) {
+  const parts = [`${name}=${encodeURIComponent(String(value))}`];
+  parts.push(`Path=${options.path || '/'}`);
+  parts.push(`SameSite=${options.sameSite || 'Lax'}`);
+  if (options.maxAge) parts.push(`Max-Age=${options.maxAge}`);
+  if (options.httpOnly !== false) parts.push('HttpOnly');
+  if (options.secure) parts.push('Secure');
+  return parts.join('; ');
+}
+
+function isSecureRequest(req) {
+  const forwardedProto = String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim().toLowerCase();
+  return forwardedProto === 'https' || Boolean(req.socket && req.socket.encrypted);
+}
+
+function resolveJourneyState(req, parsed) {
+  const params = parsed ? parsed.searchParams : new URLSearchParams();
+  const cookies = parseCookies(req.headers.cookie);
+  const visitorId = pickFirstText(
+    params.get('visitor_id'),
+    params.get('install_id'),
+    cookies[VISITOR_COOKIE_NAME]
+  ) || createJourneyId('visitor');
+  const sessionId = pickFirstText(
+    params.get('visitor_session_id'),
+    params.get('session_id'),
+    cookies[SESSION_COOKIE_NAME]
+  ) || createJourneyId('session');
+  const acquisitionId = pickFirstText(
+    params.get('acquisition_id'),
+    cookies[ACQUISITION_COOKIE_NAME]
+  ) || createJourneyId('acq');
+  const secure = isSecureRequest(req);
+  const setCookieHeaders = [];
+
+  if (cookies[VISITOR_COOKIE_NAME] !== visitorId) {
+    setCookieHeaders.push(serializeCookie(VISITOR_COOKIE_NAME, visitorId, {
+      maxAge: VISITOR_COOKIE_MAX_AGE_SECONDS,
+      secure,
+    }));
+  }
+  if (cookies[SESSION_COOKIE_NAME] !== sessionId) {
+    setCookieHeaders.push(serializeCookie(SESSION_COOKIE_NAME, sessionId, { secure }));
+  }
+  if (cookies[ACQUISITION_COOKIE_NAME] !== acquisitionId) {
+    setCookieHeaders.push(serializeCookie(ACQUISITION_COOKIE_NAME, acquisitionId, { secure }));
+  }
+
+  return {
+    visitorId,
+    sessionId,
+    acquisitionId,
+    setCookieHeaders,
+  };
+}
+
+function buildLandingAttribution(parsed, req) {
+  const params = parsed.searchParams;
+  const referrer = pickFirstText(req.headers.referer, req.headers.referrer);
+  const referrerHost = parseReferrerHost(referrer);
+  const seoSurface = getAttributionValue(params, 'seo_surface', inferSearchSurface(referrerHost));
+  const source = getAttributionValue(params, 'utm_source', inferSource(referrerHost));
+  const community = getAttributionValue(
+    params,
+    'community',
+    getAttributionValue(params, 'subreddit', parseRedditCommunity(referrer))
+  );
+
+  return {
+    source,
+    utmSource: source,
+    utmMedium: getAttributionValue(
+      params,
+      'utm_medium',
+      source === 'reddit' ? 'organic_social' : 'landing_page'
+    ),
+    utmCampaign: getAttributionValue(
+      params,
+      'utm_campaign',
+      source === 'reddit' ? 'reddit_organic' : 'organic'
+    ),
+    utmContent: getAttributionValue(params, 'utm_content', null),
+    utmTerm: getAttributionValue(params, 'utm_term', null),
+    community,
+    postId: getAttributionValue(params, 'post_id', null),
+    commentId: getAttributionValue(params, 'comment_id', null),
+    campaignVariant: getAttributionValue(params, 'campaign_variant', null),
+    offerCode: getAttributionValue(params, 'offer_code', null),
+    landingPath: parsed.pathname || '/',
+    page: parsed.pathname || '/',
+    referrer,
+    referrerHost,
+    seoSurface,
+    seoQuery: getAttributionValue(params, 'seo_query', inferSearchQuery(referrer)),
+  };
+}
+
+function buildReferrerAttribution(req) {
+  const referrer = pickFirstText(req.headers.referer, req.headers.referrer);
+  const referrerHost = parseReferrerHost(referrer);
+  const params = parseUrlSearchParams(referrer);
+  const source = getAttributionValue(params, 'utm_source', inferSource(referrerHost));
+  const community = getAttributionValue(
+    params,
+    'community',
+    getAttributionValue(params, 'subreddit', parseRedditCommunity(referrer))
+  );
+  return {
+    source,
+    utmSource: source,
+    utmMedium: getAttributionValue(
+      params,
+      'utm_medium',
+      source === 'reddit' ? 'organic_social' : 'workflow_sprint_intake'
+    ),
+    utmCampaign: getAttributionValue(
+      params,
+      'utm_campaign',
+      source === 'reddit' ? 'reddit_organic' : 'workflow_hardening_sprint'
+    ),
+    utmContent: getAttributionValue(params, 'utm_content', null),
+    utmTerm: getAttributionValue(params, 'utm_term', null),
+    community,
+    postId: getAttributionValue(params, 'post_id', null),
+    commentId: getAttributionValue(params, 'comment_id', null),
+    campaignVariant: getAttributionValue(params, 'campaign_variant', null),
+    offerCode: getAttributionValue(params, 'offer_code', null),
+    referrer,
+    referrerHost,
+    seoSurface: getAttributionValue(params, 'seo_surface', inferSearchSurface(referrerHost)),
+    seoQuery: getAttributionValue(params, 'seo_query', inferSearchQuery(referrer)),
+    landingPath: (() => {
+      try {
+        return new URL(referrer).pathname || '/';
+      } catch {
+        return '/';
+      }
+    })(),
+    page: (() => {
+      try {
+        return new URL(referrer).pathname || '/';
+      } catch {
+        return '/';
+      }
+    })(),
+  };
 }
 
 function buildCheckoutAttributionMetadata(body, req, traceId) {
@@ -225,15 +467,15 @@ function buildCheckoutFallbackUrl(baseUrl, metadata = {}) {
   return restoreStripeCheckoutPlaceholder(url.toString());
 }
 
-function buildCheckoutBootstrapBody(parsed, req) {
+function buildCheckoutBootstrapBody(parsed, req, journeyState = resolveJourneyState(req, parsed)) {
   const params = parsed.searchParams;
   const traceId = pickFirstText(params.get('trace_id')) || createJourneyId('checkout');
   return {
     traceId,
     installId: pickFirstText(params.get('install_id')),
-    acquisitionId: pickFirstText(params.get('acquisition_id')) || createJourneyId('acq'),
-    visitorId: pickFirstText(params.get('visitor_id')) || createJourneyId('visitor'),
-    sessionId: pickFirstText(params.get('visitor_session_id'), params.get('session_id')) || createJourneyId('session'),
+    acquisitionId: journeyState.acquisitionId,
+    visitorId: journeyState.visitorId,
+    sessionId: journeyState.sessionId,
     customerEmail: pickFirstText(params.get('customer_email')),
     source: pickFirstText(params.get('source'), params.get('utm_source'), 'website'),
     utmSource: pickFirstText(params.get('utm_source'), params.get('source'), 'website'),
@@ -309,6 +551,39 @@ function sendPublicBillingPreflight(res) {
   res.end();
 }
 
+function appendBestEffortTelemetry(feedbackDir, payload, headers, context) {
+  try {
+    appendTelemetryPing(feedbackDir, payload, headers);
+    return true;
+  } catch (err) {
+    try {
+      appendDiagnosticRecord({
+        source: 'telemetry_emit',
+        step: 'telemetry_emit',
+        context: `best-effort telemetry write failed during ${context}`,
+        metadata: {
+          context,
+          eventType: payload && (payload.eventType || payload.event) ? payload.eventType || payload.event : 'unknown',
+          error: err && err.message ? err.message : 'unknown_error',
+        },
+        diagnosis: {
+          diagnosed: true,
+          rootCauseCategory: 'system_failure',
+          criticalFailureStep: 'telemetry_emit',
+          violations: [{
+            constraintId: 'telemetry:emit',
+            message: 'Server-side telemetry write failed.',
+          }],
+          evidence: [err && err.message ? err.message : 'unknown_error'],
+        },
+      });
+    } catch (_) {
+      // Public telemetry remains best-effort even when diagnostics fail.
+    }
+    return false;
+  }
+}
+
 function getPublicOrigin(req) {
   const proto = String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim() || 'http';
   const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').split(',')[0].trim() || 'localhost';
@@ -340,7 +615,7 @@ function escapeHtmlAttribute(value) {
     .replaceAll('>', '&gt;');
 }
 
-function loadLandingPageHtml(runtimeConfig) {
+function loadLandingPageHtml(runtimeConfig, pageContext = {}) {
   const template = fs.readFileSync(LANDING_PAGE_PATH, 'utf-8');
   const googleSiteVerificationMeta = runtimeConfig.googleSiteVerification
     ? `  <meta name="google-site-verification" content="${escapeHtmlAttribute(runtimeConfig.googleSiteVerification)}" />`
@@ -366,6 +641,10 @@ function loadLandingPageHtml(runtimeConfig) {
     '__GA_MEASUREMENT_ID__': runtimeConfig.gaMeasurementId || '',
     '__GA_BOOTSTRAP__': gaBootstrap,
     '__GOOGLE_SITE_VERIFICATION_META__': googleSiteVerificationMeta,
+    '__SERVER_VISITOR_ID__': pageContext.serverVisitorId || '',
+    '__SERVER_SESSION_ID__': pageContext.serverSessionId || '',
+    '__SERVER_ACQUISITION_ID__': pageContext.serverAcquisitionId || '',
+    '__SERVER_TELEMETRY_CAPTURED__': pageContext.serverTelemetryCaptured ? 'true' : 'false',
     '__VERIFICATION_URL__': 'https://github.com/IgorGanapolsky/mcp-memory-gateway/blob/main/docs/VERIFICATION_EVIDENCE.md',
     '__COMPATIBILITY_REPORT_URL__': 'https://github.com/IgorGanapolsky/mcp-memory-gateway/blob/main/proof/compatibility/report.json',
     '__AUTOMATION_REPORT_URL__': 'https://github.com/IgorGanapolsky/mcp-memory-gateway/blob/main/proof/automation/report.json',
@@ -789,7 +1068,88 @@ function renderCheckoutCancelledPage(runtimeConfig) {
 </html>`;
 }
 
-function parseJsonBody(req, maxBytes = 1024 * 1024) {
+function renderWorkflowSprintIntakeResultPage(runtimeConfig, { title, detail, leadId = null }) {
+  const safeTitle = escapeHtmlAttribute(title || 'Sprint intake received');
+  const safeDetail = escapeHtmlAttribute(detail || 'We have your workflow details and will review the proof path next.');
+  const proofPackUrl = 'https://github.com/IgorGanapolsky/mcp-memory-gateway/blob/main/docs/VERIFICATION_EVIDENCE.md';
+  const sprintBriefUrl = 'https://github.com/IgorGanapolsky/mcp-memory-gateway/blob/main/docs/WORKFLOW_HARDENING_SPRINT.md';
+  const safeLeadId = leadId ? `<p><strong>Lead ID:</strong> ${escapeHtmlAttribute(leadId)}</p>` : '';
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${safeTitle}</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <style>
+    :root {
+      --bg: #f6f1e8;
+      --ink: #1d1b18;
+      --muted: #625a4d;
+      --line: #d7cfbf;
+      --accent: #b85c2d;
+      --surface: #fffdf9;
+    }
+    body {
+      margin: 0;
+      font-family: Georgia, 'Times New Roman', serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.6;
+    }
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 64px 20px 80px;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 24px;
+      margin-top: 18px;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 18px;
+    }
+    a {
+      display: inline-block;
+      text-decoration: none;
+      background: var(--accent);
+      color: white;
+      padding: 12px 18px;
+      border-radius: 10px;
+      font-weight: 700;
+    }
+    a.secondary {
+      background: transparent;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>${safeTitle}</h1>
+    <p>${safeDetail}</p>
+    <div class="card">
+      <p>Your workflow intake is now in the sprint queue. Review the proof pack and sprint scope while we assess the rollout blocker.</p>
+      ${safeLeadId}
+      <div class="actions">
+        <a href="${proofPackUrl}">Review Proof Pack</a>
+        <a class="secondary" href="${sprintBriefUrl}">Review Sprint Brief</a>
+        <a class="secondary" href="${runtimeConfig.appOrigin}/#workflow-sprint-intake">Return to Context Gateway</a>
+      </div>
+    </div>
+  </main>
+</body>
+</html>`;
+}
+
+function readBodyBuffer(req, maxBytes = 1024 * 1024) {
   return new Promise((resolve, reject) => {
     let total = 0;
     const chunks = [];
@@ -806,18 +1166,31 @@ function parseJsonBody(req, maxBytes = 1024 * 1024) {
 
     req.on('end', () => {
       if (chunks.length === 0) {
-        resolve({});
+        resolve(Buffer.alloc(0));
         return;
       }
-      try {
-        resolve(JSON.parse(Buffer.concat(chunks).toString('utf-8')));
-      } catch {
-        reject(createHttpError(400, 'Invalid JSON body'));
-      }
+      resolve(Buffer.concat(chunks));
     });
 
     req.on('error', reject);
   });
+}
+
+async function parseJsonBody(req, maxBytes = 1024 * 1024) {
+  const body = await readBodyBuffer(req, maxBytes);
+  if (!body.length) return {};
+  try {
+    return JSON.parse(body.toString('utf-8'));
+  } catch {
+    throw createHttpError(400, 'Invalid JSON body');
+  }
+}
+
+async function parseFormBody(req, maxBytes = 1024 * 1024) {
+  const body = await readBodyBuffer(req, maxBytes);
+  const decoded = body.toString('utf-8');
+  const params = new URLSearchParams(decoded);
+  return Object.fromEntries(params.entries());
 }
 
 function parseOptionalObject(input, name) {
@@ -1003,7 +1376,56 @@ function createApiServer() {
       }
 
       try {
-        sendHtml(res, 200, loadLandingPageHtml(hostedConfig));
+        const { FEEDBACK_DIR } = getFeedbackPaths();
+        const journeyState = resolveJourneyState(req, parsed);
+        const landingAttribution = buildLandingAttribution(parsed, req);
+        const landingTelemetryCaptured = appendBestEffortTelemetry(FEEDBACK_DIR, {
+          eventType: 'landing_page_view',
+          clientType: 'web',
+          visitorId: journeyState.visitorId,
+          sessionId: journeyState.sessionId,
+          acquisitionId: journeyState.acquisitionId,
+          ...landingAttribution,
+        }, req.headers, 'landing_page_view');
+        if (landingAttribution.source === 'organic_search' || landingAttribution.source === 'ai_search') {
+          appendBestEffortTelemetry(FEEDBACK_DIR, {
+            eventType: 'seo_landing_view',
+            clientType: 'web',
+            visitorId: journeyState.visitorId,
+            sessionId: journeyState.sessionId,
+            acquisitionId: journeyState.acquisitionId,
+            source: landingAttribution.source,
+            utmSource: landingAttribution.utmSource,
+            utmMedium: landingAttribution.utmMedium,
+            utmCampaign: landingAttribution.utmCampaign,
+            utmContent: landingAttribution.utmContent,
+            utmTerm: landingAttribution.utmTerm,
+            community: landingAttribution.community,
+            postId: landingAttribution.postId,
+            commentId: landingAttribution.commentId,
+            campaignVariant: landingAttribution.campaignVariant,
+            offerCode: landingAttribution.offerCode,
+            landingPath: landingAttribution.landingPath,
+            page: landingAttribution.page,
+            referrer: landingAttribution.referrer,
+            referrerHost: landingAttribution.referrerHost,
+            seoSurface: landingAttribution.seoSurface || landingAttribution.source,
+            seoQuery: landingAttribution.seoQuery,
+          }, req.headers, 'seo_landing_view');
+        }
+        const html = loadLandingPageHtml(hostedConfig, {
+          serverVisitorId: journeyState.visitorId,
+          serverSessionId: journeyState.sessionId,
+          serverAcquisitionId: journeyState.acquisitionId,
+          serverTelemetryCaptured: landingTelemetryCaptured,
+        });
+
+        sendHtml(
+          res,
+          200,
+          html,
+          journeyState.setCookieHeaders.length ? { 'Set-Cookie': journeyState.setCookieHeaders } : {}
+        );
       } catch (err) {
         sendText(res, 500, err.message || 'Landing page unavailable');
       }
@@ -1012,11 +1434,15 @@ function createApiServer() {
 
     if (req.method === 'GET' && pathname === '/checkout/pro') {
       const { FEEDBACK_DIR } = getFeedbackPaths();
-      const bootstrapBody = buildCheckoutBootstrapBody(parsed, req);
+      const journeyState = resolveJourneyState(req, parsed);
+      const bootstrapBody = buildCheckoutBootstrapBody(parsed, req, journeyState);
       const traceId = bootstrapBody.traceId || createJourneyId('checkout');
       const analyticsMetadata = buildCheckoutAttributionMetadata(bootstrapBody, req, traceId);
+      const responseHeaders = journeyState.setCookieHeaders.length
+        ? { 'Set-Cookie': journeyState.setCookieHeaders }
+        : {};
 
-      appendTelemetryPing(FEEDBACK_DIR, {
+      appendBestEffortTelemetry(FEEDBACK_DIR, {
         eventType: 'checkout_bootstrap',
         clientType: 'web',
         installId: bootstrapBody.installId,
@@ -1042,7 +1468,7 @@ function createApiServer() {
         planId: analyticsMetadata.planId,
         referrer: analyticsMetadata.referrer,
         referrerHost: analyticsMetadata.referrerHost,
-      }, req.headers);
+      }, req.headers, 'checkout_bootstrap');
 
       try {
         const result = await createCheckoutSession({
@@ -1061,7 +1487,10 @@ function createApiServer() {
         });
 
         if (result.url) {
-          res.writeHead(302, { Location: result.url });
+          res.writeHead(302, {
+            ...responseHeaders,
+            Location: result.url,
+          });
           res.end();
           return;
         }
@@ -1088,10 +1517,13 @@ function createApiServer() {
         appendQueryParam(successUrl, 'plan_id', analyticsMetadata.planId);
         appendQueryParam(successUrl, 'landing_path', analyticsMetadata.landingPath);
         appendQueryParam(successUrl, 'referrer_host', analyticsMetadata.referrerHost);
-        res.writeHead(302, { Location: successUrl.toString() });
+        res.writeHead(302, {
+          ...responseHeaders,
+          Location: successUrl.toString(),
+        });
         res.end();
       } catch (err) {
-        appendTelemetryPing(FEEDBACK_DIR, {
+        appendBestEffortTelemetry(FEEDBACK_DIR, {
           eventType: 'checkout_api_failed',
           clientType: 'web',
           installId: bootstrapBody.installId,
@@ -1114,8 +1546,9 @@ function createApiServer() {
           referrerHost: analyticsMetadata.referrerHost,
           failureCode: err && err.message ? err.message : 'checkout_bootstrap_failed',
           httpStatus: err && err.statusCode ? err.statusCode : null,
-        }, req.headers);
+        }, req.headers, 'checkout_api_failed');
         res.writeHead(302, {
+          ...responseHeaders,
           Location: buildCheckoutFallbackUrl(hostedConfig.checkoutFallbackUrl, analyticsMetadata),
         });
         res.end();
@@ -1232,24 +1665,42 @@ function createApiServer() {
     if (req.method === 'POST' && pathname === '/v1/intake/workflow-sprint') {
       const { FEEDBACK_DIR } = getFeedbackPaths();
       const traceId = createTraceId('sprint_intake');
+      const journeyState = resolveJourneyState(req, parsed);
+      const referrerAttribution = buildReferrerAttribution(req);
+      const contentType = String(req.headers['content-type'] || '').toLowerCase();
+      const isJsonRequest = contentType.includes('application/json');
+      const isFormSubmission = contentType.includes('application/x-www-form-urlencoded');
       try {
-        const body = await parseJsonBody(req, 24 * 1024);
+        const body = isFormSubmission
+          ? await parseFormBody(req, 24 * 1024)
+          : await parseJsonBody(req, 24 * 1024);
         const lead = appendWorkflowSprintLead({
           ...body,
           traceId: body.traceId || traceId,
-          page: body.page || '/#workflow-sprint-intake',
-          landingPath: body.landingPath || '/',
+          acquisitionId: body.acquisitionId || journeyState.acquisitionId,
+          visitorId: body.visitorId || journeyState.visitorId,
+          sessionId: body.sessionId || journeyState.sessionId,
+          page: body.page || referrerAttribution.page || '/#workflow-sprint-intake',
+          landingPath: body.landingPath || referrerAttribution.landingPath || '/',
           ctaId: body.ctaId || 'workflow_sprint_intake',
           ctaPlacement: body.ctaPlacement || 'workflow_sprint',
           planId: body.planId || 'sprint',
-          source: body.source || body.utmSource || 'website',
-          utmSource: body.utmSource || body.source || 'website',
-          utmMedium: body.utmMedium || 'workflow_sprint_intake',
-          utmCampaign: body.utmCampaign || 'workflow_hardening_sprint',
-          referrer: body.referrer || req.headers.referer || req.headers.referrer || null,
+          source: body.source || body.utmSource || referrerAttribution.source || 'website',
+          utmSource: body.utmSource || body.source || referrerAttribution.utmSource || 'website',
+          utmMedium: body.utmMedium || referrerAttribution.utmMedium || 'workflow_sprint_intake',
+          utmCampaign: body.utmCampaign || referrerAttribution.utmCampaign || 'workflow_hardening_sprint',
+          utmContent: body.utmContent || referrerAttribution.utmContent || null,
+          utmTerm: body.utmTerm || referrerAttribution.utmTerm || null,
+          community: body.community || referrerAttribution.community || null,
+          postId: body.postId || referrerAttribution.postId || null,
+          commentId: body.commentId || referrerAttribution.commentId || null,
+          campaignVariant: body.campaignVariant || referrerAttribution.campaignVariant || null,
+          offerCode: body.offerCode || referrerAttribution.offerCode || null,
+          referrerHost: body.referrerHost || referrerAttribution.referrerHost || null,
+          referrer: body.referrer || referrerAttribution.referrer || null,
         }, { feedbackDir: FEEDBACK_DIR });
 
-        appendTelemetryPing(FEEDBACK_DIR, {
+        appendBestEffortTelemetry(FEEDBACK_DIR, {
           eventType: 'workflow_sprint_lead_submitted',
           clientType: 'web',
           traceId: lead.attribution.traceId,
@@ -1275,7 +1726,21 @@ function createApiServer() {
           landingPath: lead.attribution.landingPath,
           referrerHost: lead.attribution.referrerHost,
           referrer: lead.attribution.referrer,
-        }, req.headers);
+        }, req.headers, 'workflow_sprint_lead_submitted');
+
+        if (isFormSubmission && !wantsJson(req, parsed)) {
+          sendHtml(
+            res,
+            201,
+            renderWorkflowSprintIntakeResultPage(hostedConfig, {
+              title: 'Workflow sprint intake received',
+              detail: 'The workflow is now queued for review. Check the proof pack and sprint brief while we qualify the rollout blocker.',
+              leadId: lead.leadId,
+            }),
+            journeyState.setCookieHeaders.length ? { 'Set-Cookie': journeyState.setCookieHeaders } : {}
+          );
+          return;
+        }
 
         sendJson(res, 201, {
           ok: true,
@@ -1285,8 +1750,49 @@ function createApiServer() {
           nextStep: 'review_proof_pack',
           proofPackUrl: 'https://github.com/IgorGanapolsky/mcp-memory-gateway/blob/main/docs/VERIFICATION_EVIDENCE.md',
           sprintBriefUrl: 'https://github.com/IgorGanapolsky/mcp-memory-gateway/blob/main/docs/WORKFLOW_HARDENING_SPRINT.md',
-        }, getPublicBillingHeaders(lead.attribution.traceId));
+        }, {
+          ...getPublicBillingHeaders(lead.attribution.traceId),
+          ...(journeyState.setCookieHeaders.length ? { 'Set-Cookie': journeyState.setCookieHeaders } : {}),
+        });
       } catch (err) {
+        appendBestEffortTelemetry(FEEDBACK_DIR, {
+          eventType: 'workflow_sprint_lead_failed',
+          clientType: 'web',
+          traceId,
+          acquisitionId: journeyState.acquisitionId,
+          visitorId: journeyState.visitorId,
+          sessionId: journeyState.sessionId,
+          source: referrerAttribution.source || 'website',
+          utmSource: referrerAttribution.utmSource || 'website',
+          utmMedium: referrerAttribution.utmMedium || 'workflow_sprint_intake',
+          utmCampaign: referrerAttribution.utmCampaign || 'workflow_hardening_sprint',
+          community: referrerAttribution.community,
+          postId: referrerAttribution.postId,
+          commentId: referrerAttribution.commentId,
+          campaignVariant: referrerAttribution.campaignVariant,
+          offerCode: referrerAttribution.offerCode,
+          ctaId: 'workflow_sprint_intake',
+          ctaPlacement: 'workflow_sprint',
+          planId: 'sprint',
+          page: referrerAttribution.page || '/#workflow-sprint-intake',
+          landingPath: referrerAttribution.landingPath || '/',
+          referrerHost: referrerAttribution.referrerHost,
+          referrer: referrerAttribution.referrer,
+          failureCode: err && err.message ? err.message : 'workflow_sprint_lead_failed',
+          httpStatus: err && err.statusCode ? err.statusCode : null,
+        }, req.headers, 'workflow_sprint_lead_failed');
+        if (isFormSubmission && !wantsJson(req, parsed)) {
+          sendHtml(
+            res,
+            err.statusCode || 500,
+            renderWorkflowSprintIntakeResultPage(hostedConfig, {
+              title: 'Workflow sprint intake failed',
+              detail: err.message || 'Unable to capture workflow sprint intake.',
+            }),
+            journeyState.setCookieHeaders.length ? { 'Set-Cookie': journeyState.setCookieHeaders } : {}
+          );
+          return;
+        }
         sendProblem(res, {
           type: !err.statusCode || err.statusCode >= 500 ? PROBLEM_TYPES.INTERNAL : PROBLEM_TYPES.BAD_REQUEST,
           title: !err.statusCode || err.statusCode >= 500 ? 'Internal Server Error' : 'Request Error',

@@ -178,6 +178,7 @@ test('getTelemetryAnalytics summarizes visitors, CTAs, and CLI installs', () => 
   assert.equal(analytics.visitors.totalEvents, 3);
   assert.equal(analytics.visitors.pageViews, 1);
   assert.equal(analytics.ctas.totalClicks, 1);
+  assert.equal(analytics.ctas.checkoutStarts, 1);
   assert.equal(analytics.ctas.uniqueCheckoutStarters, 1);
   assert.equal(analytics.ctas.checkoutFailures, 1);
   assert.equal(analytics.ctas.failuresByCode.checkout_request_failed, 1);
@@ -277,6 +278,58 @@ test('getTelemetryAnalytics summarizes buyer-loss, abandonment, and SEO telemetr
   assert.equal(analytics.seo.byQuery['ai agent guardrails'], 1);
   assert.equal(analytics.seo.topSurface.key, 'google_search');
   assert.equal(analytics.seo.topQuery.key, 'ai agent guardrails');
+});
+
+test('getTelemetryAnalytics keeps generic CTA clicks separate from checkout starts and counts checkout bootstrap', () => {
+  appendTelemetryEvent(tmpDir, {
+    eventType: 'landing_page_view',
+    clientType: 'web',
+    acquisitionId: 'acq_cta_1',
+    visitorId: 'visitor_cta_1',
+    sessionId: 'session_cta_1',
+    source: 'website',
+    utmSource: 'website',
+    utmCampaign: 'proof_launch',
+    page: '/',
+  });
+  appendTelemetryEvent(tmpDir, {
+    eventType: 'cta_click',
+    clientType: 'web',
+    acquisitionId: 'acq_cta_1',
+    visitorId: 'visitor_cta_1',
+    sessionId: 'session_cta_1',
+    source: 'website',
+    utmSource: 'website',
+    utmCampaign: 'proof_launch',
+    ctaId: 'workflow_sprint_proof',
+    ctaPlacement: 'workflow_sprint',
+    planId: 'proof',
+    page: '/',
+  });
+  appendTelemetryEvent(tmpDir, {
+    eventType: 'checkout_bootstrap',
+    clientType: 'web',
+    acquisitionId: 'acq_cta_1',
+    visitorId: 'visitor_cta_1',
+    sessionId: 'session_cta_1',
+    source: 'website',
+    utmSource: 'website',
+    utmCampaign: 'proof_launch',
+    ctaId: 'pricing_pro',
+    ctaPlacement: 'pricing',
+    planId: 'pro',
+    page: '/checkout/pro',
+  });
+
+  const analytics = getTelemetryAnalytics(tmpDir);
+  assert.equal(analytics.ctas.totalClicks, 2);
+  assert.equal(analytics.ctas.checkoutStarts, 1);
+  assert.equal(analytics.ctas.uniqueCheckoutStarters, 1);
+  assert.equal(analytics.ctas.byId.workflow_sprint_proof, 1);
+  assert.equal(analytics.ctas.byId.pricing_pro, 1);
+  assert.equal(analytics.ctas.byCampaign.proof_launch, 2);
+  assert.equal(analytics.ctas.checkoutStartsByCampaign.proof_launch, 1);
+  assert.equal(analytics.ctas.clickToCheckoutRate, 0.5);
 });
 
 test('getTelemetryAnalytics summarizes reddit community and offer performance', () => {

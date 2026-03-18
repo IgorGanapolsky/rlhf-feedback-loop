@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const { getBillingSummary } = require('./billing');
+const { getOperationalBillingSummary } = require('./operational-summary');
 
 function getPulseSnapshot(summary, now = new Date()) {
   const funnel = summary.funnel || {};
@@ -35,6 +35,7 @@ function getPulseSnapshot(summary, now = new Date()) {
     activeCount,
     visitors: trafficMetrics.visitors || 0,
     ctaClicks: trafficMetrics.ctaClicks || 0,
+    checkoutStarts: trafficMetrics.checkoutStarts || 0,
     sprintLeads,
     qualifiedSprintLeads,
     paidProviderEvents,
@@ -55,10 +56,12 @@ function getPulseSnapshot(summary, now = new Date()) {
 
 async function showPulse() {
   const now = new Date();
-  const snapshot = getPulseSnapshot(getBillingSummary(), now);
+  const { source, summary, fallbackReason } = await getOperationalBillingSummary();
+  const snapshot = getPulseSnapshot(summary, now);
   console.log('📡 [MISSION CONTROL] MISSION PULSE — ' + now.toLocaleTimeString());
   console.log('─'.repeat(60));
-  console.log(`🚀 TRAFFIC: ${snapshot.visitors} Visitors | ${snapshot.ctaClicks} CTA Clicks | ${snapshot.leadCount} Unique Leads`);
+  console.log(`🛰️ SOURCE: ${source.toUpperCase()}${fallbackReason ? ` (${fallbackReason})` : ''}`);
+  console.log(`🚀 TRAFFIC: ${snapshot.visitors} Visitors | ${snapshot.ctaClicks} CTA Clicks | ${snapshot.checkoutStarts} Checkout Starts | ${snapshot.leadCount} Unique Leads`);
   console.log(`🧪 PIPELINE: ${snapshot.sprintLeads} Sprint Leads | ${snapshot.qualifiedSprintLeads} Qualified Sprint Leads | ${snapshot.activeCount} Activations`);
   console.log(`🤖 OPERATOR ACQ: ${snapshot.operatorGeneratedAcquisitionEvents} Events | ${snapshot.operatorGeneratedUniqueLeads} Unique Leads`);
   console.log(`💳 REVENUE FLOW: ${snapshot.paidProviderEvents} Paid Provider Events | ${snapshot.paidOrders} Paid Orders`);

@@ -825,7 +825,7 @@ function getBusinessAnalytics() {
     sessions: telemetry.visitors ? telemetry.visitors.uniqueSessions || 0 : 0,
     pageViews: telemetry.visitors ? telemetry.visitors.pageViews || 0 : 0,
     ctaClicks: telemetry.ctas ? telemetry.ctas.totalClicks || 0 : 0,
-    checkoutStarts: telemetry.ctas ? telemetry.ctas.totalClicks || 0 : 0,
+    checkoutStarts: telemetry.ctas ? telemetry.ctas.checkoutStarts || 0 : 0,
     buyerLossFeedback: telemetry.buyerLoss ? telemetry.buyerLoss.totalSignals || 0 : 0,
     seoLandingViews: telemetry.seo ? telemetry.seo.landingViews || 0 : 0,
   };

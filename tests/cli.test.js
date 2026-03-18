@@ -297,6 +297,55 @@ function runServeHandshake(sendRequest, options = {}) {
   });
 }
 
+function runCliCommand(args, options = {}) {
+  const child = spawn(process.execPath, [CLI, ...args], {
+    cwd: options.cwd,
+    env: options.env,
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+
+  let stdout = '';
+  let stderr = '';
+  let settled = false;
+
+  return new Promise((resolve, reject) => {
+    const done = (err, value) => {
+      if (settled) return;
+      settled = true;
+      if (err) reject(err);
+      else resolve(value);
+    };
+    const timer = setTimeout(() => {
+      try {
+        child.kill('SIGKILL');
+      } catch (_) {
+        // no-op
+      }
+      done(new Error(`CLI command timed out: ${args.join(' ')}`));
+    }, options.timeoutMs ?? 10000);
+
+    child.stdout.on('data', (chunk) => {
+      stdout += String(chunk || '');
+    });
+    child.stderr.on('data', (chunk) => {
+      stderr += String(chunk || '');
+    });
+    child.on('error', (err) => {
+      clearTimeout(timer);
+      done(err);
+    });
+    child.on('exit', (code, signal) => {
+      clearTimeout(timer);
+      done(null, {
+        status: code,
+        signal,
+        stdout,
+        stderr,
+      });
+    });
+  });
+}
+
 describe('bin/cli.js', () => {
   let tmpDir;
   let defaultLedgerPath;
@@ -492,7 +541,7 @@ describe('bin/cli.js', () => {
     fs.rmSync(doctorDir, { recursive: true, force: true });
   });
 
-  test('cfo emits operational billing summary JSON', () => {
+  test('cfo emits local operational billing summary JSON when hosted summary is not configured', () => {
     const isolatedDir = makeTmpDir();
     const apiKeysPath = path.join(isolatedDir, 'api-keys.json');
     const ledgerPath = path.join(isolatedDir, 'funnel-events.jsonl');
@@ -605,19 +654,99 @@ describe('bin/cli.js', () => {
     assert.equal(result.status, 0, `cfo failed:\n${result.stderr}`);
 
     const payload = JSON.parse(result.stdout);
-    assert.equal(payload.coverage.source, 'funnel_ledger+revenue_ledger+key_store+workflow_sprint_leads');
-    assert.equal(payload.keys.active, 1);
-    assert.equal(payload.keys.bySource.stripe_webhook_checkout_completed, 1);
-    assert.equal(payload.keys.bySource.github_marketplace_purchased, 1);
-    assert.equal(payload.funnel.stageCounts.paid, 1);
-    assert.equal(payload.revenue.bookedRevenueCents, 4900);
-    assert.equal(payload.revenue.paidOrders, 1);
-    assert.equal(payload.revenue.paidProviderEvents, 1);
-    assert.equal(payload.pipeline.workflowSprintLeads.total, 1);
-    assert.equal(payload.pipeline.workflowSprintLeads.bySource.x, 1);
-    assert.equal(payload.pipeline.qualifiedWorkflowSprintLeads.total, 1);
+    assert.equal(payload.source, 'local');
+    assert.ok(payload.fallbackReason);
+    assert.equal(payload.summary.coverage.source, 'funnel_ledger+revenue_ledger+key_store+workflow_sprint_leads');
+    assert.equal(payload.summary.keys.active, 1);
+    assert.equal(payload.summary.keys.bySource.stripe_webhook_checkout_completed, 1);
+    assert.equal(payload.summary.keys.bySource.github_marketplace_purchased, 1);
+    assert.equal(payload.summary.funnel.stageCounts.paid, 1);
+    assert.equal(payload.summary.revenue.bookedRevenueCents, 4900);
+    assert.equal(payload.summary.revenue.paidOrders, 1);
+    assert.equal(payload.summary.revenue.paidProviderEvents, 1);
+    assert.equal(payload.summary.pipeline.workflowSprintLeads.total, 1);
+    assert.equal(payload.summary.pipeline.workflowSprintLeads.bySource.x, 1);
+    assert.equal(payload.summary.pipeline.qualifiedWorkflowSprintLeads.total, 1);
 
     fs.rmSync(isolatedDir, { recursive: true, force: true });
+  });
+
+  test('cfo prefers hosted billing summary when a live billing API base and admin key are configured', async () => {
+    const { startServer } = require('../src/api/server');
+    const remoteDir = makeTmpDir();
+    const remoteFeedbackDir = path.join(remoteDir, 'feedback');
+    const remoteApiKeysPath = path.join(remoteDir, 'api-keys.json');
+    const remoteFunnelPath = path.join(remoteDir, 'funnel-events.jsonl');
+    const remoteRevenuePath = path.join(remoteDir, 'revenue-events.jsonl');
+    fs.mkdirSync(remoteFeedbackDir, { recursive: true });
+    fs.writeFileSync(remoteApiKeysPath, JSON.stringify({ keys: {} }, null, 2));
+    fs.writeFileSync(remoteFunnelPath, `${JSON.stringify({
+      timestamp: '2026-03-18T12:00:00.000Z',
+      stage: 'acquisition',
+      event: 'checkout_session_created',
+      evidence: 'sess_remote_summary',
+      traceId: 'trace_remote_summary',
+    })}\n`);
+    fs.writeFileSync(remoteRevenuePath, `${JSON.stringify({
+      timestamp: '2026-03-18T12:05:00.000Z',
+      provider: 'stripe',
+      event: 'stripe_checkout_completed',
+      status: 'paid',
+      orderId: 'cs_remote_summary',
+      evidence: 'cs_remote_summary',
+      customerId: 'cus_remote_summary',
+      traceId: 'trace_remote_summary',
+      amountCents: 4900,
+      currency: 'USD',
+      amountKnown: true,
+      recurringInterval: null,
+      attribution: { source: 'website' },
+      metadata: {},
+    })}\n`);
+
+    const savedEnv = {
+      RLHF_FEEDBACK_DIR: process.env.RLHF_FEEDBACK_DIR,
+      RLHF_API_KEY: process.env.RLHF_API_KEY,
+      _TEST_API_KEYS_PATH: process.env._TEST_API_KEYS_PATH,
+      _TEST_FUNNEL_LEDGER_PATH: process.env._TEST_FUNNEL_LEDGER_PATH,
+      _TEST_REVENUE_LEDGER_PATH: process.env._TEST_REVENUE_LEDGER_PATH,
+    };
+
+    process.env.RLHF_FEEDBACK_DIR = remoteFeedbackDir;
+    process.env.RLHF_API_KEY = 'remote-admin-key';
+    process.env._TEST_API_KEYS_PATH = remoteApiKeysPath;
+    process.env._TEST_FUNNEL_LEDGER_PATH = remoteFunnelPath;
+    process.env._TEST_REVENUE_LEDGER_PATH = remoteRevenuePath;
+
+    const handle = await startServer({ port: 0 });
+    try {
+      const remoteBaseUrl = `http://127.0.0.1:${handle.port}`;
+
+      const result = await runCliCommand(['cfo'], {
+        cwd: makeTmpDir(),
+        env: {
+          ...process.env,
+          RLHF_BILLING_API_BASE_URL: remoteBaseUrl,
+          RLHF_API_KEY: 'remote-admin-key',
+          RLHF_METRICS_SOURCE: 'hosted',
+        },
+      });
+
+      assert.equal(result.status, 0, `cfo failed:\n${result.stderr}`);
+      const payload = JSON.parse(result.stdout);
+      assert.equal(payload.source, 'hosted');
+      assert.equal(payload.fallbackReason, null);
+      assert.equal(payload.summary.revenue.bookedRevenueCents, 4900);
+      assert.equal(payload.summary.revenue.paidOrders, 1);
+    } finally {
+      await new Promise((resolve) => handle.server.close(resolve));
+      process.env.RLHF_FEEDBACK_DIR = savedEnv.RLHF_FEEDBACK_DIR;
+      process.env.RLHF_API_KEY = savedEnv.RLHF_API_KEY;
+      process.env._TEST_API_KEYS_PATH = savedEnv._TEST_API_KEYS_PATH;
+      process.env._TEST_FUNNEL_LEDGER_PATH = savedEnv._TEST_FUNNEL_LEDGER_PATH;
+      process.env._TEST_REVENUE_LEDGER_PATH = savedEnv._TEST_REVENUE_LEDGER_PATH;
+      fs.rmSync(remoteDir, { recursive: true, force: true });
+    }
   });
 
   test('model-fit writes a machine-readable report using hardware overrides', () => {

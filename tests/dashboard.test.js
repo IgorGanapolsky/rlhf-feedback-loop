@@ -462,6 +462,7 @@ test('generateDashboard includes visitor funnel and booked revenue analytics', (
   const data = generateDashboard(tmpDir);
   assert.equal(data.analytics.telemetry.visitors.uniqueVisitors, 1);
   assert.equal(data.analytics.telemetry.ctas.totalClicks, 1);
+  assert.equal(data.analytics.telemetry.ctas.checkoutStarts, 1);
   assert.equal(data.analytics.telemetry.ctas.uniqueCheckoutStarters, 1);
   assert.equal(data.analytics.funnel.acquisitionLeads, 1);
   assert.equal(data.analytics.funnel.paidOrders, 1);
@@ -482,7 +483,17 @@ test('generateDashboard separates repeated CTA clicks from unique checkout start
   writeTelemetryLog([
     {
       receivedAt: new Date().toISOString(),
-      eventType: 'checkout_start',
+      eventType: 'cta_click',
+      clientType: 'web',
+      acquisitionId: 'acq_repeat_1',
+      visitorId: 'visitor_repeat_1',
+      sessionId: 'session_repeat_1',
+      ctaId: 'workflow_sprint_proof',
+      page: '/',
+    },
+    {
+      receivedAt: new Date().toISOString(),
+      eventType: 'checkout_bootstrap',
       clientType: 'web',
       acquisitionId: 'acq_repeat_1',
       visitorId: 'visitor_repeat_1',
@@ -492,7 +503,7 @@ test('generateDashboard separates repeated CTA clicks from unique checkout start
     },
     {
       receivedAt: new Date().toISOString(),
-      eventType: 'checkout_start',
+      eventType: 'checkout_bootstrap',
       clientType: 'web',
       acquisitionId: 'acq_repeat_1',
       visitorId: 'visitor_repeat_1',
@@ -532,8 +543,12 @@ test('generateDashboard separates repeated CTA clicks from unique checkout start
   ]);
 
   const data = generateDashboard(tmpDir);
-  assert.equal(data.analytics.telemetry.ctas.totalClicks, 2);
+  assert.equal(data.analytics.telemetry.ctas.totalClicks, 3);
+  assert.equal(data.analytics.telemetry.ctas.checkoutStarts, 2);
   assert.equal(data.analytics.telemetry.ctas.uniqueCheckoutStarters, 1);
+  assert.equal(data.analytics.funnel.ctaClicks, 3);
+  assert.equal(data.analytics.funnel.checkoutStarts, 2);
+  assert.equal(data.analytics.reconciliation.telemetryCheckoutStarts, 2);
   assert.equal(data.analytics.reconciliation.paidWithoutAcquisition, 1);
 });
 
