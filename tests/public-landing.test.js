@@ -121,8 +121,8 @@ test('public landing page positions the gateway as continuity-friendly reliabili
   assert.match(landingPage, /See Sprint Scope/);
   assert.match(landingPage, /Start Sprint Intake/);
   assert.match(landingPage, /Review Sprint Brief/);
-  assert.match(landingPage, /id="workflow-sprint-form"/);
-  assert.match(landingPage, /id="workflow-sprint-form" action="\/v1\/intake\/workflow-sprint" method="post"/);
+  assert.match(landingPage, /id="workflow-sprint-intake"/);
+  assert.match(landingPage, /id="workflow-sprint-intake" action="\/v1\/intake\/workflow-sprint" method="post"/);
   assert.match(landingPage, /name="ctaId" type="hidden" value="workflow_sprint_intake"/);
   assert.match(landingPage, /\/v1\/intake\/workflow-sprint/);
   assert.match(landingPage, /data-cta-id="workflow_sprint_brief"/);
