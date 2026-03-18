@@ -572,9 +572,20 @@ function stats() {
 }
 
 function cfo() {
-  const { getBillingSummary } = require(path.join(PKG_ROOT, 'scripts', 'billing'));
-  const summary = getBillingSummary();
-  console.log(JSON.stringify(summary, null, 2));
+  const { getOperationalBillingSummary } = require(path.join(PKG_ROOT, 'scripts', 'operational-summary'));
+  getOperationalBillingSummary()
+    .then(({ source, summary, fallbackReason }) => {
+      console.log(JSON.stringify({
+        source,
+        fallbackReason,
+        summary,
+      }, null, 2));
+      process.exit(0);
+    })
+    .catch((err) => {
+      console.error(err && err.message ? err.message : err);
+      process.exit(1);
+    });
 }
 
 function northStar() {
@@ -776,7 +787,12 @@ function funnel() {
 
 function pulse() {
   const { showPulse } = require(path.join(PKG_ROOT, 'scripts', 'pulse'));
-  showPulse();
+  showPulse().catch((err) => {
+    console.error(err && err.message ? err.message : err);
+    process.exit(1);
+  }).then(() => {
+    process.exit(0);
+  });
 }
 
 function gateStats() {
@@ -862,7 +878,7 @@ function help() {
   console.log('  serve                 Start MCP server (stdio) — for claude/codex/gemini mcp add');
   console.log('  capture [flags]       Capture feedback (--feedback=up|down --context="..." --tags="...")');
   console.log('  stats                 Show feedback analytics + Revenue-at-Risk');
-  console.log('  cfo                   Show local operational billing summary as JSON');
+  console.log('  cfo                   Show hosted billing summary when configured, else local fallback JSON');
   console.log('  north-star            Show proof-backed workflow-run progress toward the North Star');
   console.log('  summary               Human-readable feedback summary');
   console.log('  model-fit             Detect the current local embedding profile and write evidence report');

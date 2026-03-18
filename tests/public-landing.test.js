@@ -59,6 +59,10 @@ test('public landing page keeps optional GA4 and Search Console hooks available 
   assert.match(landingPage, /__GOOGLE_SITE_VERIFICATION_META__/);
   assert.match(landingPage, /__GA_BOOTSTRAP__/);
   assert.match(landingPage, /const gaMeasurementId = '__GA_MEASUREMENT_ID__';/);
+  assert.match(landingPage, /const serverVisitorId = '__SERVER_VISITOR_ID__';/);
+  assert.match(landingPage, /const serverSessionId = '__SERVER_SESSION_ID__';/);
+  assert.match(landingPage, /const serverAcquisitionId = '__SERVER_ACQUISITION_ID__';/);
+  assert.match(landingPage, /const serverTelemetryCaptured = '__SERVER_TELEMETRY_CAPTURED__' === 'true';/);
   assert.match(landingPage, /function trackGaEvent/);
   assert.match(landingPage, /trackGaEvent\('begin_checkout'/);
   assert.match(landingPage, /trackGaEvent\('reason_not_buying'/);
@@ -81,6 +85,8 @@ test('public landing page auto-detects search traffic and records SEO landing te
   assert.match(landingPage, /function inferSearchSurface/);
   assert.match(landingPage, /function inferSearchQuery/);
   assert.match(landingPage, /landingAttribution\.source === 'organic_search' \|\| landingAttribution\.source === 'ai_search'/);
+  assert.match(landingPage, /if \(!serverTelemetryCaptured\) \{\s*sendTelemetry\('landing_page_view'/);
+  assert.match(landingPage, /if \(!serverTelemetryCaptured\) \{\s*sendTelemetry\('seo_landing_view'/);
   assert.match(landingPage, /sendTelemetry\('seo_landing_view'/);
   assert.match(landingPage, /trackGaEvent\('seo_landing_view'/);
 });
@@ -116,7 +122,11 @@ test('public landing page positions the gateway as continuity-friendly reliabili
   assert.match(landingPage, /Start Sprint Intake/);
   assert.match(landingPage, /Review Sprint Brief/);
   assert.match(landingPage, /id="workflow-sprint-form"/);
+  assert.match(landingPage, /id="workflow-sprint-form" action="\/v1\/intake\/workflow-sprint" method="post"/);
+  assert.match(landingPage, /name="ctaId" type="hidden" value="workflow_sprint_intake"/);
   assert.match(landingPage, /\/v1\/intake\/workflow-sprint/);
+  assert.match(landingPage, /data-cta-id="workflow_sprint_brief"/);
+  assert.match(landingPage, /data-cta-id="workflow_sprint_proof"/);
   assert.match(landingPage, /workflow_sprint_lead_failed/);
   assert.match(landingPage, /href="#workflow-sprint-intake"/);
   assert.match(landingPage, /VERIFICATION_EVIDENCE\.md/);
