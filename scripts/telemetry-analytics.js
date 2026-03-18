@@ -263,6 +263,12 @@ function getTelemetrySummary(feedbackDir) {
   const pageViewsByCommunity = {};
   const pageViewsByOfferCode = {};
   const pageViewsByCampaignVariant = {};
+  const ctaClicksBySource = {};
+  const ctaClicksByCampaign = {};
+  const ctaClicksByTrafficChannel = {};
+  const ctaClicksByCommunity = {};
+  const ctaClicksByOfferCode = {};
+  const ctaClicksByCampaignVariant = {};
   const checkoutStartsBySource = {};
   const checkoutStartsByCampaign = {};
   const checkoutStartsByTrafficChannel = {};
@@ -282,6 +288,7 @@ function getTelemetrySummary(feedbackDir) {
   const cliByPlatform = {};
   const cliByVersion = {};
   let pageViews = 0;
+  let ctaClicks = 0;
   let checkoutStarts = 0;
   let checkoutFailures = 0;
   let checkoutCancelled = 0;
@@ -326,7 +333,18 @@ function getTelemetrySummary(feedbackDir) {
         if (entry.attributionTagged) attributedPageViews += 1;
       }
 
-      if ((entry.eventType || entry.event) === 'checkout_start') {
+      if ((entry.eventType || entry.event) === 'cta_click' || (entry.eventType || entry.event) === 'checkout_start' || (entry.eventType || entry.event) === 'checkout_bootstrap') {
+        ctaClicks += 1;
+        incrementCounter(ctaClicksBySource, entry.source);
+        incrementCounter(ctaClicksByCampaign, entry.utmCampaign);
+        incrementCounter(ctaClicksByTrafficChannel, entry.trafficChannel);
+        incrementCounter(ctaClicksByCommunity, entry.community);
+        incrementCounter(ctaClicksByOfferCode, entry.offerCode);
+        incrementCounter(ctaClicksByCampaignVariant, entry.campaignVariant);
+        incrementCounter(byCtaId, entry.ctaId);
+      }
+
+      if ((entry.eventType || entry.event) === 'checkout_start' || (entry.eventType || entry.event) === 'checkout_bootstrap') {
         checkoutStarts += 1;
         incrementCounter(checkoutStartsBySource, entry.source);
         incrementCounter(checkoutStartsByCampaign, entry.utmCampaign);
@@ -334,7 +352,6 @@ function getTelemetrySummary(feedbackDir) {
         incrementCounter(checkoutStartsByCommunity, entry.community);
         incrementCounter(checkoutStartsByOfferCode, entry.offerCode);
         incrementCounter(checkoutStartsByCampaignVariant, entry.campaignVariant);
-        incrementCounter(byCtaId, entry.ctaId);
         const starterKey = pickFirstText(
           entry.acquisitionId,
           entry.visitorId,
@@ -428,6 +445,7 @@ function getTelemetrySummary(feedbackDir) {
       uniqueSessions: webSessions.size,
       uniqueCheckoutStarters: webCheckoutStarters.size,
       pageViews,
+      ctaClicks,
       checkoutStarts,
       checkoutFailures,
       checkoutCancelled,
@@ -458,6 +476,12 @@ function getTelemetrySummary(feedbackDir) {
       pageViewsByCommunity,
       pageViewsByOfferCode,
       pageViewsByCampaignVariant,
+      ctaClicksBySource,
+      ctaClicksByCampaign,
+      ctaClicksByTrafficChannel,
+      ctaClicksByCommunity,
+      ctaClicksByOfferCode,
+      ctaClicksByCampaignVariant,
       checkoutStartsBySource,
       checkoutStartsByCampaign,
       checkoutStartsByTrafficChannel,
@@ -535,7 +559,8 @@ function getTelemetryAnalytics(feedbackDir) {
       topReferrerHost: topReferrerHost ? { key: topReferrerHost[0], count: topReferrerHost[1] } : null,
     },
     ctas: {
-      totalClicks: summary.web.checkoutStarts,
+      totalClicks: summary.web.ctaClicks,
+      checkoutStarts: summary.web.checkoutStarts,
       uniqueCheckoutStarters: summary.web.uniqueCheckoutStarters,
       checkoutFailures: summary.web.checkoutFailures,
       checkoutCancelled: summary.web.checkoutCancelled,
@@ -544,16 +569,23 @@ function getTelemetryAnalytics(feedbackDir) {
       failuresByStatus: summary.marketing.checkoutFailuresByStatus,
       cancellationReasons: summary.marketing.cancellationsByReason,
       abandonmentReasons: summary.marketing.abandonmentsByReason,
-      bySource: summary.marketing.checkoutStartsBySource,
-      byCampaign: summary.marketing.checkoutStartsByCampaign,
-      byTrafficChannel: summary.marketing.checkoutStartsByTrafficChannel,
-      byCommunity: summary.marketing.checkoutStartsByCommunity,
-      byOfferCode: summary.marketing.checkoutStartsByOfferCode,
-      byCampaignVariant: summary.marketing.checkoutStartsByCampaignVariant,
+      bySource: summary.marketing.ctaClicksBySource,
+      byCampaign: summary.marketing.ctaClicksByCampaign,
+      byTrafficChannel: summary.marketing.ctaClicksByTrafficChannel,
+      byCommunity: summary.marketing.ctaClicksByCommunity,
+      byOfferCode: summary.marketing.ctaClicksByOfferCode,
+      byCampaignVariant: summary.marketing.ctaClicksByCampaignVariant,
+      checkoutStartsBySource: summary.marketing.checkoutStartsBySource,
+      checkoutStartsByCampaign: summary.marketing.checkoutStartsByCampaign,
+      checkoutStartsByTrafficChannel: summary.marketing.checkoutStartsByTrafficChannel,
+      checkoutStartsByCommunity: summary.marketing.checkoutStartsByCommunity,
+      checkoutStartsByOfferCode: summary.marketing.checkoutStartsByOfferCode,
+      checkoutStartsByCampaignVariant: summary.marketing.checkoutStartsByCampaignVariant,
       byId: summary.marketing.byCtaId,
       topCta: topCta ? { key: topCta[0], count: topCta[1] } : null,
       pageViewToCheckoutRate: summary.web.pageViewToCheckoutRate,
       visitorToCheckoutRate: summary.web.visitorToCheckoutRate,
+      clickToCheckoutRate: safeRate(summary.web.checkoutStarts, summary.web.ctaClicks),
       cancellationRate: safeRate(summary.web.checkoutCancelled, summary.web.checkoutStarts),
       abandonmentRate: safeRate(summary.web.checkoutAbandoned, summary.web.checkoutStarts),
       conversionByTrafficChannel: summary.marketing.checkoutConversionByTrafficChannel,

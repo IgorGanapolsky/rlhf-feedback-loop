@@ -254,9 +254,13 @@ function computeAnalyticsSummary(feedbackDir) {
   const northStar = summarizeWorkflowRuns(feedbackDir);
   const uniqueVisitors = telemetry.visitors.uniqueVisitors;
   const ctaClicks = telemetry.ctas.totalClicks;
+  const checkoutStarts = telemetry.ctas.checkoutStarts || 0;
   const acquisitionLeads = billing.signups ? billing.signups.uniqueLeads || 0 : 0;
   const paidOrders = billing.revenue ? billing.revenue.paidOrders || 0 : 0;
-  const checkoutStartEntries = telemetryEntries.filter((entry) => (entry.eventType || entry.event) === 'checkout_start');
+  const checkoutStartEntries = telemetryEntries.filter((entry) => {
+    const eventType = entry.eventType || entry.event;
+    return eventType === 'checkout_start' || eventType === 'checkout_bootstrap';
+  });
   const acquisitionEntries = funnelEntries.filter((entry) => entry && entry.stage === 'acquisition');
   const checkoutKeys = new Set(checkoutStartEntries.map(resolveJourneyKey).filter(Boolean));
   const acquisitionKeys = new Set(acquisitionEntries.map(resolveJourneyKey).filter(Boolean));
@@ -282,7 +286,7 @@ function computeAnalyticsSummary(feedbackDir) {
       sessions: telemetry.visitors ? telemetry.visitors.uniqueSessions || 0 : 0,
       pageViews: telemetry.visitors ? telemetry.visitors.pageViews || 0 : 0,
       ctaClicks,
-      checkoutStarts: telemetry.ctas ? telemetry.ctas.totalClicks || 0 : 0,
+      checkoutStarts,
       acquisitionLeads,
       paidOrders,
       visitorToLeadRate: safeRate(acquisitionLeads, uniqueVisitors),
@@ -357,7 +361,7 @@ function computeAnalyticsSummary(feedbackDir) {
       unreconciledPaidEvents: 0,
     },
     reconciliation: {
-      telemetryCheckoutStarts: telemetry.ctas.totalClicks,
+      telemetryCheckoutStarts: checkoutStarts,
       uniqueCheckoutStarters: telemetry.ctas.uniqueCheckoutStarters,
       matchedAcquisitions: matchedAcquisitionKeys.size,
       matchedPaidOrders,

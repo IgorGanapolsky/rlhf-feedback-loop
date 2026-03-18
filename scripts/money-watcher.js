@@ -6,7 +6,7 @@
 
 'use strict';
 
-const { getBillingSummary } = require('./billing');
+const { getOperationalBillingSummary } = require('./operational-summary');
 
 function getCommercialRevenueSnapshot(summary) {
   const revenue = summary.revenue || {};
@@ -18,38 +18,51 @@ function getCommercialRevenueSnapshot(summary) {
   };
 }
 
-function watchMoney(intervalMs = 10000) {
+async function watchMoney(intervalMs = 10000) {
   console.log('👀 Money Watcher activated. Polling billing summary for commercial changes...');
-  let initialSnapshot = getCommercialRevenueSnapshot(getBillingSummary());
+  const initialState = await getOperationalBillingSummary();
+  let initialSnapshot = getCommercialRevenueSnapshot(initialState.summary);
+  let polling = false;
 
-  return setInterval(() => {
-    const summary = getBillingSummary();
-    const currentSnapshot = getCommercialRevenueSnapshot(summary);
+  return setInterval(async () => {
+    if (polling) return;
+    polling = true;
+    try {
+      const { source, summary, fallbackReason } = await getOperationalBillingSummary();
+      const currentSnapshot = getCommercialRevenueSnapshot(summary);
 
-    const newPaidOrders = currentSnapshot.paidOrders - initialSnapshot.paidOrders;
-    const newBookedRevenue = currentSnapshot.bookedRevenueCents - initialSnapshot.bookedRevenueCents;
+      const newPaidOrders = currentSnapshot.paidOrders - initialSnapshot.paidOrders;
+      const newBookedRevenue = currentSnapshot.bookedRevenueCents - initialSnapshot.bookedRevenueCents;
 
-    if (newPaidOrders > 0 || newBookedRevenue > 0) {
-      console.log('\n🚨🚨🚨 COMMERCIAL ALERT: NET-NEW PAID ACTIVITY DETECTED! 🚨🚨🚨');
-      console.log('Operational billing summary:');
-      console.log(JSON.stringify({
-        newPaidOrders,
-        newBookedRevenueCents: newBookedRevenue,
-        latestPaidAt: currentSnapshot.latestPaidAt,
-        latestPaidOrder: currentSnapshot.latestPaidOrder,
-        bookedRevenueCents: currentSnapshot.bookedRevenueCents,
-        activeKeys: summary.keys.active,
-        totalUsage: summary.keys.totalUsage,
-      }, null, 2));
+      if (newPaidOrders > 0 || newBookedRevenue > 0) {
+        console.log('\n🚨🚨🚨 COMMERCIAL ALERT: NET-NEW PAID ACTIVITY DETECTED! 🚨🚨🚨');
+        console.log('Operational billing summary:');
+        console.log(JSON.stringify({
+          source,
+          fallbackReason,
+          newPaidOrders,
+          newBookedRevenueCents: newBookedRevenue,
+          latestPaidAt: currentSnapshot.latestPaidAt,
+          latestPaidOrder: currentSnapshot.latestPaidOrder,
+          bookedRevenueCents: currentSnapshot.bookedRevenueCents,
+          activeKeys: summary.keys.active,
+          totalUsage: summary.keys.totalUsage,
+        }, null, 2));
 
-      process.stdout.write('\x07');
-      initialSnapshot = currentSnapshot;
+        process.stdout.write('\x07');
+        initialSnapshot = currentSnapshot;
+      }
+    } finally {
+      polling = false;
     }
   }, intervalMs);
 }
 
 if (require.main === module) {
-  watchMoney();
+  watchMoney().catch((err) => {
+    console.error(err && err.message ? err.message : err);
+    process.exit(1);
+  });
 }
 
 module.exports = {
