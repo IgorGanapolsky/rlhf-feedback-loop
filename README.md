@@ -81,7 +81,9 @@ This repo now ships a submission-ready Cursor plugin bundle:
 - Plugin directory: `plugins/cursor-marketplace/`
 - Plugin MCP config: `plugins/cursor-marketplace/.mcp.json`
 
-That package keeps the Cursor review surface intentionally small: one MCP server bundle that helps Cursor agents stop repeating mistakes with local memory, pre-action gates, and proof-backed feedback loops. The runtime launcher now targets `mcp-memory-gateway@latest`, so npm releases can flow into the plugin runtime without editing the config. Marketplace metadata, screenshots, and directory copy still require an explicit plugin refresh. Until the public listing is approved, Cursor users can still install locally with `npx mcp-memory-gateway init`.
+Use `MCP Memory Gateway` as the display name in Cursor Marketplace and Cursor Directory forms. Keep `mcp-memory-gateway` as the plugin slug and npm package name.
+
+That package keeps the Cursor review surface intentionally small: one MCP server bundle that helps Cursor agents stop repeating mistakes with local memory, pre-action gates, and proof-backed feedback. The runtime launcher now targets `mcp-memory-gateway@latest`, so npm releases can flow into the plugin runtime without editing the config. Marketplace metadata, screenshots, and directory copy still require an explicit plugin refresh. Until the public listing is approved, Cursor users can still install locally with `npx mcp-memory-gateway init`.
 
 Operational guidance for Cursor releases and promotion lives in [docs/CURSOR_PLUGIN_OPERATIONS.md](docs/CURSOR_PLUGIN_OPERATIONS.md).
 

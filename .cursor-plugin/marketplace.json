@@ -4,14 +4,14 @@
     "name": "Igor Ganapolsky"
   },
   "metadata": {
-    "description": "Cursor plugin packaging for MCP Memory Gateway, the local-first reliability layer that helps agents stop repeating mistakes.",
+    "description": "Cursor plugin packaging for MCP Memory Gateway, the reliability layer that helps Cursor agents stop repeating mistakes with local memory, pre-action gates, and proof-backed feedback.",
     "version": "0.7.1"
   },
   "plugins": [
     {
       "name": "mcp-memory-gateway",
       "source": "plugins/cursor-marketplace",
-      "description": "Stop Cursor agents from repeating mistakes with local memory, pre-action gates, and verification-backed feedback loops.",
+      "description": "Stop Cursor agents from repeating mistakes with local memory, pre-action gates, and proof-backed feedback.",
       "category": "developer-tools",
       "tags": [
         "mcp",

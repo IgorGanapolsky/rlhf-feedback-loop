@@ -6,6 +6,13 @@
 - Team Marketplace: private repo-backed install surface for Cursor Teams and Enterprise
 - Cursor Directory: discoverability surface only
 
+## Canonical identity
+
+- Display name: `MCP Memory Gateway`
+- Plugin slug: `mcp-memory-gateway`
+- npm package: `mcp-memory-gateway`
+- MCP server label inside the plugin config: `rlhf`
+
 ## Update behavior
 
 - Runtime path: the Cursor plugin launches `npx -y mcp-memory-gateway@latest serve`.
@@ -27,11 +34,19 @@
 - Lead with outcome before architecture: memory, pre-action gates, proof.
 - Keep `Agentic Feedback Studio`, `Veto Layer`, `DPO`, and `Thompson Sampling` in the body or tags, not the first sentence.
 - Keep proof near the pitch by linking [VERIFICATION_EVIDENCE.md](./VERIFICATION_EVIDENCE.md).
+- In manual forms, use the display name for `Name` and keep the slug for package/config paths only.
 
 ## Suggested short description
 
-Stop Cursor agents from repeating mistakes with local memory, pre-action guardrails, and verification-backed feedback loops.
+Stop Cursor agents from repeating mistakes with local memory, pre-action gates, and proof-backed feedback.
 
 ## Suggested long description
 
 MCP Memory Gateway gives Cursor agents a local-first reliability loop. Capture feedback with evidence, recall past failures before repeating them, block known-bad actions with the Veto Layer, and keep proof close to every workflow change.
+
+## Suggested manual submission fields
+
+- Name: `MCP Memory Gateway`
+- Description: `Stop Cursor agents from repeating mistakes with local memory, pre-action gates, and proof-backed feedback.`
+- Repository URL: `https://github.com/IgorGanapolsky/mcp-memory-gateway`
+- Homepage: `https://rlhf-feedback-loop-production.up.railway.app`

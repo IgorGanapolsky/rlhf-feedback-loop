@@ -7,8 +7,8 @@ Stop Cursor agents from repeating mistakes.
 Lead with the outcome first:
 
 - local memory for repo-specific lessons
-- pre-action guardrails before tool use
-- proof-backed feedback loops with verification evidence
+- pre-action gates before tool use
+- proof-backed feedback with verification evidence
 
 Keep these terms in the body, tags, or follow-up copy:
 
@@ -19,7 +19,14 @@ Keep these terms in the body, tags, or follow-up copy:
 
 ## Directory blurb
 
-MCP Memory Gateway helps Cursor agents stop repeating mistakes with local memory, pre-action gates, and proof-backed feedback loops. Capture feedback with evidence, recall past failures before they recur, and turn repeated errors into reusable prevention rules.
+MCP Memory Gateway helps Cursor agents stop repeating mistakes with local memory, pre-action gates, and proof-backed feedback. Capture feedback with evidence, recall past failures before they recur, and turn repeated errors into reusable prevention rules.
+
+## Manual submission fields
+
+- Name: `MCP Memory Gateway`
+- Description: `Stop Cursor agents from repeating mistakes with local memory, pre-action gates, and proof-backed feedback.`
+- Repository URL: `https://github.com/IgorGanapolsky/mcp-memory-gateway`
+- Homepage: `https://rlhf-feedback-loop-production.up.railway.app`
 
 ## Surface notes
 
@@ -34,7 +41,7 @@ Cursor is fast until it repeats the same repo mistake for the third time.
 We shipped MCP Memory Gateway to give Cursor agents:
 - local memory for repo lessons
 - pre-action gates before tool use
-- proof-backed feedback loops
+- proof-backed feedback
 
 The point is not more orchestration.
 The point is fewer repeated mistakes.
