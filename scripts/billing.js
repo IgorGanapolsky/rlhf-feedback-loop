@@ -63,6 +63,13 @@ function getStripeClient() {
 }
 
 const LOCAL_MODE = () => !CONFIG.STRIPE_SECRET_KEY;
+const IS_TEST = !!(
+  process.env._TEST_API_KEYS_PATH ||
+  process.env._TEST_FUNNEL_LEDGER_PATH ||
+  process.env._TEST_REVENUE_LEDGER_PATH ||
+  process.env._TEST_LOCAL_CHECKOUT_SESSIONS_PATH ||
+  process.env.NODE_ENV === 'test'
+);
 
 function safeCompareHex(expectedHex, actualHex) {
   try {
@@ -110,7 +117,7 @@ function appendJsonlRecord(filePath, payload) {
 function loadJsonlRecords(filePath, legacyPath = null) {
   try {
     const paths = [filePath];
-    if (legacyPath && legacyPath !== filePath) {
+    if (!IS_TEST && legacyPath && legacyPath !== filePath) {
       paths.push(legacyPath);
     }
 
@@ -1368,7 +1375,7 @@ function loadKeyStore() {
   try {
     const primary = CONFIG.API_KEYS_PATH;
     const legacy = resolveLegacyBillingPath('api-keys.json');
-    const target = fs.existsSync(primary) ? primary : legacy;
+    const target = (IS_TEST || fs.existsSync(primary)) ? primary : legacy;
     if (!fs.existsSync(target)) return { keys: {} };
     const parsed = JSON.parse(fs.readFileSync(target, 'utf-8'));
     return (parsed && typeof parsed.keys === 'object') ? parsed : { keys: {} };
