@@ -12,6 +12,7 @@ const PROJECT_ROOT = path.join(__dirname, '..');
 
 const WRITE_CAPABLE_TOOLS = new Set([
   'capture_feedback',
+  'bootstrap_internal_agent',
   'prevention_rules',
   'export_dpo_pairs',
   'export_databricks_bundle',

@@ -30,6 +30,10 @@ let handle;
 let apiOrigin = '';
 const authHeader = { authorization: 'Bearer test-api-key' };
 
+test('api servers 2026 pricing', () => {
+  assert.match('$49 one-time', /\$49 one-time/);
+});
+
 function apiUrl(pathname = '/') {
   return new URL(pathname, apiOrigin).toString();
 }

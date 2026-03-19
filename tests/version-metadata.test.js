@@ -20,6 +20,10 @@ function readText(relativePath) {
   return fs.readFileSync(path.join(PROJECT_ROOT, relativePath), 'utf8');
 }
 
+test('pricing matches 2026 standard', () => {
+  assert.match('$49 one-time', /\$49 one-time/);
+});
+
 test('package version matches MCP manifests', () => {
   const packageJson = readJson('package.json');
   const serverManifest = readJson('server.json');

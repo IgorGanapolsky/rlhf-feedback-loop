@@ -2,7 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { spawn } = require('child_process');
+const { spawn, execFileSync } = require('child_process');
 const { waitForBackgroundSideEffects } = require('./feedback-loop');
 const { startServer } = require('../src/api/server');
 const { handleRequest } = require('../adapters/mcp/server-stdio');
@@ -34,6 +34,24 @@ function parseLeadingJson(text) {
   const boundary = raw.indexOf(marker);
   const jsonSegment = boundary === -1 ? raw : raw.slice(0, boundary);
   return JSON.parse(jsonSegment.trim());
+}
+
+function initGitRepo() {
+  const repoPath = fs.mkdtempSync(path.join(os.tmpdir(), 'rlhf-proof-repo-'));
+  execFileSync('git', ['init', '-b', 'main'], { cwd: repoPath, stdio: 'ignore' });
+  execFileSync('git', ['config', 'user.name', 'RLHF Proof'], { cwd: repoPath, stdio: 'ignore' });
+  execFileSync('git', ['config', 'user.email', 'proof@example.com'], { cwd: repoPath, stdio: 'ignore' });
+  fs.writeFileSync(path.join(repoPath, 'README.md'), '# proof repo\n');
+  execFileSync('git', ['add', 'README.md'], { cwd: repoPath, stdio: 'ignore' });
+  execFileSync('git', ['commit', '-m', 'init'], { cwd: repoPath, stdio: 'ignore' });
+  return repoPath;
+}
+
+function removeWorktree(repoPath, worktreePath) {
+  if (!repoPath || !worktreePath || !fs.existsSync(worktreePath)) return;
+  execFileSync('git', ['-C', repoPath, 'worktree', 'remove', '--force', worktreePath], {
+    stdio: 'ignore',
+  });
 }
 
 async function fetchWithRetry(url, options, { retries = 5, delayMs = 100 } = {}) {
@@ -275,6 +293,47 @@ async function runProof(options = {}) {
         source: body.codegraphImpact.source,
         impactScore: body.codegraphImpact.evidence.impactScore,
       });
+    }
+
+    {
+      currentCheck = 'api.internal_agent.bootstrap';
+      const repoPath = initGitRepo();
+      const sandboxRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'rlhf-proof-bootstrap-'));
+      let sandboxPath = null;
+
+      try {
+        const res = await fetchWithRetry(`${baseUrl}/v1/internal-agent/bootstrap`, {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer proof-key',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            source: 'github',
+            repoPath,
+            sandboxRoot,
+            context: 'Improve the response with evidence and prevention rules',
+            trigger: { type: 'pull_request_comment', id: '17', actor: 'octocat' },
+            task: {
+              title: 'Harden bootstrap plan',
+              body: 'Refactor scripts/intent-router.js and provide proof.',
+            },
+          }),
+        });
+        check(res.status === 200, `internal agent bootstrap expected 200, got ${res.status}`);
+        const body = await res.json();
+        sandboxPath = body.sandbox && body.sandbox.path;
+        check(body.sandbox && body.sandbox.ready === true, 'api bootstrap should prepare a sandbox');
+        check(body.reviewerLane && body.reviewerLane.enabled === true, 'api bootstrap should recommend a reviewer lane');
+        addResult('api.internal_agent.bootstrap', true, {
+          sandboxReady: body.sandbox.ready,
+          executionMode: body.intentPlan.executionMode,
+        });
+      } finally {
+        removeWorktree(repoPath, sandboxPath);
+        fs.rmSync(repoPath, { recursive: true, force: true });
+        fs.rmSync(sandboxRoot, { recursive: true, force: true });
+      }
     }
 
     {
@@ -547,6 +606,47 @@ async function runProof(options = {}) {
     }
 
     {
+      currentCheck = 'mcp.tools.call.bootstrap_internal_agent';
+      const repoPath = initGitRepo();
+      const sandboxRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'rlhf-proof-mcp-bootstrap-'));
+      let sandboxPath = null;
+
+      try {
+        const call = await handleRequest({
+          jsonrpc: '2.0',
+          id: 37,
+          method: 'tools/call',
+          params: {
+            name: 'bootstrap_internal_agent',
+            arguments: {
+              source: 'github',
+              repoPath,
+              sandboxRoot,
+              context: 'Improve the response with evidence and prevention rules',
+              trigger: { type: 'pull_request_comment', id: '18', actor: 'octocat' },
+              task: {
+                title: 'Harden bootstrap plan',
+                body: 'Refactor scripts/intent-router.js and provide proof.',
+              },
+            },
+          },
+        });
+        const payload = JSON.parse(call.content[0].text);
+        sandboxPath = payload.sandbox && payload.sandbox.path;
+        check(payload.sandbox && payload.sandbox.ready === true, 'mcp bootstrap should prepare a sandbox');
+        check(payload.reviewerLane && payload.reviewerLane.enabled === true, 'mcp bootstrap should recommend a reviewer lane');
+        addResult('mcp.tools.call.bootstrap_internal_agent', true, {
+          sandboxReady: payload.sandbox.ready,
+          executionMode: payload.intentPlan.executionMode,
+        });
+      } finally {
+        removeWorktree(repoPath, sandboxPath);
+        fs.rmSync(repoPath, { recursive: true, force: true });
+        fs.rmSync(sandboxRoot, { recursive: true, force: true });
+      }
+    }
+
+    {
       currentCheck = 'mcp.tools.call.capture_feedback.rubric_gate';
       const call = await handleRequest({
         jsonrpc: '2.0',
@@ -621,7 +721,7 @@ async function runProof(options = {}) {
       const chatgpt = fs.readFileSync(path.join(ROOT, 'adapters/chatgpt/openapi.yaml'), 'utf-8');
       check(canonical === chatgpt, 'chatgpt openapi not in sync with canonical openapi');
 
-      ['/v1/feedback/capture', '/v1/dpo/export', '/v1/context/construct', '/v1/intents/plan'].forEach((route) => {
+      ['/v1/feedback/capture', '/v1/dpo/export', '/v1/context/construct', '/v1/intents/plan', '/v1/internal-agent/bootstrap'].forEach((route) => {
         check(new RegExp(escapeRegExp(route)).test(canonical), `route missing from openapi: ${route}`);
       });
       addResult('adapter.chatgpt.openapi.parity', true, { byteEqual: true });

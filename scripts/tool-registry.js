@@ -183,6 +183,77 @@ const TOOLS = [
     },
   }),
   destructiveTool({
+  }),
+  destructiveTool({
+    name: 'bootstrap_internal_agent',
+    description: 'Normalize a GitHub/Slack/Linear trigger into startup context, construct a recall pack, prepare a git worktree sandbox, and emit an execution plus reviewer-lane plan.',
+    inputSchema: {
+      type: 'object',
+      required: ['source'],
+      properties: {
+        source: { type: 'string', enum: ['github', 'slack', 'linear', 'api', 'cli'] },
+        repoPath: { type: 'string' },
+        prepareSandbox: { type: 'boolean' },
+        sandboxRoot: { type: 'string' },
+        intentId: { type: 'string' },
+        context: { type: 'string' },
+        mcpProfile: { type: 'string' },
+        partnerProfile: { type: 'string' },
+        delegationMode: { type: 'string', enum: ['off', 'auto', 'sequential'] },
+        approved: { type: 'boolean' },
+        trigger: {
+          type: 'object',
+          properties: {
+            type: { type: 'string' },
+            id: { type: 'string' },
+            url: { type: 'string' },
+            actor: { type: 'string' },
+          },
+        },
+        thread: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            title: { type: 'string' },
+            url: { type: 'string' },
+          },
+        },
+        task: {
+          type: 'object',
+          properties: {
+            title: { type: 'string' },
+            body: { type: 'string' },
+            number: { type: 'string' },
+            branch: { type: 'string' },
+            labels: { type: 'array', items: { type: 'string' } },
+          },
+        },
+        comments: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              author: { type: 'string' },
+              text: { type: 'string' },
+              timestamp: { type: 'string' },
+            },
+          },
+        },
+        messages: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              author: { type: 'string' },
+              text: { type: 'string' },
+              timestamp: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+  }),
+  destructiveTool({
     name: 'prevention_rules',
     description: 'Generate prevention rules from repeated mistake patterns',
     inputSchema: {

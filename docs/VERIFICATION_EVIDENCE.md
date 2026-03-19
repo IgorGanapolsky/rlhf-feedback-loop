@@ -1,3 +1,59 @@
+## March 18, 2026: Open SWE-style internal-agent bootstrap, sandbox lane, and MCP/API parity
+
+Scope:
+
+- Added `scripts/internal-agent-bootstrap.js` as a real runtime bootstrap module for internal coding-agent threads, not a marketing-only stub.
+- Added a first-class `bootstrap_internal_agent` surface across the MCP tool registry, API server, canonical OpenAPI spec, and Gemini function declarations.
+- Added worktree-backed sandbox preparation so bootstrap can create or reuse an isolated git worktree lane for execution.
+- Added reviewer-lane planning in the bootstrap result so coding workflows can expose an optional evaluator/reviewer path without making multi-agent orchestration the default.
+- Replaced dead placeholder MCP behavior for the tested tool surfaces in `adapters/mcp/server-stdio.js` with real dispatch and payload handling.
+- Hardened stdio transport behavior so framed and newline-delimited MCP initialization both work, while malformed ndjson still returns the legacy ndjson error envelope expected by the CLI contract.
+- Preserved recall-limit commercial behavior while keeping real recall output and codegraph evidence intact after the adapter rewrite.
+
+Commands run in the dedicated worktree at `/Users/ganapolsky_i/workspace/git/igor/rlhf-open-swe-plan`:
+
+```bash
+npm ci
+node --test tests/internal-agent-bootstrap.test.js tests/mcp-server.test.js tests/openapi-parity.test.js tests/prove-adapters.test.js tests/cli.test.js tests/recall-limit.test.js
+npm test
+npm run test:coverage
+env RLHF_PROOF_DIR='/var/folders/yw/2qhx3yzj0psf87rdxh8lqlmm0000gp/T/tmp.1Y2VqtnO1F/proof' npm run prove:adapters
+env RLHF_AUTOMATION_PROOF_DIR='/var/folders/yw/2qhx3yzj0psf87rdxh8lqlmm0000gp/T/tmp.2gfdnB5cPh/proof-automation' npm run prove:automation
+npm run self-heal:check
+git status --short
+git diff --stat
+```
+
+Observed result:
+
+- `npm ci` exited `0`; `150` packages installed, `151` audited, `0` vulnerabilities. Log: `/var/folders/yw/2qhx3yzj0psf87rdxh8lqlmm0000gp/T/tmp.xKAQXDEA64/npm-ci.log`
+- Focused Open SWE regression pack exited `0`: `111` passed, `0` failed. Log: `/var/folders/yw/2qhx3yzj0psf87rdxh8lqlmm0000gp/T/tmp.QAW02kTBU1/open-swe-regression.log`
+- `npm test` exited `0` end-to-end in the clean worktree. Log: `/var/folders/yw/2qhx3yzj0psf87rdxh8lqlmm0000gp/T/tmp.gkSlebXonX/npm-test.log`
+- `npm run test:coverage` exited `0` with all-files coverage at `86.97%` lines, `75.15%` branches, and `92.49%` functions. Log: `/var/folders/yw/2qhx3yzj0psf87rdxh8lqlmm0000gp/T/tmp.omsAOIgi5P/test-coverage.log`
+- `env RLHF_PROOF_DIR=... npm run prove:adapters` exited `0`: `48` passed, `0` failed. Log: `/var/folders/yw/2qhx3yzj0psf87rdxh8lqlmm0000gp/T/tmp.1Y2VqtnO1F/prove-adapters.log`
+- `env RLHF_AUTOMATION_PROOF_DIR=... npm run prove:automation` exited `0`: `55` passed, `0` failed. Log: `/var/folders/yw/2qhx3yzj0psf87rdxh8lqlmm0000gp/T/tmp.2gfdnB5cPh/prove-automation.log`
+- `npm run self-heal:check` exited `0`: `Overall: HEALTHY` with `4/4` healthy checks. Log: `/var/folders/yw/2qhx3yzj0psf87rdxh8lqlmm0000gp/T/tmp.gqN6I7Gfkp/self-heal-check.log`
+- Current tracked diff after the implementation:
+  - `16` changed paths in the worktree
+  - `14` tracked files changed with `1050` insertions and `20` deletions
+  - `2` new files: `scripts/internal-agent-bootstrap.js` and `tests/internal-agent-bootstrap.test.js`
+- Post-sync verification after merging `origin/main` into `codex/open-swe-adoption-plan` for PR `#258` also passed:
+  - `npm ci` exited `0`. Log: `/var/folders/yw/2qhx3yzj0psf87rdxh8lqlmm0000gp/T/tmp.l6cgkKKJVv/npm-ci-merge.log`
+  - `npm test` exited `0`. Log: `/var/folders/yw/2qhx3yzj0psf87rdxh8lqlmm0000gp/T/tmp.RRXVoXMSMg/npm-test-merge.log`
+  - `npm run test:coverage` exited `0` with all-files coverage at `89.57%` lines, `75.72%` branches, and `93.10%` functions. Log: `/var/folders/yw/2qhx3yzj0psf87rdxh8lqlmm0000gp/T/tmp.S5vGznS7oW/test-coverage-merge.log`
+  - `env RLHF_PROOF_DIR=... npm run prove:adapters` exited `0`: `48` passed, `0` failed. Log: `/var/folders/yw/2qhx3yzj0psf87rdxh8lqlmm0000gp/T/tmp.0QvYuLywFK/prove-adapters-merge.log`
+  - `env RLHF_AUTOMATION_PROOF_DIR=... npm run prove:automation` exited `0`: `55` passed, `0` failed. Log: `/var/folders/yw/2qhx3yzj0psf87rdxh8lqlmm0000gp/T/tmp.LIxnkdcu80/prove-automation-merge.log`
+  - `npm run self-heal:check` exited `0`: `Overall: HEALTHY` with `4/4` healthy checks. Log: `/var/folders/yw/2qhx3yzj0psf87rdxh8lqlmm0000gp/T/tmp.Xr81UMZGaf/self-heal-check-merge.log`
+
+Requirements verified:
+
+- `bootstrap_internal_agent` is now reachable through the API route, MCP tool surface, canonical OpenAPI document, ChatGPT adapter OpenAPI mirror, and Gemini declarations.
+- Bootstrap can normalize GitHub/Slack/Linear-style invocations, build startup context, create or reuse a git worktree sandbox, and emit a reviewer-lane recommendation for coding tasks.
+- The MCP stdio server still accepts both `Content-Length` framed requests and newline-delimited JSON requests after the adapter rewrite.
+- Malformed ndjson input still returns the expected ndjson error envelope, which keeps `tests/cli.test.js` green instead of silently changing the transport contract.
+- Recall still returns actual results, includes codegraph evidence, and appends the post-limit upgrade nudge after five calls.
+- Adapter proof coverage increased to `48` passing checks because the new bootstrap surface is exercised by both `api.internal_agent.bootstrap` and `mcp.tools.call.bootstrap_internal_agent`.
+
 ## March 18, 2026: North Star truth surface, workflow-run ledger, and hosted analytics durability
 
 Scope:

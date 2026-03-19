@@ -39,6 +39,9 @@ const {
   completeHandoff,
 } = require('../../scripts/delegation-runtime');
 const {
+  bootstrapInternalAgent,
+} = require('../../scripts/internal-agent-bootstrap');
+const {
   loadModel,
   getReliability,
   samplePosteriors,
@@ -2134,6 +2137,33 @@ function createApiServer() {
           sendJson(res, 200, result);
         } catch (err) {
           throw createHttpError(err.statusCode || 400, err.message || 'Invalid handoff completion request');
+        }
+        return;
+      }
+
+      if (req.method === 'POST' && pathname === '/v1/internal-agent/bootstrap') {
+        const body = await parseJsonBody(req);
+        try {
+          const result = bootstrapInternalAgent({
+            source: body.source,
+            repoPath: body.repoPath,
+            prepareSandbox: body.prepareSandbox,
+            sandboxRoot: body.sandboxRoot,
+            intentId: body.intentId,
+            context: body.context,
+            mcpProfile: body.mcpProfile,
+            partnerProfile: body.partnerProfile,
+            delegationMode: body.delegationMode,
+            approved: body.approved === true,
+            trigger: body.trigger,
+            thread: body.thread,
+            task: body.task,
+            comments: body.comments,
+            messages: body.messages,
+          });
+          sendJson(res, 200, result);
+        } catch (err) {
+          throw createHttpError(err.statusCode || 400, err.message || 'Invalid internal agent bootstrap request');
         }
         return;
       }

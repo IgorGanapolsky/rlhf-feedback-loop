@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const os = require('node:os');
 const path = require('node:path');
 const fs = require('node:fs');
+const { execFileSync } = require('node:child_process');
 
 const tmpFeedbackDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rlhf-mcp-test-'));
 const tmpProofDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rlhf-mcp-proof-'));
@@ -11,6 +12,24 @@ process.env.RLHF_PROOF_DIR = tmpProofDir;
 process.env.RLHF_NO_RATE_LIMIT = '1'; // bypass free-tier rate limits during tests
 
 const { handleRequest, TOOLS, SAFE_DATA_DIR } = require('../adapters/mcp/server-stdio');
+
+function initGitRepo() {
+  const repoPath = fs.mkdtempSync(path.join(os.tmpdir(), 'rlhf-mcp-repo-'));
+  execFileSync('git', ['init', '-b', 'main'], { cwd: repoPath, stdio: 'ignore' });
+  execFileSync('git', ['config', 'user.name', 'RLHF Test'], { cwd: repoPath, stdio: 'ignore' });
+  execFileSync('git', ['config', 'user.email', 'rlhf@example.com'], { cwd: repoPath, stdio: 'ignore' });
+  fs.writeFileSync(path.join(repoPath, 'README.md'), '# temp repo\n');
+  execFileSync('git', ['add', 'README.md'], { cwd: repoPath, stdio: 'ignore' });
+  execFileSync('git', ['commit', '-m', 'init'], { cwd: repoPath, stdio: 'ignore' });
+  return repoPath;
+}
+
+function removeWorktree(repoPath, worktreePath) {
+  if (!repoPath || !worktreePath || !fs.existsSync(worktreePath)) return;
+  execFileSync('git', ['-C', repoPath, 'worktree', 'remove', '--force', worktreePath], {
+    stdio: 'ignore',
+  });
+}
 
 test.after(() => {
   fs.rmSync(tmpFeedbackDir, { recursive: true, force: true });
@@ -214,6 +233,59 @@ test('start_handoff and complete_handoff expose sequential delegation over MCP',
   assert.equal(completed.status, 'completed');
   assert.equal(completed.outcome, 'accepted');
   assert.equal(completed.verificationAccepted, true);
+});
+
+test('bootstrap_internal_agent creates a sandbox and reviewer plan over MCP', async () => {
+  const repoPath = initGitRepo();
+  const sandboxRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'rlhf-mcp-bootstrap-'));
+  const previous = process.env.RLHF_CODEGRAPH_STUB_RESPONSE;
+  process.env.RLHF_CODEGRAPH_STUB_RESPONSE = JSON.stringify({
+    source: 'stub',
+    symbols: ['planIntent'],
+    callers: ['src/api/server.js -> planIntent'],
+    callees: ['rankActions'],
+    deadCode: ['legacyIntentPlanner'],
+  });
+
+  try {
+    const result = await handleRequest({
+      jsonrpc: '2.0',
+      id: 281,
+      method: 'tools/call',
+      params: {
+        name: 'bootstrap_internal_agent',
+        arguments: {
+          source: 'github',
+          repoPath,
+          sandboxRoot,
+          context: 'Improve the response with evidence and prevention rules',
+          trigger: { type: 'pull_request_comment', id: '42', actor: 'octocat' },
+          thread: { title: 'PR #42' },
+          task: {
+            title: 'Harden the MCP adapter',
+            body: 'Refactor scripts/intent-router.js and show proof.',
+          },
+          comments: [
+            { author: 'octocat', text: 'Need a verified bootstrap flow.' },
+          ],
+        },
+      },
+    });
+
+    const payload = JSON.parse(result.content[0].text);
+    assert.equal(payload.sandbox.ready, true);
+    assert.equal(payload.reviewerLane.enabled, true);
+    assert.ok(payload.recallPack.packId);
+    assert.equal(payload.codeGraph.enabled, true);
+    assert.ok(payload.middlewarePlan.some((step) => step.step === 'proof_gate'));
+
+    removeWorktree(repoPath, payload.sandbox.path);
+  } finally {
+    if (previous === undefined) delete process.env.RLHF_CODEGRAPH_STUB_RESPONSE;
+    else process.env.RLHF_CODEGRAPH_STUB_RESPONSE = previous;
+    fs.rmSync(repoPath, { recursive: true, force: true });
+    fs.rmSync(sandboxRoot, { recursive: true, force: true });
+  }
 });
 
 test('diagnose_failure exposes compiled constraints and root cause over MCP', async () => {
