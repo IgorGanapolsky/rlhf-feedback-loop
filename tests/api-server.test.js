@@ -126,6 +126,74 @@ test('privacy policy route covers collection, sharing, retention, and contact de
   assert.match(body, /igor\.ganapolsky@gmail\.com/i);
 });
 
+test('public HEAD routes stay unauthenticated and side-effect free', async () => {
+  const telemetryPath = path.join(tmpFeedbackDir, 'telemetry-pings.jsonl');
+  const checkoutSessionsPath = process.env._TEST_LOCAL_CHECKOUT_SESSIONS_PATH;
+  const telemetryCountBefore = readJsonl(telemetryPath).length;
+  const checkoutSessionsBefore = checkoutSessionsPath && fs.existsSync(checkoutSessionsPath)
+    ? JSON.parse(fs.readFileSync(checkoutSessionsPath, 'utf8')).length
+    : 0;
+
+  const homeRes = await fetch(apiUrl('/'), { method: 'HEAD' });
+  assert.equal(homeRes.status, 200);
+  assert.match(String(homeRes.headers.get('content-type')), /text\/html/);
+  assert.equal(await homeRes.text(), '');
+  assert.equal(
+    typeof homeRes.headers.getSetCookie === 'function' ? homeRes.headers.getSetCookie().length : 0,
+    0
+  );
+
+  const privacyRes = await fetch(apiUrl('/privacy'), { method: 'HEAD' });
+  assert.equal(privacyRes.status, 200);
+  assert.match(String(privacyRes.headers.get('content-type')), /text\/html/);
+  assert.equal(await privacyRes.text(), '');
+
+  const robotsRes = await fetch(apiUrl('/robots.txt'), { method: 'HEAD' });
+  assert.equal(robotsRes.status, 200);
+  assert.match(String(robotsRes.headers.get('content-type')), /text\/plain/);
+  assert.equal(await robotsRes.text(), '');
+
+  const sitemapRes = await fetch(apiUrl('/sitemap.xml'), { method: 'HEAD' });
+  assert.equal(sitemapRes.status, 200);
+  assert.match(String(sitemapRes.headers.get('content-type')), /application\/xml/);
+  assert.equal(await sitemapRes.text(), '');
+
+  const cardRes = await fetch(apiUrl('/.well-known/mcp/server-card.json'), { method: 'HEAD' });
+  assert.equal(cardRes.status, 200);
+  assert.match(String(cardRes.headers.get('content-type')), /application\/json/);
+  assert.equal(await cardRes.text(), '');
+
+  const healthRes = await fetch(apiUrl('/health'), { method: 'HEAD' });
+  assert.equal(healthRes.status, 200);
+  assert.match(String(healthRes.headers.get('content-type')), /application\/json/);
+  assert.equal(await healthRes.text(), '');
+
+  const healthzRes = await fetch(apiUrl('/healthz'), { method: 'HEAD' });
+  assert.equal(healthzRes.status, 200);
+  assert.match(String(healthzRes.headers.get('content-type')), /application\/json/);
+  assert.equal(await healthzRes.text(), '');
+
+  const openapiRes = await fetch(apiUrl('/openapi.json'), { method: 'HEAD' });
+  assert.equal(openapiRes.status, 200);
+  assert.match(String(openapiRes.headers.get('content-type')), /(application\/json|text\/yaml)/);
+  assert.equal(await openapiRes.text(), '');
+
+  const checkoutRes = await fetch(apiUrl('/checkout/pro'), { method: 'HEAD' });
+  assert.equal(checkoutRes.status, 200);
+  assert.equal(await checkoutRes.text(), '');
+  assert.equal(
+    typeof checkoutRes.headers.getSetCookie === 'function' ? checkoutRes.headers.getSetCookie().length : 0,
+    0
+  );
+
+  const telemetryCountAfter = readJsonl(telemetryPath).length;
+  const checkoutSessionsAfter = checkoutSessionsPath && fs.existsSync(checkoutSessionsPath)
+    ? JSON.parse(fs.readFileSync(checkoutSessionsPath, 'utf8')).length
+    : 0;
+  assert.equal(telemetryCountAfter, telemetryCountBefore);
+  assert.equal(checkoutSessionsAfter, checkoutSessionsBefore);
+});
+
 test('root seeds journey cookies, injects server telemetry IDs, and records landing telemetry server-side', async () => {
   const res = await fetch(apiUrl('/'));
   assert.equal(res.status, 200);
