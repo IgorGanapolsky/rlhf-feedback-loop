@@ -1,6 +1,7 @@
 {
   "name": "mcp-memory-gateway",
-  "description": "Stop Cursor agents from repeating mistakes with local memory, pre-action guardrails, and proof-backed feedback loops.",
+  "displayName": "MCP Memory Gateway",
+  "description": "Stop Cursor agents from repeating mistakes with local memory, pre-action gates, and proof-backed feedback.",
   "version": "0.7.1",
   "author": {
     "name": "Igor Ganapolsky"

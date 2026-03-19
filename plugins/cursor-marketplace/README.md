@@ -1,6 +1,11 @@
 # MCP Memory Gateway for Cursor
 
-`mcp-memory-gateway` packages a local-first reliability layer for Cursor that helps agents stop repeating mistakes.
+`MCP Memory Gateway` is the human-facing plugin name in Cursor listings.
+`mcp-memory-gateway` stays the plugin slug, npm package, and launcher target.
+
+The canonical short description is:
+
+> Stop Cursor agents from repeating mistakes with local memory, pre-action gates, and proof-backed feedback.
 
 The plugin installs the project MCP server so Cursor agents can:
 
@@ -31,6 +36,8 @@ Cursor Teams and Enterprise can import this repository through `Dashboard -> Set
 ### Cursor Directory
 
 Treat Cursor Directory as a discoverability surface, not the runtime distribution channel. It helps people find the plugin, but npm releases do not rewrite directory copy on their own.
+
+If a manual submission form asks for `Name`, use `MCP Memory Gateway` instead of the slug.
 
 ### Local setup before approval
 
