@@ -14,6 +14,7 @@ const { getFeedbackPaths } = require('./feedback-loop');
 const { getTelemetryAnalytics } = require('./telemetry-analytics');
 const { loadWorkflowSprintLeads } = require('./workflow-sprint-intake');
 const {
+  eventOccursInWindow,
   filterEntriesForWindow,
   resolveAnalyticsWindow,
   serializeAnalyticsWindow,
@@ -29,6 +30,7 @@ const CONFIG = {
   GITHUB_MARKETPLACE_WEBHOOK_SECRET: process.env.GITHUB_MARKETPLACE_WEBHOOK_SECRET || '',
   GITHUB_MARKETPLACE_PLAN_PRICES_JSON: process.env.RLHF_GITHUB_MARKETPLACE_PLAN_PRICES_JSON || '',
   STRIPE_PRICE_ID: process.env.STRIPE_PRICE_ID || 'price_1TCOL1GGBpd520QY8CyhR9Dd',
+  STRIPE_PRODUCT_ID: process.env.STRIPE_PRODUCT_ID || '',
   get API_KEYS_PATH() {
     return process.env._TEST_API_KEYS_PATH || path.join(getFeedbackPaths().FEEDBACK_DIR, 'api-keys.json');
   },
@@ -441,6 +443,7 @@ function deriveRevenueEventFromPaidProviderEvent(entry = {}) {
 
 function loadResolvedRevenueEvents(options = {}) {
   const analyticsWindow = resolveAnalyticsWindow(options);
+  const extraRevenueEvents = Array.isArray(options.extraRevenueEvents) ? options.extraRevenueEvents : [];
   const revenueEvents = filterEntriesForWindow(
     loadRevenueLedger(),
     analyticsWindow,
@@ -460,7 +463,7 @@ function loadResolvedRevenueEvents(options = {}) {
     resolved.push(derived);
   }
 
-  return resolved;
+  return mergeRevenueEvents(resolved, extraRevenueEvents);
 }
 
 function appendRevenueEvent({
@@ -577,14 +580,256 @@ function resolveGithubPlanPricing(planId) {
   };
 }
 
+function parseTestStripeReconciledRevenueEvents() {
+  const raw = process.env._TEST_STRIPE_RECONCILED_REVENUE_EVENTS_JSON;
+  if (!raw) return [];
+
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((entry) => entry && typeof entry === 'object') : [];
+  } catch {
+    return [];
+  }
+}
+
+function mergeRevenueEvents(entries = [], extraEntries = []) {
+  const merged = [...entries];
+
+  for (const entry of extraEntries) {
+    if (!entry || typeof entry !== 'object') continue;
+    if (hasRevenueEventMatch(merged, entry)) continue;
+    merged.push(entry);
+  }
+
+  return merged;
+}
+
+function buildStripePriceCatalog(currentPrice, relatedPrices = []) {
+  const productId = normalizeText(CONFIG.STRIPE_PRODUCT_ID || (currentPrice && currentPrice.product));
+  const prices = new Map();
+
+  function addPrice(price) {
+    if (!price || typeof price !== 'object') return;
+    const priceId = normalizeText(price.id);
+    if (!priceId) return;
+    prices.set(priceId, {
+      priceId,
+      productId: normalizeText(price.product) || productId,
+      unitAmount: normalizeInteger(price.unit_amount),
+      recurringInterval: normalizeText(price.recurring && price.recurring.interval),
+      active: Boolean(price.active),
+    });
+  }
+
+  addPrice(currentPrice);
+  for (const price of relatedPrices) {
+    addPrice(price);
+  }
+
+  return {
+    productId,
+    prices,
+  };
+}
+
+function matchStripeInvoiceLine(priceCatalog, line = {}) {
+  const price = line.price || {};
+  const priceId = normalizeText(price.id);
+  const productId = normalizeText(price.product);
+
+  if (priceId && priceCatalog.prices.has(priceId)) {
+    return priceCatalog.prices.get(priceId);
+  }
+
+  if (productId && priceCatalog.productId && productId === priceCatalog.productId) {
+    return {
+      priceId: priceId || null,
+      productId,
+      unitAmount: normalizeInteger(price.unit_amount),
+      recurringInterval: normalizeText(price.recurring && price.recurring.interval),
+      active: Boolean(price.active),
+    };
+  }
+
+  return null;
+}
+
+function matchStripeChargeFromSubscriptions(priceCatalog, charge, subscriptions = []) {
+  if (!charge || !Array.isArray(subscriptions) || subscriptions.length === 0) {
+    return null;
+  }
+
+  const matches = [];
+  for (const subscription of subscriptions) {
+    const items = subscription && subscription.items && Array.isArray(subscription.items.data)
+      ? subscription.items.data
+      : [];
+    for (const item of items) {
+      const price = item.price || {};
+      const priceId = normalizeText(price.id);
+      const productId = normalizeText(price.product);
+      const unitAmount = normalizeInteger(price.unit_amount);
+      const recurringInterval = normalizeText(price.recurring && price.recurring.interval);
+      const matchesConfiguredPrice = priceId && priceCatalog.prices.has(priceId);
+      const matchesConfiguredProduct = productId && priceCatalog.productId && productId === priceCatalog.productId;
+
+      if (!matchesConfiguredPrice && !matchesConfiguredProduct) {
+        continue;
+      }
+
+      matches.push({
+        priceId: priceId || null,
+        productId: productId || priceCatalog.productId,
+        unitAmount,
+        recurringInterval,
+        subscriptionId: normalizeText(subscription.id),
+      });
+    }
+  }
+
+  if (matches.length === 0) {
+    return null;
+  }
+
+  const exactAmountMatch = matches.find((candidate) => {
+    return candidate.unitAmount !== null && candidate.unitAmount === normalizeInteger(charge.amount);
+  });
+  if (exactAmountMatch) {
+    return exactAmountMatch;
+  }
+
+  const description = normalizeText(charge.description || '') || '';
+  return description.toLowerCase().startsWith('subscription') ? matches[0] : null;
+}
+
+function buildStripeReconciledRevenueEvent(charge, match = {}) {
+  const timestampMs = Number(charge.created) * 1000;
+  const timestamp = Number.isFinite(timestampMs)
+    ? new Date(timestampMs).toISOString()
+    : new Date().toISOString();
+  const amountCents = normalizeInteger(charge.amount);
+
+  return {
+    timestamp,
+    provider: 'stripe',
+    event: 'stripe_charge_reconciled',
+    status: 'paid',
+    orderId: normalizeText(charge.id),
+    evidence: normalizeText(charge.id) || 'stripe_charge_reconciled',
+    customerId: normalizeText(charge.customer) || `stripe_charge_${normalizeText(charge.id) || 'unknown'}`,
+    installId: null,
+    traceId: null,
+    amountCents,
+    currency: normalizeCurrency(charge.currency),
+    amountKnown: amountCents !== null,
+    recurringInterval: normalizeText(match.recurringInterval),
+    attribution: {
+      source: 'stripe_reconciled',
+    },
+    metadata: {
+      stripeReconciled: true,
+      chargeId: normalizeText(charge.id),
+      paymentIntentId: normalizeText(charge.payment_intent),
+      invoiceId: normalizeText(charge.invoice),
+      priceId: normalizeText(match.priceId),
+      productId: normalizeText(match.productId),
+      subscriptionId: normalizeText(match.subscriptionId),
+      historicalPrice: Boolean(match.priceId && match.priceId !== CONFIG.STRIPE_PRICE_ID),
+    },
+  };
+}
+
+async function listStripeReconciledRevenueEvents() {
+  const testEvents = parseTestStripeReconciledRevenueEvents();
+  if (testEvents.length > 0) {
+    return testEvents;
+  }
+
+  if (!CONFIG.STRIPE_SECRET_KEY || !CONFIG.STRIPE_PRICE_ID) {
+    return [];
+  }
+
+  let stripe;
+  try {
+    stripe = getStripeClient();
+  } catch {
+    return [];
+  }
+
+  const currentPrice = await stripe.prices.retrieve(CONFIG.STRIPE_PRICE_ID);
+  const relatedPrices = await stripe.prices.list({
+    product: CONFIG.STRIPE_PRODUCT_ID || currentPrice.product,
+    limit: 100,
+  });
+  const priceCatalog = buildStripePriceCatalog(
+    currentPrice,
+    relatedPrices && Array.isArray(relatedPrices.data) ? relatedPrices.data : []
+  );
+  if (!priceCatalog.productId) {
+    return [];
+  }
+
+  const charges = await stripe.charges.list({ limit: 100 });
+  const reconciled = [];
+  const invoiceCache = new Map();
+  const subscriptionCache = new Map();
+
+  for (const charge of charges.data || []) {
+    if (!charge || !charge.paid || charge.status !== 'succeeded' || charge.refunded) {
+      continue;
+    }
+
+    let match = null;
+
+    if (charge.invoice) {
+      const invoiceId = normalizeText(charge.invoice);
+      if (invoiceId) {
+        let invoice = invoiceCache.get(invoiceId);
+        if (!invoice) {
+          invoice = await stripe.invoices.retrieve(invoiceId, { expand: ['lines.data.price'] });
+          invoiceCache.set(invoiceId, invoice);
+        }
+        const lines = invoice && invoice.lines && Array.isArray(invoice.lines.data) ? invoice.lines.data : [];
+        match = lines.map((line) => matchStripeInvoiceLine(priceCatalog, line)).find(Boolean) || null;
+      }
+    }
+
+    if (!match && charge.customer) {
+      const customerId = normalizeText(charge.customer);
+      if (customerId) {
+        let subscriptions = subscriptionCache.get(customerId);
+        if (!subscriptions) {
+          const listed = await stripe.subscriptions.list({
+            customer: customerId,
+            status: 'all',
+            limit: 100,
+          });
+          subscriptions = listed && Array.isArray(listed.data) ? listed.data : [];
+          subscriptionCache.set(customerId, subscriptions);
+        }
+        match = matchStripeChargeFromSubscriptions(priceCatalog, charge, subscriptions);
+      }
+    }
+
+    if (!match) {
+      continue;
+    }
+
+    reconciled.push(buildStripeReconciledRevenueEvent(charge, match));
+  }
+
+  return reconciled;
+}
+
 function getFunnelAnalytics(options = {}) {
   const analyticsWindow = resolveAnalyticsWindow(options);
+  const extraRevenueEvents = Array.isArray(options.extraRevenueEvents) ? options.extraRevenueEvents : [];
   const events = filterEntriesForWindow(
     loadFunnelLedger(),
     analyticsWindow,
     (entry) => entry && entry.timestamp
   );
-  const paidOrders = loadResolvedRevenueEvents(analyticsWindow).filter((entry) => entry && entry.status === 'paid');
+  const paidOrders = loadResolvedRevenueEvents({ ...analyticsWindow, extraRevenueEvents }).filter((entry) => entry && entry.status === 'paid');
   const stageCounts = { acquisition: 0, activation: 0, paid: 0 };
   const eventCounts = {};
   for (const entry of events) {
@@ -610,6 +855,7 @@ function getFunnelAnalytics(options = {}) {
 
 function getBusinessAnalytics(options = {}) {
   const analyticsWindow = resolveAnalyticsWindow(options);
+  const extraRevenueEvents = Array.isArray(options.extraRevenueEvents) ? options.extraRevenueEvents : [];
   const { FEEDBACK_DIR } = getFeedbackPaths();
   const telemetry = getTelemetryAnalytics(FEEDBACK_DIR, analyticsWindow);
   const events = filterEntriesForWindow(
@@ -617,13 +863,13 @@ function getBusinessAnalytics(options = {}) {
     analyticsWindow,
     (entry) => entry && entry.timestamp
   );
-  const revenueEvents = loadResolvedRevenueEvents(analyticsWindow);
+  const revenueEvents = loadResolvedRevenueEvents({ ...analyticsWindow, extraRevenueEvents });
   const workflowSprintLeads = filterEntriesForWindow(
     loadWorkflowSprintLeads(),
     analyticsWindow,
     (entry) => entry && entry.submittedAt
   );
-  const funnel = getFunnelAnalytics(analyticsWindow);
+  const funnel = getFunnelAnalytics({ ...analyticsWindow, extraRevenueEvents });
   const acquisitionEvents = events.filter((entry) => entry && entry.stage === 'acquisition');
   const paidEvents = events.filter((entry) => entry && entry.stage === 'paid');
   const paidOrders = revenueEvents.filter((entry) => entry && entry.status === 'paid');
@@ -685,6 +931,10 @@ function getBusinessAnalytics(options = {}) {
   let amountKnownOrders = 0;
   let amountUnknownOrders = 0;
   let derivedPaidOrders = 0;
+  let paidOrdersToday = 0;
+  let bookedRevenueTodayCents = 0;
+  let processorReconciledOrders = 0;
+  let processorReconciledRevenueCents = 0;
   let latestPaidAt = null;
   let latestPaidOrder = null;
 
@@ -722,6 +972,14 @@ function getBusinessAnalytics(options = {}) {
       const currency = normalizeCurrency(entry.currency) || 'UNKNOWN';
       amountKnownOrders += 1;
       bookedRevenueCents += entry.amountCents;
+      if (eventOccursInWindow(entry.timestamp, {
+        window: 'today',
+        timeZone: analyticsWindow.timeZone,
+        now: analyticsWindow.now,
+      })) {
+        paidOrdersToday += 1;
+        bookedRevenueTodayCents += entry.amountCents;
+      }
       incrementCounter(bookedRevenueBySourceCents, sourceKey, entry.amountCents);
       incrementCounter(bookedRevenueByCampaignCents, campaignKey, entry.amountCents);
       incrementCounter(bookedRevenueByCommunityCents, attribution.community, entry.amountCents);
@@ -743,6 +1001,12 @@ function getBusinessAnalytics(options = {}) {
 
     if (entry.metadata && entry.metadata.derivedFromPaidProviderEvent) {
       derivedPaidOrders += 1;
+    }
+    if (entry.metadata && entry.metadata.stripeReconciled) {
+      processorReconciledOrders += 1;
+      if (entry.amountKnown && Number.isInteger(entry.amountCents)) {
+        processorReconciledRevenueCents += entry.amountCents;
+      }
     }
 
     if (!latestPaidAt || String(entry.timestamp || '') > latestPaidAt) {
@@ -892,7 +1156,7 @@ function getBusinessAnalytics(options = {}) {
       tracksAttribution: true,
       tracksWorkflowSprintLeads: true,
       providerCoverage: {
-        stripe: 'booked_revenue',
+        stripe: processorReconciledOrders > 0 ? 'booked_revenue+processor_reconciled' : 'booked_revenue',
         githubMarketplace: CONFIG.GITHUB_MARKETPLACE_PLAN_PRICES_JSON ? 'configured_plan_prices' : 'paid_orders_only',
       },
     },
@@ -926,10 +1190,14 @@ function getBusinessAnalytics(options = {}) {
       paidOrders: paidOrders.length,
       paidCustomers: paidCustomerIds.size,
       bookedRevenueCents,
+      bookedRevenueTodayCents,
       bookedRevenueByCurrency,
       amountKnownOrders,
       amountUnknownOrders,
       derivedPaidOrders,
+      paidOrdersToday,
+      processorReconciledOrders,
+      processorReconciledRevenueCents,
       amountKnownCoverageRate: safeRate(amountKnownOrders, paidOrders.length),
       unreconciledPaidEvents,
       latestPaidAt,
@@ -1086,6 +1354,14 @@ function getBillingSummary(options = {}) {
     },
     customers: orderedCustomers,
   };
+}
+
+async function getBillingSummaryLive(options = {}) {
+  const extraRevenueEvents = await listStripeReconciledRevenueEvents().catch(() => []);
+  return getBillingSummary({
+    ...options,
+    extraRevenueEvents,
+  });
 }
 
 function loadKeyStore() {
@@ -1522,7 +1798,7 @@ function handleGithubWebhook(event) {
 }
 
 module.exports = {
-  createCheckoutSession, getCheckoutSessionStatus, provisionApiKey, rotateApiKey, validateApiKey, recordUsage, disableCustomerKeys, handleWebhook, verifyWebhookSignature, verifyGithubWebhookSignature, handleGithubWebhook, loadKeyStore, appendFunnelEvent, appendRevenueEvent, loadFunnelLedger, loadRevenueLedger, loadResolvedRevenueEvents, getFunnelAnalytics, getBusinessAnalytics, getBillingSummary,
+  createCheckoutSession, getCheckoutSessionStatus, provisionApiKey, rotateApiKey, validateApiKey, recordUsage, disableCustomerKeys, handleWebhook, verifyWebhookSignature, verifyGithubWebhookSignature, handleGithubWebhook, loadKeyStore, appendFunnelEvent, appendRevenueEvent, loadFunnelLedger, loadRevenueLedger, loadResolvedRevenueEvents, getFunnelAnalytics, getBusinessAnalytics, getBillingSummary, getBillingSummaryLive, listStripeReconciledRevenueEvents,
   _API_KEYS_PATH: () => CONFIG.API_KEYS_PATH,
   _FUNNEL_LEDGER_PATH: () => CONFIG.FUNNEL_LEDGER_PATH,
   _REVENUE_LEDGER_PATH: () => CONFIG.REVENUE_LEDGER_PATH,

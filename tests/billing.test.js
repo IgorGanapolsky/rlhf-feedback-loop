@@ -28,6 +28,7 @@ const savedGithubPlanPricing = process.env.RLHF_GITHUB_MARKETPLACE_PLAN_PRICES_J
 const savedStripeSecretKey = process.env.STRIPE_SECRET_KEY;
 const savedStripePriceId = process.env.STRIPE_PRICE_ID;
 const savedFeedbackDir = process.env.RLHF_FEEDBACK_DIR;
+const savedTestStripeReconciledRevenueEvents = process.env._TEST_STRIPE_RECONCILED_REVENUE_EVENTS_JSON;
 
 // Initial setup
 process.env._TEST_API_KEYS_PATH = testApiKeysPath;
@@ -53,6 +54,8 @@ after(() => {
   else process.env.RLHF_GITHUB_MARKETPLACE_PLAN_PRICES_JSON = savedGithubPlanPricing;
   if (savedFeedbackDir === undefined) delete process.env.RLHF_FEEDBACK_DIR;
   else process.env.RLHF_FEEDBACK_DIR = savedFeedbackDir;
+  if (savedTestStripeReconciledRevenueEvents === undefined) delete process.env._TEST_STRIPE_RECONCILED_REVENUE_EVENTS_JSON;
+  else process.env._TEST_STRIPE_RECONCILED_REVENUE_EVENTS_JSON = savedTestStripeReconciledRevenueEvents;
   fs.rmSync(billingTestRoot, { recursive: true, force: true });
 });
 
@@ -76,6 +79,7 @@ function clearBillingArtifacts() {
     if (fs.existsSync(target)) fs.rmSync(target, { force: true });
   }
   fs.rmSync(testFeedbackDir, { recursive: true, force: true });
+  delete process.env._TEST_STRIPE_RECONCILED_REVENUE_EVENTS_JSON;
 }
 
 function readLedgerEvents() {
@@ -375,7 +379,6 @@ describe('billing.js — funnel ledger', () => {
     assert.equal(summary.revenue.derivedPaidOrders, 1);
     assert.equal(summary.dataQuality.unreconciledPaidEvents, 0);
   });
-
   test('getBillingSummary applies today window across revenue, telemetry, and sprint leads', () => {
     const billing = require('../scripts/billing');
     const telemetryPath = path.join(testFeedbackDir, 'telemetry-pings.jsonl');
@@ -585,6 +588,43 @@ describe('billing.js — funnel ledger', () => {
     assert.equal(summary.trafficMetrics.checkoutPaidConfirmations, 1);
     assert.equal(summary.keys.scope, 'current_state');
     assert.equal(summary.keys.windowed, false);
+  });
+
+  test('getBillingSummaryLive includes Stripe-reconciled historical revenue without claiming money today', async () => {
+    process.env._TEST_STRIPE_RECONCILED_REVENUE_EVENTS_JSON = JSON.stringify([
+      {
+        timestamp: '2025-11-18T10:36:00.000Z',
+        provider: 'stripe',
+        event: 'stripe_charge_reconciled',
+        status: 'paid',
+        orderId: 'ch_hist_001',
+        evidence: 'ch_hist_001',
+        customerId: 'cus_hist_001',
+        amountCents: 1000,
+        currency: 'USD',
+        amountKnown: true,
+        recurringInterval: 'month',
+        attribution: {
+          source: 'stripe_reconciled',
+        },
+        metadata: {
+          stripeReconciled: true,
+          priceId: 'price_hist_001',
+          productId: 'prod_hist_001',
+        },
+      },
+    ]);
+
+    const billing = requireFreshBilling('');
+    const summary = await billing.getBillingSummaryLive();
+
+    assert.equal(summary.revenue.bookedRevenueCents, 1000);
+    assert.equal(summary.revenue.bookedRevenueTodayCents, 0);
+    assert.equal(summary.revenue.paidOrders, 1);
+    assert.equal(summary.revenue.paidOrdersToday, 0);
+    assert.equal(summary.revenue.processorReconciledOrders, 1);
+    assert.equal(summary.revenue.processorReconciledRevenueCents, 1000);
+    assert.equal(summary.coverage.providerCoverage.stripe, 'booked_revenue+processor_reconciled');
   });
 });
 
