@@ -4,19 +4,21 @@
     "name": "Igor Ganapolsky"
   },
   "metadata": {
-    "description": "Cursor Marketplace packaging for MCP Memory Gateway, the Agentic Feedback Studio and Veto Layer for AI agents.",
+    "description": "Cursor plugin packaging for MCP Memory Gateway, the local-first reliability layer that helps agents stop repeating mistakes.",
     "version": "0.7.1"
   },
   "plugins": [
     {
       "name": "mcp-memory-gateway",
       "source": "plugins/cursor-marketplace",
-      "description": "Local-first context engineering, Veto Layer gates, DPO exports, and Thompson Sampling feedback loops for Cursor agents.",
+      "description": "Stop Cursor agents from repeating mistakes with local memory, pre-action gates, and verification-backed feedback loops.",
       "category": "developer-tools",
       "tags": [
         "mcp",
         "cursor",
         "rlhf",
+        "agent-reliability",
+        "repeated-mistakes",
         "context-engineering",
         "veto-layer",
         "agentic-feedback-studio"

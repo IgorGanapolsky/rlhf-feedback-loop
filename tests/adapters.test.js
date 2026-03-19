@@ -127,7 +127,7 @@ test('chatgpt openapi.yaml contains /v1/feedback/capture path', () => {
   assert.match(content, /\/v1\/feedback\/capture/, 'openapi.yaml must contain /v1/feedback/capture');
 });
 
-test('cursor marketplace plugin is pinned to the released package version', () => {
+test('cursor marketplace plugin keeps metadata versioned while runtime tracks the latest npm tag', () => {
   const marketplacePath = path.join(root, '.cursor-plugin', 'marketplace.json');
   const pluginManifestPath = path.join(root, 'plugins', 'cursor-marketplace', '.cursor-plugin', 'plugin.json');
   const pluginConfigPath = path.join(root, 'plugins', 'cursor-marketplace', '.mcp.json');
@@ -139,7 +139,7 @@ test('cursor marketplace plugin is pinned to the released package version', () =
   assert.equal(marketplace.metadata.version, packageVersion);
   assert.equal(marketplace.plugins[0].name, pluginManifest.name);
   assert.equal(pluginManifest.version, packageVersion);
-  assert.deepEqual(pluginConfig.mcpServers.rlhf.args, ['-y', `mcp-memory-gateway@${packageVersion}`, 'serve']);
+  assert.deepEqual(pluginConfig.mcpServers.rlhf.args, ['-y', 'mcp-memory-gateway@latest', 'serve']);
 });
 
 test('claude plugin metadata stays aligned with the released package and install story', () => {

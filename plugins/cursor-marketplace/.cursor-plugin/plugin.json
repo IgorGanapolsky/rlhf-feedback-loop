@@ -1,6 +1,6 @@
 {
   "name": "mcp-memory-gateway",
-  "description": "Local-first context engineering, Veto Layer guardrails, DPO exports, and Thompson Sampling feedback memory for Cursor agents.",
+  "description": "Stop Cursor agents from repeating mistakes with local memory, pre-action guardrails, and proof-backed feedback loops.",
   "version": "0.7.1",
   "author": {
     "name": "Igor Ganapolsky"
@@ -12,6 +12,8 @@
     "cursor",
     "mcp",
     "rlhf",
+    "agent-reliability",
+    "repeated-mistakes",
     "context-engineering",
     "veto-layer",
     "agentic-feedback-studio",

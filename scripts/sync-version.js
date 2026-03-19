@@ -142,14 +142,12 @@ function syncVersion(opts) {
   if (fs.existsSync(path.join(PROJECT_ROOT, cursorPluginConfigPath))) {
     const cursorPluginConfig = readJson(cursorPluginConfigPath);
     const server = cursorPluginConfig.mcpServers && cursorPluginConfig.mcpServers.rlhf;
-    const currentArg = server && Array.isArray(server.args)
-      ? server.args.find((arg) => typeof arg === 'string' && arg.startsWith('mcp-memory-gateway@'))
-      : null;
-    const expectedArg = `mcp-memory-gateway@${version}`;
-    if (currentArg && currentArg !== expectedArg) {
-      drifted.push({ file: cursorPluginConfigPath, field: 'mcpServers.rlhf.args', current: currentArg });
+    const expectedArgs = ['-y', 'mcp-memory-gateway@latest', 'serve'];
+    const currentArgs = server && Array.isArray(server.args) ? server.args : [];
+    if (server && server.command === 'npx' && JSON.stringify(currentArgs) !== JSON.stringify(expectedArgs)) {
+      drifted.push({ file: cursorPluginConfigPath, field: 'mcpServers.rlhf.args', current: JSON.stringify(currentArgs) });
       if (!checkOnly) {
-        server.args = server.args.map((arg) => (arg === currentArg ? expectedArg : arg));
+        server.args = expectedArgs.slice();
         writeJson(cursorPluginConfigPath, cursorPluginConfig);
       }
     }
@@ -165,7 +163,6 @@ function syncVersion(opts) {
     'docs/VERIFICATION_EVIDENCE.md',
     'plugins/codex-profile/INSTALL.md',
     'plugins/opencode-profile/INSTALL.md',
-    'plugins/cursor-marketplace/README.md',
   ];
   const pinnedPackagePattern = /mcp-memory-gateway@\d+\.\d+\.\d+/g;
   for (const relPath of pinnedPackageTargets) {
