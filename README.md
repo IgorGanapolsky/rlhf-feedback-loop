@@ -9,7 +9,7 @@
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/igorganapolsky)
 [![Pro Pack](https://img.shields.io/badge/Pro%20Pack-%2449%20one--time-635bff?logo=stripe&logoColor=white)](https://rlhf-feedback-loop-production.up.railway.app/checkout/pro)
 
-**Local-first AI reliability system for coding agents.** Keeps one sharp agent on task: persist decisions, surface reliability rules, and inject relevant history without adding orchestration or subagent handoff overhead.
+**Project memory and guardrails for coding agents.** Stop Claude, Cursor, Codex, Gemini, and Amp from repeating mistakes with persistent project memory, pre-action checks, and proof-backed runs.
 
 > **Honest disclaimer:** This is a **context injection system**, not RLHF. LLM weights are not updated by thumbs-up/down signals. What actually happens: feedback is validated, promoted to searchable memory, and recalled at session start so agents have project history they'd otherwise lose. That's genuinely valuable — but it's context engineering, not reinforcement learning.
 
@@ -83,7 +83,7 @@ This repo now ships a submission-ready Cursor plugin bundle:
 
 Use `MCP Memory Gateway` as the display name in Cursor Marketplace and Cursor Directory forms. Keep `mcp-memory-gateway` as the plugin slug and npm package name.
 
-That package keeps the Cursor review surface intentionally small: one MCP server bundle that helps Cursor agents stop repeating mistakes with local memory, pre-action gates, and proof-backed feedback. The runtime launcher now targets `mcp-memory-gateway@latest`, so npm releases can flow into the plugin runtime without editing the config. Marketplace metadata, screenshots, and directory copy still require an explicit plugin refresh. Until the public listing is approved, Cursor users can still install locally with `npx mcp-memory-gateway init`.
+That package keeps the Cursor review surface intentionally small: one MCP server bundle that gives Cursor project memory, pre-action checks, and proof-backed runs without another agent framework. The runtime launcher now targets `mcp-memory-gateway@latest`, so npm releases can flow into the plugin runtime without editing the plugin config. Marketplace metadata, screenshots, and directory copy still require an explicit plugin refresh. Until the public listing is approved, Cursor users can still install locally with `npx mcp-memory-gateway init`.
 
 Operational guidance for Cursor releases and promotion lives in [docs/CURSOR_PLUGIN_OPERATIONS.md](docs/CURSOR_PLUGIN_OPERATIONS.md).
 

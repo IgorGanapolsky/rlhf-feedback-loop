@@ -1735,7 +1735,7 @@ function createApiServer() {
           version: pkg.version,
         },
         name: 'mcp-memory-gateway',
-        description: 'RLHF feedback loop for AI agents. Capture feedback, block mistakes, export DPO data, and warehouse analytics bundles.',
+        description: 'Project memory and guardrails for coding agents. Stop repeated mistakes with recall, pre-action checks, and proof-backed runs.',
         version: pkg.version,
         tools: getServerCardTools(),
         repository: 'https://github.com/IgorGanapolsky/mcp-memory-gateway',

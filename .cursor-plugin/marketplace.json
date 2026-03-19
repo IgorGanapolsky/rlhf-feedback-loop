@@ -4,24 +4,26 @@
     "name": "Igor Ganapolsky"
   },
   "metadata": {
-    "description": "Cursor plugin packaging for MCP Memory Gateway, the reliability layer that helps Cursor agents stop repeating mistakes with local memory, pre-action gates, and proof-backed feedback.",
+    "description": "Project memory and guardrails for coding agents. Stop Cursor agents from repeating mistakes with project memory, pre-action checks, and proof-backed runs.",
     "version": "0.7.1"
   },
   "plugins": [
     {
       "name": "mcp-memory-gateway",
       "source": "plugins/cursor-marketplace",
-      "description": "Stop Cursor agents from repeating mistakes with local memory, pre-action gates, and proof-backed feedback.",
+      "description": "Stop Cursor agents from repeating mistakes with project memory, pre-action checks, and proof-backed runs.",
       "category": "developer-tools",
       "tags": [
         "mcp",
         "cursor",
-        "rlhf",
+        "project-memory",
+        "guardrails",
+        "coding-agents",
         "agent-reliability",
         "repeated-mistakes",
         "context-engineering",
-        "veto-layer",
-        "agentic-feedback-studio"
+        "proof-backed-runs",
+        "workflow-hardening"
       ]
     }
   ]

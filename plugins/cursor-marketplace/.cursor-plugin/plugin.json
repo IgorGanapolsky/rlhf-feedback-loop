@@ -1,7 +1,7 @@
 {
   "name": "mcp-memory-gateway",
   "displayName": "MCP Memory Gateway",
-  "description": "Stop Cursor agents from repeating mistakes with local memory, pre-action gates, and proof-backed feedback.",
+  "description": "Stop Cursor agents from repeating mistakes with project memory, pre-action checks, and proof-backed runs.",
   "version": "0.7.1",
   "author": {
     "name": "Igor Ganapolsky"
@@ -12,14 +12,15 @@
   "keywords": [
     "cursor",
     "mcp",
-    "rlhf",
+    "project-memory",
+    "guardrails",
+    "coding-agents",
     "agent-reliability",
     "repeated-mistakes",
     "context-engineering",
-    "veto-layer",
-    "agentic-feedback-studio",
-    "dpo",
-    "thompson-sampling"
+    "workflow-hardening",
+    "pre-action-checks",
+    "proof-backed-runs"
   ],
   "logo": "assets/logo-400x400.png"
 }

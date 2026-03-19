@@ -104,8 +104,8 @@ test('public landing page includes a Reddit campaign banner and subreddit-aware 
 test('public landing page positions the gateway as continuity-friendly reliability without orchestration tax', () => {
   const landingPage = readLandingPage();
 
-  assert.match(landingPage, /Claude workflow hardening, Claude Desktop extension, and AI reliability/i);
-  assert.match(landingPage, /Harden one Claude workflow\./i);
+  assert.match(landingPage, /Project memory and guardrails for coding agents/i);
+  assert.match(landingPage, /Stop coding agents from repeating mistakes\./i);
   assert.match(landingPage, /Keep one sharp agent\./);
   assert.match(landingPage, /Workflow Hardening Sprint/i);
   assert.match(landingPage, /One workflow, one owner, one proof review/i);

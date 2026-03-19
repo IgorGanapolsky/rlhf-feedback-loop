@@ -1,14 +1,14 @@
 # MCP Memory Gateway for Claude Desktop
 
-`mcp-memory-gateway` gives Claude Desktop a local-first **Agentic Feedback Studio** and **Veto Layer** for workflow hardening.
+`mcp-memory-gateway` gives Claude Desktop project memory and guardrails for coding agents.
 
 The extension path is useful when a team wants Claude Desktop to keep one workflow sharper over time without adding another orchestration layer. The MCP server captures explicit feedback, recalls past failures, promotes reusable prevention rules, and produces proof-backed rollout artifacts.
 
 ## Features
 
 - Workflow hardening for Claude-first engineering and ops workflows
-- Veto Layer gates that block repeated mistakes before tool use
-- Reliability memory and recall across long sessions
+- Pre-action checks that block repeated mistakes before tool use
+- Project memory and recall across long sessions
 - Bounded context packs, provenance, and diagnostics
 - DPO export and analytics bundle generation after runtime reliability lands
 - Submission-ready MCPB packaging for Claude Desktop review and local installs
