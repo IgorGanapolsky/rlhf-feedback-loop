@@ -20,6 +20,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { execSync } = require('child_process');
+const { resolveMcpEntry } = require(path.join(__dirname, '..', 'scripts', 'mcp-config'));
 
 const COMMAND = process.argv[2];
 const CWD = process.cwd();
@@ -98,34 +99,6 @@ function pkgVersion() {
 const HOME = process.env.HOME || process.env.USERPROFILE || '';
 const MCP_SERVER_NAME = 'rlhf';
 const LEGACY_MCP_SERVER_NAMES = ['rlhf', 'rlhf-feedback-loop', 'rlhf_feedback_loop'];
-const PORTABLE_MCP_COMMAND = 'npx';
-const LOCAL_MCP_COMMAND = 'node';
-
-function portableMcpArgs() {
-  return ['-y', `mcp-memory-gateway@${pkgVersion()}`, 'serve'];
-}
-
-function localServerEntryPath() {
-  return path.join(PKG_ROOT, 'adapters', 'mcp', 'server-stdio.js');
-}
-
-function shouldUseLocalServerEntry() {
-  return fs.existsSync(path.join(PKG_ROOT, '.git'));
-}
-
-function portableMcpEntry() {
-  return {
-    command: PORTABLE_MCP_COMMAND,
-    args: portableMcpArgs(),
-  };
-}
-
-function localMcpEntry() {
-  return {
-    command: LOCAL_MCP_COMMAND,
-    args: [localServerEntryPath()],
-  };
-}
 
 function mcpEntriesMatch(entry, expectedEntry) {
   return Boolean(
@@ -147,12 +120,16 @@ function formatTomlStringArray(values) {
   return `[${values.map((value) => JSON.stringify(value)).join(', ')}]`;
 }
 
-function canonicalMcpEntry() {
-  return shouldUseLocalServerEntry() ? localMcpEntry() : portableMcpEntry();
+function canonicalMcpEntry(scope = 'project') {
+  return resolveMcpEntry({
+    pkgRoot: PKG_ROOT,
+    pkgVersion: pkgVersion(),
+    scope,
+  });
 }
 
-function mcpSectionBlock(name = MCP_SERVER_NAME) {
-  const entry = canonicalMcpEntry();
+function mcpSectionBlock(name = MCP_SERVER_NAME, scope = 'project') {
+  const entry = canonicalMcpEntry(scope);
   return `[mcp_servers.${name}]\ncommand = "${entry.command}"\nargs = ${formatTomlStringArray(entry.args)}\n`;
 }
 
@@ -207,8 +184,8 @@ function upsertCodexServerConfig(content) {
   };
 }
 
-function mergeMcpJson(filePath, label) {
-  const canonicalEntry = canonicalMcpEntry();
+function mergeMcpJson(filePath, label, scope = 'project') {
+  const canonicalEntry = canonicalMcpEntry(scope);
   if (!fs.existsSync(filePath)) {
     const dir = path.dirname(filePath);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
@@ -253,7 +230,7 @@ function whichExists(cmd) {
 }
 
 function setupClaude() {
-  const mcpChanged = mergeMcpJson(path.join(CWD, '.mcp.json'), 'Claude Code');
+  const mcpChanged = mergeMcpJson(path.join(CWD, '.mcp.json'), 'Claude Code', 'project');
 
   // Upsert Stop hook into .claude/settings.json for autonomous self-scoring
   const settingsPath = path.join(CWD, '.claude', 'settings.json');
@@ -283,7 +260,7 @@ function setupClaude() {
 
 function setupCodex() {
   const configPath = path.join(HOME, '.codex', 'config.toml');
-  const block = mcpSectionBlock();
+  const block = mcpSectionBlock(MCP_SERVER_NAME, 'home');
   if (!fs.existsSync(configPath)) {
     fs.mkdirSync(path.dirname(configPath), { recursive: true });
     fs.writeFileSync(configPath, block);
@@ -304,7 +281,7 @@ function setupGemini() {
     const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
     settings.mcpServers = settings.mcpServers || {};
     let changed = false;
-    const canonicalEntry = canonicalMcpEntry();
+    const canonicalEntry = canonicalMcpEntry('home');
 
     if (!mcpEntriesMatch(settings.mcpServers[MCP_SERVER_NAME], canonicalEntry)) {
       settings.mcpServers[MCP_SERVER_NAME] = canonicalEntry;
@@ -325,7 +302,7 @@ function setupGemini() {
     return true;
   }
   // Fallback: project-level .gemini/settings.json
-  return mergeMcpJson(path.join(CWD, '.gemini', 'settings.json'), 'Gemini');
+  return mergeMcpJson(path.join(CWD, '.gemini', 'settings.json'), 'Gemini', 'project');
 }
 
 function setupAmp() {
@@ -341,7 +318,7 @@ function setupAmp() {
 }
 
 function setupCursor() {
-  return mergeMcpJson(path.join(CWD, '.cursor', 'mcp.json'), 'Cursor');
+  return mergeMcpJson(path.join(CWD, '.cursor', 'mcp.json'), 'Cursor', 'project');
 }
 
 function init() {
