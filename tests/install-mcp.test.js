@@ -20,6 +20,7 @@ const assert = require('node:assert/strict');
 const {
   MCP_SERVER_KEY,
   MCP_SERVER_CONFIG,
+  resolveMcpServerConfig,
   isAlreadyInstalled,
   buildMcpConfig,
   installMcp,
@@ -48,10 +49,17 @@ describe('install-mcp', () => {
     });
   });
 
-  test('MCP_SERVER_CONFIG prefers local direct server path in source checkouts', () => {
+  test('MCP_SERVER_CONFIG prefers a stable local direct server path in source checkouts', () => {
     assert.equal(MCP_SERVER_CONFIG.command, 'node');
     assert.equal(MCP_SERVER_CONFIG.args.length, 1);
     assert.match(MCP_SERVER_CONFIG.args[0], /adapters[\\/]mcp[\\/]server-stdio\.js$/);
+  });
+
+  test('resolveMcpServerConfig keeps project installs scoped to the current checkout path', () => {
+    const projectConfig = resolveMcpServerConfig({ project: true });
+    assert.equal(projectConfig.command, 'node');
+    assert.equal(projectConfig.args.length, 1);
+    assert.match(projectConfig.args[0], /adapters[\\/]mcp[\\/]server-stdio\.js$/);
   });
 
   test('parseFlags detects --project flag', () => {
@@ -163,7 +171,7 @@ describe('install-mcp', () => {
       assert.ok(fs.existsSync(settingsPath), 'project settings.json should be created');
 
       const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
-      assert.deepStrictEqual(settings.mcpServers[MCP_SERVER_KEY], MCP_SERVER_CONFIG);
+      assert.deepStrictEqual(settings.mcpServers[MCP_SERVER_KEY], resolveMcpServerConfig({ project: true }));
     } finally {
       process.chdir(origCwd);
       fs.rmSync(isolatedDir, { recursive: true, force: true });

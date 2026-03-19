@@ -19,9 +19,16 @@ const os = require('os');
 const path = require('path');
 const { test, describe, before, after } = require('node:test');
 const assert = require('node:assert/strict');
+const { resolveMcpEntry } = require('../scripts/mcp-config');
 
 const CLI = path.resolve(__dirname, '../bin/cli.js');
+const PKG_ROOT = path.resolve(__dirname, '..');
 const MCP_SERVER_PATH = path.resolve(__dirname, '../adapters/mcp/server-stdio.js');
+const HOME_MCP_SERVER_PATH = resolveMcpEntry({
+  pkgRoot: PKG_ROOT,
+  pkgVersion: require('../package.json').version,
+  scope: 'home',
+}).args[0];
 const savedFunnelPath = process.env._TEST_FUNNEL_LEDGER_PATH;
 const savedHome = process.env.HOME;
 const savedUserProfile = process.env.USERPROFILE;
@@ -1107,7 +1114,7 @@ describe('bin/cli.js', () => {
     assert.deepEqual(mcp.mcpServers.rlhf.args, [MCP_SERVER_PATH]);
   });
 
-  test('init writes local direct codex MCP launcher when running from source checkout', () => {
+  test('init writes stable codex MCP launcher when running from source checkout', () => {
     const isolatedDir = makeTmpDir();
     const isolatedHome = makeTmpDir();
     const codexHome = path.join(isolatedHome, '.codex');
@@ -1129,7 +1136,7 @@ describe('bin/cli.js', () => {
     const content = fs.readFileSync(configPath, 'utf8');
     assert.match(content, /\[mcp_servers\.rlhf\]/);
     assert.match(content, /command = "node"/);
-    assert.match(content, new RegExp(`args = \\["${MCP_SERVER_PATH.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"\\]`));
+    assert.match(content, new RegExp(`args = \\["${HOME_MCP_SERVER_PATH.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"\\]`));
 
     fs.rmSync(isolatedDir, { recursive: true, force: true });
     fs.rmSync(isolatedHome, { recursive: true, force: true });

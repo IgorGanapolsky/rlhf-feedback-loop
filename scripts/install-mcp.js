@@ -14,31 +14,18 @@
 
 const fs = require('fs');
 const path = require('path');
+const { resolveMcpEntry } = require('./mcp-config');
 
 const MCP_SERVER_KEY = 'rlhf';
 const PKG_ROOT = path.join(__dirname, '..');
 const PKG_VERSION = JSON.parse(fs.readFileSync(path.join(PKG_ROOT, 'package.json'), 'utf8')).version;
 
-function portableMcpConfig() {
-  return {
-    command: 'npx',
-    args: ['-y', `mcp-memory-gateway@${PKG_VERSION}`, 'serve'],
-  };
-}
-
-function localMcpConfig() {
-  return {
-    command: 'node',
-    args: [path.join(PKG_ROOT, 'adapters', 'mcp', 'server-stdio.js')],
-  };
-}
-
-function shouldUseLocalMcpConfig() {
-  return fs.existsSync(path.join(PKG_ROOT, '.git'));
-}
-
-function resolveMcpServerConfig() {
-  return shouldUseLocalMcpConfig() ? localMcpConfig() : portableMcpConfig();
+function resolveMcpServerConfig(flags = {}) {
+  return resolveMcpEntry({
+    pkgRoot: PKG_ROOT,
+    pkgVersion: PKG_VERSION,
+    scope: flags.project ? 'project' : 'home',
+  });
 }
 
 const MCP_SERVER_CONFIG = resolveMcpServerConfig();
@@ -80,35 +67,37 @@ function backupFile(filePath) {
   return backupPath;
 }
 
-function serverConfigMatches(entry) {
+function serverConfigMatches(entry, flags = {}) {
+  const expectedConfig = resolveMcpServerConfig(flags);
   return Boolean(
     entry &&
-    entry.command === MCP_SERVER_CONFIG.command &&
+    entry.command === expectedConfig.command &&
     Array.isArray(entry.args) &&
-    entry.args.length === MCP_SERVER_CONFIG.args.length &&
-    entry.args.every((arg, index) => arg === MCP_SERVER_CONFIG.args[index])
+    entry.args.length === expectedConfig.args.length &&
+    entry.args.every((arg, index) => arg === expectedConfig.args[index])
   );
 }
 
-function isAlreadyInstalled(settings) {
+function isAlreadyInstalled(settings, flags = {}) {
   return !!(
     settings &&
     settings.mcpServers &&
-    serverConfigMatches(settings.mcpServers[MCP_SERVER_KEY])
+    serverConfigMatches(settings.mcpServers[MCP_SERVER_KEY], flags)
   );
 }
 
-function buildMcpConfig() {
-  return { [MCP_SERVER_KEY]: MCP_SERVER_CONFIG };
+function buildMcpConfig(flags = {}) {
+  return { [MCP_SERVER_KEY]: resolveMcpServerConfig(flags) };
 }
 
 function installMcp(flags) {
   const settingsPath = resolveSettingsPath(flags);
   const scope = flags.project ? 'project' : 'global';
+  const serverConfig = resolveMcpServerConfig(flags);
 
   let settings = loadSettings(settingsPath);
 
-  if (isAlreadyInstalled(settings)) {
+  if (isAlreadyInstalled(settings, flags)) {
     console.log(`RLHF MCP server already installed in ${scope} settings.`);
     console.log(`  Path: ${settingsPath}`);
     return { installed: false, path: settingsPath, reason: 'already-installed' };
@@ -129,7 +118,7 @@ function installMcp(flags) {
     settings.mcpServers = {};
   }
 
-  settings.mcpServers[MCP_SERVER_KEY] = MCP_SERVER_CONFIG;
+  settings.mcpServers[MCP_SERVER_KEY] = serverConfig;
 
   // Ensure parent directory exists
   const dir = path.dirname(settingsPath);
@@ -144,7 +133,7 @@ function installMcp(flags) {
   console.log(`RLHF MCP server installed (${scope}).`);
   console.log(`  Path: ${settingsPath}`);
   console.log(`  Added: mcpServers.${MCP_SERVER_KEY}`);
-  console.log(`  Config: ${JSON.stringify(MCP_SERVER_CONFIG)}`);
+  console.log(`  Config: ${JSON.stringify(serverConfig)}`);
 
   return { installed: true, path: settingsPath, backup: backupPath || null };
 }
@@ -153,6 +142,7 @@ function installMcp(flags) {
 module.exports = {
   MCP_SERVER_KEY,
   MCP_SERVER_CONFIG,
+  resolveMcpServerConfig,
   resolveSettingsPath,
   loadSettings,
   backupFile,
