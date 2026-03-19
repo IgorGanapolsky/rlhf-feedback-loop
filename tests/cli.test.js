@@ -25,6 +25,8 @@ const MCP_SERVER_PATH = path.resolve(__dirname, '../adapters/mcp/server-stdio.js
 const savedFunnelPath = process.env._TEST_FUNNEL_LEDGER_PATH;
 const savedHome = process.env.HOME;
 const savedUserProfile = process.env.USERPROFILE;
+const savedStripeSecretKey = process.env.STRIPE_SECRET_KEY;
+const savedStripePriceId = process.env.STRIPE_PRICE_ID;
 
 function makeTmpDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'rlhf-cli-test-'));
@@ -358,6 +360,8 @@ describe('bin/cli.js', () => {
     process.env._TEST_FUNNEL_LEDGER_PATH = defaultLedgerPath;
     process.env.HOME = testHomeDir;
     process.env.USERPROFILE = testHomeDir;
+    process.env.STRIPE_SECRET_KEY = '';
+    process.env.STRIPE_PRICE_ID = '';
   });
 
   after(() => {
@@ -377,6 +381,16 @@ describe('bin/cli.js', () => {
       delete process.env.USERPROFILE;
     } else {
       process.env.USERPROFILE = savedUserProfile;
+    }
+    if (savedStripeSecretKey === undefined) {
+      delete process.env.STRIPE_SECRET_KEY;
+    } else {
+      process.env.STRIPE_SECRET_KEY = savedStripeSecretKey;
+    }
+    if (savedStripePriceId === undefined) {
+      delete process.env.STRIPE_PRICE_ID;
+    } else {
+      process.env.STRIPE_PRICE_ID = savedStripePriceId;
     }
   });
 
