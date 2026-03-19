@@ -1,7 +1,7 @@
 {
   "name": "mcp-memory-gateway",
   "version": "0.7.1",
-  "description": "Local-first reliability layer for AI coding agents. Resume sessions faster, recall project decisions, and block repeated mistakes without orchestration overhead.",
+  "description": "Project memory and guardrails for coding agents. Recall project decisions, block repeated mistakes, and verify runs without orchestration overhead.",
   "homepage": "https://rlhf-feedback-loop-production.up.railway.app",
   "repository": {
     "type": "git",

@@ -22,7 +22,7 @@ Repo-local operator guides:
 - [Aider with OpenAI-compatible backends](docs/guides/aider-openai-compatible.md)
 - [OpenCode integration](docs/guides/opencode-integration.md)
 
-Continuity tools help you resume work. MCP Memory Gateway keeps the resumed session sharper: recall, reliability rules, pre-action gates, and verification layered on top of that continuity workflow without another planner or swarm.
+MCP Memory Gateway keeps one sharp agent on task. Continuity tools help you resume work. The resumed session stays sharper with recall, reliability rules, pre-action gates, and verification layered on top of that continuity workflow without another planner or swarm.
 
 ## Claude Workflow Hardening
 
