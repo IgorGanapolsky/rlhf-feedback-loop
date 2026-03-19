@@ -93,6 +93,30 @@
       }
     },
     {
+      "name": "bootstrap_internal_agent",
+      "description": "Normalize a GitHub, Slack, or Linear trigger into startup context, a recall pack, a git worktree sandbox, and a reviewer-ready execution plan.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "source": { "type": "string", "enum": ["github", "slack", "linear", "api", "cli"] },
+          "repoPath": { "type": "string" },
+          "prepareSandbox": { "type": "boolean" },
+          "intentId": { "type": "string" },
+          "context": { "type": "string" },
+          "trigger": { "type": "object" },
+          "thread": { "type": "object" },
+          "task": { "type": "object" },
+          "comments": { "type": "array", "items": { "type": "object" } },
+          "messages": { "type": "array", "items": { "type": "object" } }
+        },
+        "required": ["source"]
+      },
+      "http": {
+        "method": "POST",
+        "path": "/v1/internal-agent/bootstrap"
+      }
+    },
+    {
       "name": "export_databricks_bundle",
       "description": "Export RLHF logs and proof artifacts as a Databricks-ready bundle",
       "parameters": {

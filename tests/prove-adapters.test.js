@@ -29,8 +29,8 @@ test('adapter proof: zero failures', () => {
   assert.equal(report.summary.failed, 0);
 });
 
-test('adapter proof: at least 28 checks pass', () => {
-  assert.ok(report.summary.passed >= 28, `expected >= 28 passed, got ${report.summary.passed}`);
+test('adapter proof: at least 30 checks pass', () => {
+  assert.ok(report.summary.passed >= 30, `expected >= 30 passed, got ${report.summary.passed}`);
 });
 
 test('adapter proof: report.json written', () => {
@@ -48,6 +48,7 @@ const requiredChecks = [
   'api.intents.catalog',
   'api.intents.plan',
   'api.intents.plan.codegraph',
+  'api.internal_agent.bootstrap',
   'api.capture_feedback',
   'api.capture_feedback.clarification',
   'api.capture_feedback.rubric_gate',
@@ -63,6 +64,7 @@ const requiredChecks = [
   'mcp.tools.call.plan_intent',
   'mcp.tools.call.plan_intent.codegraph',
   'mcp.tools.call.recall.codegraph',
+  'mcp.tools.call.bootstrap_internal_agent',
   'mcp.tools.call.capture_feedback.clarification',
   'mcp.tools.call.capture_feedback.rubric_gate',
   'mcp.policy.locked_profile_denies_write_tool',
