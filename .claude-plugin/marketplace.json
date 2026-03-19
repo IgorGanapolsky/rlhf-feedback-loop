@@ -4,7 +4,7 @@
   "plugins": [
     {
       "name": "mcp-memory-gateway",
-      "description": "Claude Desktop workflow hardening extension with Veto Layer guardrails, proof-backed memory, and MCP reliability tools",
+      "description": "Claude Desktop project memory and guardrails for coding agents. Stop repeated mistakes with recall, pre-action checks, and proof-backed runs.",
       "type": "mcp",
       "source": {
         "type": "npm",
@@ -20,8 +20,11 @@
           "claude-desktop",
           "desktop-extension",
           "workflow-hardening",
-          "veto-layer",
-          "agentic-feedback-studio",
+          "coding-agents",
+          "project-memory",
+          "guardrails",
+          "pre-action-checks",
+          "proof-backed-runs",
           "mcp",
           "memory"
         ],

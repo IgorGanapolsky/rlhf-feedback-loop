@@ -38,15 +38,15 @@
 
 ## Suggested short description
 
-Stop Cursor agents from repeating mistakes with local memory, pre-action gates, and proof-backed feedback.
+Stop Cursor agents from repeating mistakes with project memory, pre-action checks, and proof-backed runs.
 
 ## Suggested long description
 
-MCP Memory Gateway gives Cursor agents a local-first reliability loop. Capture feedback with evidence, recall past failures before repeating them, block known-bad actions with the Veto Layer, and keep proof close to every workflow change.
+MCP Memory Gateway gives Cursor agents project memory and guardrails. Capture feedback with evidence, recall past failures before repeating them, block known-bad actions with pre-action checks, and keep proof close to every workflow change.
 
 ## Suggested manual submission fields
 
 - Name: `MCP Memory Gateway`
-- Description: `Stop Cursor agents from repeating mistakes with local memory, pre-action gates, and proof-backed feedback.`
+- Description: `Stop Cursor agents from repeating mistakes with project memory, pre-action checks, and proof-backed runs.`
 - Repository URL: `https://github.com/IgorGanapolsky/mcp-memory-gateway`
 - Homepage: `https://rlhf-feedback-loop-production.up.railway.app`
