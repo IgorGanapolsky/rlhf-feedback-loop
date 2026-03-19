@@ -86,7 +86,8 @@ test('root serves the landing page by default', async () => {
   const body = await res.text();
   assert.match(body, /mcp.memory.gateway/i);
   assert.match(body, /Keep one sharp agent/i);
-  assert.match(body, /Claude workflow hardening/i);
+  assert.match(body, /Project memory and guardrails for coding agents/i);
+  assert.match(body, /Stop coding agents from repeating mistakes/i);
   assert.match(body, /Workflow Hardening Sprint/i);
   assert.match(body, /Start Sprint Intake/i);
   assert.match(body, /Code modernization guardrails/i);

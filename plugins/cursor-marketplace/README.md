@@ -9,11 +9,11 @@ The canonical short description is:
 
 The plugin installs the project MCP server so Cursor agents can:
 
-- capture explicit user feedback with evidence
-- recall past mistakes before repeating them
-- block known-bad actions before tool use
+- keep project memory across sessions
+- run pre-action checks before risky tool use
+- capture proof-backed runs and feedback with evidence
 - promote repeated failures into prevention rules
-- export DPO-style preference pairs and analytics bundles
+- export analytics bundles and DPO-style preference pairs
 
 ## Plugin contents
 
@@ -68,7 +68,7 @@ Or copy the plugin MCP config into `.cursor/mcp.json`:
 
 ## What makes this useful in Cursor
 
-MCP Memory Gateway gives Cursor agents a local-first reliability loop:
+MCP Memory Gateway gives Cursor agents a practical guardrail layer:
 
 - **Pre-Action Gates** block known-bad actions before tool use
 - **Prevention rules** auto-generated from repeated failures

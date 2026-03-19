@@ -13,7 +13,7 @@ function readJson(relativePath) {
   return JSON.parse(readText(relativePath));
 }
 
-test('package metadata leads with reliability instead of generic memory-layer phrasing', () => {
+test('package metadata leads with project memory and guardrails instead of generic memory-layer phrasing', () => {
   const packageJson = readJson('package.json');
 
   assert.match(packageJson.description, /Pre-action gates/i);
@@ -42,10 +42,11 @@ test('continuity guide frames the gateway as downstream reliability, not a new o
 test('launch-content variants align with reliability-over-orchestration positioning', () => {
   const launchContent = readText(path.join('docs', 'marketing', 'LAUNCH_CONTENT.md'));
 
-  assert.match(launchContent, /AI reliability system|reliability layer/i);
+  assert.match(launchContent, /MCP Memory Gateway/i);
+  assert.match(launchContent, /project memory and guardrails for coding agents/i);
   assert.match(launchContent, /one sharp agent|repeated mistakes/i);
+  assert.doesNotMatch(launchContent, /Agentic Feedback Studio/i);
   assert.doesNotMatch(launchContent, /persistent memory layer that fixes this/i);
-  assert.doesNotMatch(launchContent, /persistent memory for Claude Code/i);
 });
 
 test('GEO demand engine prioritizes action queries and proof-backed fan-out surfaces', () => {

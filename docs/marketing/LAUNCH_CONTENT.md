@@ -2,7 +2,7 @@
 
 ## 1. Reddit Post (Target: r/ClaudeCode, r/ClaudeAI)
 
-**Title:** I built an AI reliability system for Claude Code — keep one sharp agent on task
+**Title:** I built project memory and guardrails for coding agents — keep one sharp agent
 
 **Body:**
 Claude Code is strong, but the failure mode I kept seeing was not just forgetting context. It was repeating the same operational mistakes across sessions.
@@ -10,9 +10,9 @@ Claude Code is strong, but the failure mode I kept seeing was not just forgettin
 It's called **Reliability Gateway**.
 
 - **Problem:** Project lessons disappear, feedback gets lost, and the same mistakes keep happening.
-- **Solution:** A local-first reliability layer that captures feedback, retrieves the right lesson on the next task, and turns repeated failures into prevention rules.
+- **Solution:** Project memory and guardrails for coding agents. Capture feedback, retrieve the right lesson on the next task, and turn repeated failures into prevention rules.
 - **Features:** 
-  - Zero-Config: Drop it into any repo with `npx mcp-memory-gateway install`.
+  - Zero-Config: Drop it into any repo with `npx mcp-memory-gateway init`.
   - Reliability Loop: feedback -> retrieval -> prevention rules -> verification.
   - Bayesian Preference Scoring: Thompson Sampling models preference shifts over time.
   - DPO/KTO Export: Turn real sessions into training data for fine-tuning.
@@ -28,7 +28,7 @@ Would love to hear how you're reducing repeated agent mistakes without adding mo
 
 ## 2. Show HN Post
 
-**Title:** Show HN: MCP Memory Gateway – AI reliability layer for coding agents
+**Title:** Show HN: MCP Memory Gateway – project memory and guardrails for coding agents
 
 **Body:**
 Hi HN, I’m launching the MCP Memory Gateway (Reliability Gateway).
@@ -43,12 +43,12 @@ I built a local-first reliability layer that implements:
 
 It works with any MCP-compatible agent (Claude Code, Codex, Gemini).
 
-**Zero-Config:** Drop it into any repo with one command: `npx mcp-memory-gateway install`
+**Zero-Config:** Drop it into any repo with one command: `npx mcp-memory-gateway init`
 
 GitHub: [https://github.com/IgorGanapolsky/mcp-memory-gateway]
 Landing Page: [https://mcp-memory-gateway.up.railway.app]
 
-I'm here all day to answer technical questions about reliability layers, guardrails, and proof loops for coding agents.
+I'm here all day to answer technical questions about project memory, guardrails, and proof loops for coding agents.
 
 ---
 
@@ -59,7 +59,7 @@ I'm here all day to answer technical questions about reliability layers, guardra
 
 If Claude makes a mistake, capture it once and turn it into a reusable lesson, prevention rule, or hard guardrail so the same failure stops repeating.
 
-- 🛠 **Zero-Config:** `npx mcp-memory-gateway install`
+- 🛠 **Zero-Config:** `npx mcp-memory-gateway init`
 - 🧠 **Reliability Loop:** feedback -> retrieval -> prevention rules -> verification
 - ⚡ **Global Skill:** Install once, use across all your repos.
 
@@ -71,5 +71,5 @@ Live: https://mcp-memory-gateway.up.railway.app
 
 ## 4. Cold Outreach Hooks (Twitter DM / LinkedIn)
 
-- **Hook 1:** "I saw your work on [Project]. We are building a local-first reliability layer for coding agents that turns repeated failures into prevention rules. Would love your feedback on the zero-config setup."
+- **Hook 1:** "I saw your work on [Project]. We are building project memory and guardrails for coding agents so repeated failures turn into prevention rules. Would love your feedback on the zero-config setup."
 - **Hook 2:** "Running Claude Code or Codex seriously? We built a feedback -> retrieval -> prevention loop that helps one sharp agent stop repeating the same mistakes across sessions. Want to try it?"

@@ -22,7 +22,7 @@ Repo-local operator guides:
 - [Aider with OpenAI-compatible backends](docs/guides/aider-openai-compatible.md)
 - [OpenCode integration](docs/guides/opencode-integration.md)
 
-Continuity tools help you resume work. MCP Memory Gateway keeps the resumed session sharper: recall, reliability rules, pre-action gates, and verification layered on top of that continuity workflow without another planner or swarm.
+MCP Memory Gateway keeps one sharp agent on task. Continuity tools help you resume work. The resumed session stays sharper with recall, reliability rules, pre-action gates, and verification layered on top of that continuity workflow without another planner or swarm.
 
 ## Claude Workflow Hardening
 
@@ -83,7 +83,7 @@ This repo now ships a submission-ready Cursor plugin bundle:
 
 Use `MCP Memory Gateway` as the display name in Cursor Marketplace and Cursor Directory forms. Keep `mcp-memory-gateway` as the plugin slug and npm package name.
 
-That package keeps the Cursor review surface intentionally small: one MCP server bundle that helps Cursor agents stop repeating mistakes with local memory, pre-action gates, and proof-backed feedback. The runtime launcher now targets `mcp-memory-gateway@latest`, so npm releases can flow into the plugin runtime without editing the config. Marketplace metadata, screenshots, and directory copy still require an explicit plugin refresh. Until the public listing is approved, Cursor users can still install locally with `npx mcp-memory-gateway init`.
+That package keeps the Cursor review surface intentionally small: one MCP server bundle that gives Cursor project memory, pre-action checks, and proof-backed runs without another agent framework. The runtime launcher now targets `mcp-memory-gateway@latest`, so npm releases can flow into the plugin runtime without editing the plugin config. Marketplace metadata, screenshots, and directory copy still require an explicit plugin refresh. Until the public listing is approved, Cursor users can still install locally with `npx mcp-memory-gateway init`.
 
 Operational guidance for Cursor releases and promotion lives in [docs/CURSOR_PLUGIN_OPERATIONS.md](docs/CURSOR_PLUGIN_OPERATIONS.md).
 
