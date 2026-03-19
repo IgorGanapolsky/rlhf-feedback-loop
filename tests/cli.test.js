@@ -803,6 +803,51 @@ describe('bin/cli.js', () => {
     fs.rmSync(isolatedDir, { recursive: true, force: true });
   });
 
+  test('cfo surfaces Stripe-reconciled historical revenue and keeps today at zero when only past charges exist', () => {
+    const isolatedDir = makeTmpDir();
+    const feedbackDir = path.join(isolatedDir, 'feedback');
+
+    const result = spawnSync(process.execPath, [CLI, 'cfo'], {
+      encoding: 'utf8',
+      cwd: isolatedDir,
+      env: {
+        ...process.env,
+        RLHF_FEEDBACK_DIR: feedbackDir,
+        _TEST_STRIPE_RECONCILED_REVENUE_EVENTS_JSON: JSON.stringify([
+          {
+            timestamp: '2025-11-18T10:36:00.000Z',
+            provider: 'stripe',
+            event: 'stripe_charge_reconciled',
+            status: 'paid',
+            orderId: 'ch_cli_hist_001',
+            evidence: 'ch_cli_hist_001',
+            customerId: 'cus_cli_hist_001',
+            amountCents: 1000,
+            currency: 'USD',
+            amountKnown: true,
+            recurringInterval: 'month',
+            attribution: {
+              source: 'stripe_reconciled',
+            },
+            metadata: {
+              stripeReconciled: true,
+              priceId: 'price_hist_001',
+              productId: 'prod_hist_001',
+            },
+          },
+        ]),
+      },
+    });
+    assert.equal(result.status, 0, `cfo failed:\n${result.stderr}`);
+
+    const payload = JSON.parse(result.stdout);
+    assert.equal(payload.summary.revenue.bookedRevenueCents, 1000);
+    assert.equal(payload.summary.revenue.bookedRevenueTodayCents, 0);
+    assert.equal(payload.summary.revenue.processorReconciledOrders, 1);
+    assert.equal(payload.summary.coverage.providerCoverage.stripe, 'booked_revenue+processor_reconciled');
+
+    fs.rmSync(isolatedDir, { recursive: true, force: true });
+  });
   test('cfo prefers hosted billing summary when a live billing API base and admin key are configured', async () => {
     const { startServer } = require('../src/api/server');
     const remoteDir = makeTmpDir();

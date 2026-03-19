@@ -1282,6 +1282,47 @@ test('billing summary applies today window query params for admin users', async 
   }
 });
 
+test('billing summary includes Stripe-reconciled revenue when live processor events are available', async () => {
+  process.env._TEST_STRIPE_RECONCILED_REVENUE_EVENTS_JSON = JSON.stringify([
+    {
+      timestamp: '2025-11-18T10:36:00.000Z',
+      provider: 'stripe',
+      event: 'stripe_charge_reconciled',
+      status: 'paid',
+      orderId: 'ch_api_hist_001',
+      evidence: 'ch_api_hist_001',
+      customerId: 'cus_api_hist_001',
+      amountCents: 1000,
+      currency: 'USD',
+      amountKnown: true,
+      recurringInterval: 'month',
+      attribution: {
+        source: 'stripe_reconciled',
+      },
+      metadata: {
+        stripeReconciled: true,
+        priceId: 'price_hist_001',
+        productId: 'prod_hist_001',
+      },
+    },
+  ]);
+
+  try {
+    const res = await fetch(apiUrl('/v1/billing/summary'), {
+      headers: authHeader,
+    });
+    assert.equal(res.status, 200);
+
+    const body = await res.json();
+    assert.ok(body.revenue.bookedRevenueCents >= 1000);
+    assert.ok(body.revenue.paidOrders >= 1);
+    assert.equal(body.revenue.processorReconciledOrders, 1);
+    assert.equal(body.revenue.processorReconciledRevenueCents, 1000);
+    assert.equal(body.coverage.providerCoverage.stripe, 'booked_revenue+processor_reconciled');
+  } finally {
+    delete process.env._TEST_STRIPE_RECONCILED_REVENUE_EVENTS_JSON;
+  }
+});
 test('billing summary rejects billing keys', async () => {
   const billingKey = billing.provisionApiKey('cus_non_admin_summary').key;
   const res = await fetch(apiUrl('/v1/billing/summary'), {

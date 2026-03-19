@@ -1,6 +1,6 @@
 'use strict';
 
-const { getBillingSummary } = require('./billing');
+const { getBillingSummaryLive } = require('./billing');
 const { resolveAnalyticsWindow } = require('./analytics-window');
 const { resolveHostedBillingConfig } = require('./hosted-config');
 
@@ -75,7 +75,7 @@ async function getOperationalBillingSummary(options = {}) {
   } catch (err) {
     return {
       source: 'local',
-      summary: getBillingSummary(analyticsWindow),
+      summary: await getBillingSummaryLive(analyticsWindow),
       fallbackReason: err && err.message ? err.message : 'hosted_summary_unavailable',
     };
   }

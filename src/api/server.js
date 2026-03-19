@@ -59,6 +59,7 @@ const {
   handleGithubWebhook,
   getFunnelAnalytics,
   getBillingSummary,
+  getBillingSummaryLive,
 } = require('../../scripts/billing');
 const {
   resolveHostedBillingConfig,
@@ -2626,7 +2627,7 @@ function createApiServer() {
           return;
         }
 
-        const summary = getBillingSummary(summaryOptions);
+        const summary = await getBillingSummaryLive(summaryOptions);
         sendJson(res, 200, summary);
         return;
       }
