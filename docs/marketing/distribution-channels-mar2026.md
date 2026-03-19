@@ -30,7 +30,8 @@
 - rohitg00/awesome-devops-mcp-servers
 
 ### IDE Marketplaces
-- Cursor Directory — submit at cursor.directory/plugins
+- Cursor Directory — discovery surface, submit at cursor.directory/plugins
+- Cursor Marketplace — install/update surface, submit at cursor.com/marketplace/publish
 - VS Code Marketplace — `vsce publish`
 - Open VSX Registry — `npx ovsx publish`
 - JetBrains Marketplace — IntelliJ Plugin DevKit

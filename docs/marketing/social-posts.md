@@ -20,6 +20,7 @@ Use this kit instead of older memory-first launch copy when posting about the pr
 - LinkedIn long-form post: [linkedin-ai-reliability-post.md](./linkedin-ai-reliability-post.md)
 - X thread: [x-launch-thread.md](./x-launch-thread.md)
 - Reddit posts: [reddit-posts.md](./reddit-posts.md)
+- Cursor plugin launch kit: [cursor-plugin-launch.md](./cursor-plugin-launch.md)
 
 ## Asset Inventory
 

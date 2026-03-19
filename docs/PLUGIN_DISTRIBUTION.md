@@ -60,9 +60,19 @@ npm run build:claude-mcpb
 - Public/team marketplace manifests: `.cursor-plugin/marketplace.json`
 - Plugin source directory: `plugins/cursor-marketplace/`
 - Plugin manifest: `plugins/cursor-marketplace/.cursor-plugin/plugin.json`
-- Transport: local stdio MCP server launched via `npx -y mcp-memory-gateway@0.7.1 serve`
+- Transport: local stdio MCP server launched via `npx -y mcp-memory-gateway@latest serve`
 - Submission path: `https://cursor.com/marketplace/publish`
 - Team fallback: import the GitHub repo through `Dashboard -> Settings -> Plugins -> Team Marketplaces`
+- Cursor Directory: treat as a discovery surface, not the install/update surface
+
+Cursor update rules:
+
+1. `npm publish` can update the runtime path because the plugin launcher requests `mcp-memory-gateway@latest`.
+2. `npm publish` does not update marketplace metadata, screenshots, README copy, or directory descriptions.
+3. Republish or refresh the plugin bundle when marketplace-facing assets change.
+4. For repo-backed Team Marketplaces, enable Auto Refresh when the Cursor admin UI exposes it.
+
+Promotion and release operations are tracked in [CURSOR_PLUGIN_OPERATIONS.md](CURSOR_PLUGIN_OPERATIONS.md).
 
 ## Gemini (Function Calling)
 

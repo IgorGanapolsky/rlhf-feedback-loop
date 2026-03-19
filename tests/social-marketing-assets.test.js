@@ -35,6 +35,18 @@ test('channel docs carry the current workflow-hardening messaging', () => {
   assert.match(reddit, /A system changes behavior\./);
 });
 
+test('cursor plugin launch kit leads with repeated-mistake prevention and proof', () => {
+  const cursorLaunch = read('docs/marketing/cursor-plugin-launch.md');
+  const socialKit = read('docs/marketing/social-posts.md');
+
+  assert.match(cursorLaunch, /Stop Cursor agents from repeating mistakes/i);
+  assert.match(cursorLaunch, /pre-action gates|pre-action guardrails/i);
+  assert.match(cursorLaunch, /VERIFICATION_EVIDENCE\.md/);
+  assert.match(cursorLaunch, /Cursor Directory/i);
+  assert.match(cursorLaunch, /Cursor Marketplace/i);
+  assert.match(socialKit, /\[cursor-plugin-launch\.md\]/);
+});
+
 test('private local SVG assets exist for LinkedIn carousel and X card', () => {
   const assetDir = path.join(repoRoot, 'docs/marketing/assets');
   const assetFiles = [

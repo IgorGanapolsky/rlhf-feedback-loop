@@ -1,14 +1,14 @@
 # MCP Memory Gateway for Cursor
 
-`mcp-memory-gateway` packages the **Agentic Feedback Studio** and **Veto Layer** for Cursor as a marketplace-ready plugin bundle.
+`mcp-memory-gateway` packages a local-first reliability layer for Cursor that helps agents stop repeating mistakes.
 
 The plugin installs the project MCP server so Cursor agents can:
 
 - capture explicit user feedback with evidence
 - recall past mistakes before repeating them
-- generate prevention rules from repeated failures
-- build bounded context packs with provenance
-- export DPO-style preference pairs and Databricks analytics bundles
+- block known-bad actions before tool use
+- promote repeated failures into prevention rules
+- export DPO-style preference pairs and analytics bundles
 
 ## Plugin contents
 
@@ -18,15 +18,19 @@ The plugin installs the project MCP server so Cursor agents can:
 
 This first Cursor package is intentionally minimal. It bundles the MCP server only, which keeps the review surface small and aligns with Cursor Cloud Agents support.
 
-## Install paths
+## Install surfaces
 
 ### Cursor Marketplace
 
-After approval, install directly from the public Cursor Marketplace listing.
+Use this for installation and plugin metadata distribution.
 
 ### Team Marketplace
 
-Cursor Teams and Enterprise can import this repository through `Dashboard -> Settings -> Plugins -> Team Marketplaces`.
+Cursor Teams and Enterprise can import this repository through `Dashboard -> Settings -> Plugins -> Team Marketplaces`. If Cursor exposes `Enable Auto Refresh`, turn it on so repo-backed plugin updates refresh automatically.
+
+### Cursor Directory
+
+Treat Cursor Directory as a discoverability surface, not the runtime distribution channel. It helps people find the plugin, but npm releases do not rewrite directory copy on their own.
 
 ### Local setup before approval
 
@@ -43,19 +47,27 @@ Or copy the plugin MCP config into `.cursor/mcp.json`:
   "mcpServers": {
     "rlhf": {
       "command": "npx",
-      "args": ["-y", "mcp-memory-gateway@0.7.1", "serve"]
+      "args": ["-y", "mcp-memory-gateway@latest", "serve"]
     }
   }
 }
 ```
 
+## Update behavior
+
+- Runtime updates: the plugin asks npm for `mcp-memory-gateway@latest`, so new npm releases can flow into the Cursor runtime without editing the plugin config.
+- Metadata updates: `npm publish` does not refresh the marketplace description, screenshots, README, or directory listing copy. Republish the plugin bundle when those assets change.
+- Guaranteed rollouts: if you need deterministic behavior for a specific release, pin a version manually in local config instead of relying on `@latest`.
+
 ## What makes this useful in Cursor
 
-MCP Memory Gateway gives Cursor agents a local-first feedback loop:
+MCP Memory Gateway gives Cursor agents a local-first reliability loop:
 
-- **Veto Layer** gates block repeated mistakes before tool use
+- **Repeated-mistake prevention** keeps the same repo failures from coming back every session
+- **Veto Layer** gates block known-bad actions before tool use
 - **Context engineering** keeps relevant project history in scope
 - **Thompson Sampling** and attribution logs improve action ranking
 - **DPO exports** let you warehouse and fine-tune downstream
 
 Verification evidence for shipped behavior lives in `docs/VERIFICATION_EVIDENCE.md`.
+Release and promotion rules live in `docs/CURSOR_PLUGIN_OPERATIONS.md`.
