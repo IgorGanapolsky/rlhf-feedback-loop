@@ -554,32 +554,35 @@ function buildCheckoutBootstrapBody(parsed, req, journeyState = resolveJourneySt
   };
 }
 
-function sendJson(res, statusCode, payload, extraHeaders = {}) {
+function sendJson(res, statusCode, payload, extraHeaders = {}, options = {}) {
+  const { headOnly = false } = options;
   const body = JSON.stringify(payload);
   res.writeHead(statusCode, {
     'Content-Type': 'application/json; charset=utf-8',
     'Content-Length': Buffer.byteLength(body),
     ...extraHeaders,
   });
-  res.end(body);
+  res.end(headOnly ? '' : body);
 }
 
-function sendText(res, statusCode, text, extraHeaders = {}) {
+function sendText(res, statusCode, text, extraHeaders = {}, options = {}) {
+  const { headOnly = false } = options;
   res.writeHead(statusCode, {
     'Content-Type': 'text/plain; charset=utf-8',
     'Content-Length': Buffer.byteLength(text),
     ...extraHeaders,
   });
-  res.end(text);
+  res.end(headOnly ? '' : text);
 }
 
-function sendHtml(res, statusCode, html, extraHeaders = {}) {
+function sendHtml(res, statusCode, html, extraHeaders = {}, options = {}) {
+  const { headOnly = false } = options;
   res.writeHead(statusCode, {
     'Content-Type': 'text/html; charset=utf-8',
     'Content-Length': Buffer.byteLength(html),
     ...extraHeaders,
   });
-  res.end(html);
+  res.end(headOnly ? '' : html);
 }
 
 function getPublicBillingHeaders(traceId = '') {
@@ -1425,6 +1428,8 @@ function createApiServer() {
   return http.createServer(async (req, res) => {
     const parsed = new URL(req.url, 'http://localhost');
     const pathname = parsed.pathname;
+    const isHeadRequest = req.method === 'HEAD';
+    const isGetLikeRequest = req.method === 'GET' || isHeadRequest;
     const publicOrigin = getPublicOrigin(req);
     const hostedConfig = resolveHostedBillingConfig({ requestOrigin: publicOrigin });
 
@@ -1489,21 +1494,25 @@ function createApiServer() {
     }
 
     // Public endpoints — no auth required
-    if (req.method === 'GET' && pathname === '/robots.txt') {
+    if (isGetLikeRequest && pathname === '/robots.txt') {
       sendText(res, 200, renderRobotsTxt(hostedConfig), {
         'Content-Type': 'text/plain; charset=utf-8',
+      }, {
+        headOnly: isHeadRequest,
       });
       return;
     }
 
-    if (req.method === 'GET' && pathname === '/sitemap.xml') {
+    if (isGetLikeRequest && pathname === '/sitemap.xml') {
       sendText(res, 200, renderSitemapXml(hostedConfig), {
         'Content-Type': 'application/xml; charset=utf-8',
+      }, {
+        headOnly: isHeadRequest,
       });
       return;
     }
 
-    if (req.method === 'GET' && pathname === '/') {
+    if (isGetLikeRequest && pathname === '/') {
       if (wantsJson(req, parsed)) {
         sendJson(res, 200, {
           name: 'mcp-memory-gateway',
@@ -1511,6 +1520,15 @@ function createApiServer() {
           status: 'ok',
           docs: 'https://github.com/IgorGanapolsky/mcp-memory-gateway',
           endpoints: ['/health', '/v1/feedback/capture', '/v1/feedback/stats', '/v1/dpo/export', '/v1/analytics/databricks/export'],
+        }, {}, {
+          headOnly: isHeadRequest,
+        });
+        return;
+      }
+
+      if (isHeadRequest) {
+        sendHtml(res, 200, loadLandingPageHtml(hostedConfig), {}, {
+          headOnly: true,
         });
         return;
       }
@@ -1572,7 +1590,14 @@ function createApiServer() {
       return;
     }
 
-    if (req.method === 'GET' && pathname === '/checkout/pro') {
+    if (isGetLikeRequest && pathname === '/checkout/pro') {
+      if (isHeadRequest) {
+        sendText(res, 200, '', {}, {
+          headOnly: true,
+        });
+        return;
+      }
+
       const { FEEDBACK_DIR } = getFeedbackPaths();
       const journeyState = resolveJourneyState(req, parsed);
       const bootstrapBody = buildCheckoutBootstrapBody(parsed, req, journeyState);
@@ -1696,7 +1721,14 @@ function createApiServer() {
       return;
     }
 
-    if (req.method === 'GET' && pathname === '/success') {
+    if (isGetLikeRequest && pathname === '/success') {
+      if (isHeadRequest) {
+        sendHtml(res, 200, renderCheckoutSuccessPage(hostedConfig), {}, {
+          headOnly: true,
+        });
+        return;
+      }
+
       const { FEEDBACK_DIR } = getFeedbackPaths();
       const journeyState = resolveJourneyState(req, parsed);
       appendBestEffortTelemetry(FEEDBACK_DIR, {
@@ -1712,7 +1744,14 @@ function createApiServer() {
       return;
     }
 
-    if (req.method === 'GET' && pathname === '/cancel') {
+    if (isGetLikeRequest && pathname === '/cancel') {
+      if (isHeadRequest) {
+        sendHtml(res, 200, renderCheckoutCancelledPage(hostedConfig), {}, {
+          headOnly: true,
+        });
+        return;
+      }
+
       const { FEEDBACK_DIR } = getFeedbackPaths();
       const journeyState = resolveJourneyState(req, parsed);
       appendBestEffortTelemetry(FEEDBACK_DIR, {
@@ -1728,7 +1767,7 @@ function createApiServer() {
       return;
     }
 
-    if (req.method === 'GET' && pathname === '/.well-known/mcp/server-card.json') {
+    if (isGetLikeRequest && pathname === '/.well-known/mcp/server-card.json') {
       sendJson(res, 200, {
         serverInfo: {
           name: 'mcp-memory-gateway',
@@ -1740,11 +1779,13 @@ function createApiServer() {
         tools: getServerCardTools(),
         repository: 'https://github.com/IgorGanapolsky/mcp-memory-gateway',
         homepage: hostedConfig.appOrigin,
+      }, {}, {
+        headOnly: isHeadRequest,
       });
       return;
     }
 
-    if (req.method === 'GET' && pathname === '/health') {
+    if (isGetLikeRequest && pathname === '/health') {
       sendJson(res, 200, {
         status: 'ok',
         version: pkg.version,
@@ -1753,16 +1794,20 @@ function createApiServer() {
           appOrigin: hostedConfig.appOrigin,
           billingApiBaseUrl: hostedConfig.billingApiBaseUrl,
         },
+      }, {}, {
+        headOnly: isHeadRequest,
       });
       return;
     }
 
-    if (req.method === 'GET' && pathname === '/healthz') {
+    if (isGetLikeRequest && pathname === '/healthz') {
       const { FEEDBACK_LOG_PATH, MEMORY_LOG_PATH } = getFeedbackPaths();
       sendJson(res, 200, {
         status: 'ok',
         feedbackLogPath: FEEDBACK_LOG_PATH,
         memoryLogPath: MEMORY_LOG_PATH,
+      }, {}, {
+        headOnly: isHeadRequest,
       });
       return;
     }
@@ -1966,7 +2011,7 @@ function createApiServer() {
     }
 
     // Public OpenAPI spec — no auth required (needed for ChatGPT GPT Store import)
-    if (req.method === 'GET' && pathname === '/openapi.json') {
+    if (isGetLikeRequest && pathname === '/openapi.json') {
       const specPath = path.join(__dirname, '../../adapters/chatgpt/openapi.yaml');
       try {
         const yaml = fs.readFileSync(specPath, 'utf8');
@@ -1978,11 +2023,18 @@ function createApiServer() {
           if (spec.servers && spec.servers[0]) {
             spec.servers[0].url = `${req.headers['x-forwarded-proto'] || 'https'}://${req.headers.host}`;
           }
-          res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-          res.end(JSON.stringify(spec, null, 2));
+          sendJson(res, 200, spec, {
+            'Access-Control-Allow-Origin': '*',
+          }, {
+            headOnly: isHeadRequest,
+          });
         } catch {
-          res.writeHead(200, { 'Content-Type': 'text/yaml', 'Access-Control-Allow-Origin': '*' });
-          res.end(yaml);
+          sendText(res, 200, yaml, {
+            'Content-Type': 'text/yaml; charset=utf-8',
+            'Access-Control-Allow-Origin': '*',
+          }, {
+            headOnly: isHeadRequest,
+          });
         }
       } catch {
         sendProblem(res, {
@@ -1996,9 +2048,8 @@ function createApiServer() {
     }
 
     // Public privacy policy — required for GPT Store and marketplace listings
-    if (req.method === 'GET' && pathname === '/privacy') {
-      res.writeHead(200, { 'Content-Type': 'text/html' });
-      res.end(`<!DOCTYPE html><html><head><title>Privacy Policy — MCP Memory Gateway</title></head><body>
+    if (isGetLikeRequest && pathname === '/privacy') {
+      sendHtml(res, 200, `<!DOCTYPE html><html><head><title>Privacy Policy — MCP Memory Gateway</title></head><body>
 <h1>Privacy Policy</h1>
 <p><strong>MCP Memory Gateway</strong> (npm: mcp-memory-gateway)</p>
 <p>Last updated: 2026-03-11</p>
@@ -2019,7 +2070,9 @@ function createApiServer() {
 <p>Contact igor.ganapolsky@gmail.com to request deletion of hosted data.</p>
 <h2>Contact</h2><p>igor.ganapolsky@gmail.com</p>
 <p><a href="https://github.com/IgorGanapolsky/mcp-memory-gateway">GitHub</a></p>
-</body></html>`);
+</body></html>`, {}, {
+        headOnly: isHeadRequest,
+      });
       return;
     }
 
