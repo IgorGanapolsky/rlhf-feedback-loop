@@ -13,7 +13,7 @@ function readJson(relativePath) {
   return JSON.parse(readText(relativePath));
 }
 
-test('package metadata leads with project memory and guardrails instead of generic memory-layer phrasing', () => {
+test('package metadata leads with Pre-Action Gates instead of generic memory-layer phrasing', () => {
   const packageJson = readJson('package.json');
 
   assert.match(packageJson.description, /Pre-action gates/i);
@@ -21,12 +21,13 @@ test('package metadata leads with project memory and guardrails instead of gener
   assert.doesNotMatch(packageJson.description, /Universal Context & Memory Layer/i);
 });
 
-test('README explains the product as one-agent reliability instead of more orchestration', () => {
+test('README explains the product as Pre-Action Gates instead of more orchestration', () => {
   const readme = readText('README.md');
 
   assert.match(readme, /pre-action gates/i);
+  assert.match(readme, /physically block/i);
   assert.match(readme, /without another planner or swarm/i);
-  assert.match(readme, /reliability/i);
+  assert.match(readme, /feedback-to-enforcement pipeline/i);
 });
 
 test('continuity guide frames the gateway as downstream reliability, not a new orchestrator', () => {
@@ -39,14 +40,13 @@ test('continuity guide frames the gateway as downstream reliability, not a new o
   assert.match(guide, /Do not add an orchestration layer unless it improves output enough to justify the handoff overhead\./);
 });
 
-test('launch-content variants align with reliability-over-orchestration positioning', () => {
+test('launch-content variants align with Pre-Action Gates positioning', () => {
   const launchContent = readText(path.join('docs', 'marketing', 'LAUNCH_CONTENT.md'));
 
   assert.match(launchContent, /MCP Memory Gateway/i);
-  assert.match(launchContent, /project memory and guardrails for coding agents/i);
+  assert.match(launchContent, /Reliability Gateway/i);
   assert.match(launchContent, /one sharp agent|repeated mistakes/i);
   assert.doesNotMatch(launchContent, /Agentic Feedback Studio/i);
-  assert.doesNotMatch(launchContent, /persistent memory layer that fixes this/i);
 });
 
 test('GEO demand engine prioritizes action queries and proof-backed fan-out surfaces', () => {
