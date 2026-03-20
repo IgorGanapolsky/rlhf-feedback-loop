@@ -3,7 +3,23 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { resolveBlockers } = require('../scripts/pr-manager');
+const {
+  getPrStatus,
+  loadManagedPrs,
+  managePrs,
+  resolveBlockers,
+} = require('../scripts/pr-manager');
+
+function createRunner(results) {
+  const queue = [...results];
+  return (args) => {
+    if (queue.length === 0) {
+      throw new Error(`Unexpected GH CLI call: ${args.join(' ')}`);
+    }
+
+    return queue.shift();
+  };
+}
 
 test('PR Manager - Diagnoses Ready state', async (t) => {
   const mockPr = {
@@ -19,7 +35,7 @@ test('PR Manager - Diagnoses Ready state', async (t) => {
   assert.equal(result.status, 'ready', 'PR with CLEAN/MERGEABLE state should be ready');
 });
 
-test('PR Manager - Detects Draft', async (t) => {
+test('PR Manager - Detects Draft', async () => {
   const mockPr = {
     number: 124,
     isDraft: true
@@ -30,7 +46,7 @@ test('PR Manager - Detects Draft', async (t) => {
   assert.equal(result.reason, 'draft');
 });
 
-test('PR Manager - Detects CI Failure', async (t) => {
+test('PR Manager - Detects CI Failure', async () => {
   const mockPr = {
     number: 125,
     title: 'Failing CI PR',
@@ -48,7 +64,7 @@ test('PR Manager - Detects CI Failure', async (t) => {
   assert.deepEqual(result.checks, ['CI/test']);
 });
 
-test('PR Manager - Detects Conflicts', async (t) => {
+test('PR Manager - Detects Conflicts', async () => {
   const mockPr = {
     number: 126,
     title: 'Conflicting PR',
@@ -60,4 +76,95 @@ test('PR Manager - Detects Conflicts', async (t) => {
   const result = await resolveBlockers(mockPr);
   assert.equal(result.status, 'blocked', 'Dirty state should be blocked');
   assert.equal(result.reason, 'conflicts');
+});
+
+test('PR Manager - getPrStatus returns null when current branch has no PR', () => {
+  const runner = createRunner([
+    {
+      status: 1,
+      stdout: '',
+      stderr: 'no pull requests found for branch "codex/tech-debt-audit-20260320"\n'
+    }
+  ]);
+
+  assert.equal(getPrStatus('', runner), null);
+});
+
+test('PR Manager - loadManagedPrs falls back to open PR list when branch has no PR', () => {
+  const mockPr = {
+    number: 281,
+    title: 'Merged-ready PR',
+    mergeable: 'MERGEABLE',
+    mergeStateStatus: 'CLEAN',
+    isDraft: false,
+    statusCheckRollup: []
+  };
+  const runner = createRunner([
+    {
+      status: 1,
+      stdout: '',
+      stderr: 'no pull requests found for branch "codex/tech-debt-audit-20260320"\n'
+    },
+    {
+      status: 0,
+      stdout: JSON.stringify([mockPr]),
+      stderr: ''
+    }
+  ]);
+
+  assert.deepEqual(loadManagedPrs('', runner), [mockPr]);
+});
+
+test('PR Manager - managePrs returns noop when there are no open PRs', async () => {
+  const runner = createRunner([
+    {
+      status: 1,
+      stdout: '',
+      stderr: 'no pull requests found for branch "codex/tech-debt-audit-20260320"\n'
+    },
+    {
+      status: 0,
+      stdout: '[]',
+      stderr: ''
+    }
+  ]);
+
+  const result = await managePrs('', runner);
+  assert.equal(result.status, 'noop');
+  assert.deepEqual(result.prs, []);
+});
+
+test('PR Manager - managePrs merges ready open PRs discovered from the repo list', async () => {
+  const mockPr = {
+    number: 282,
+    title: 'Repo-wide ready PR',
+    mergeable: 'MERGEABLE',
+    mergeStateStatus: 'CLEAN',
+    isDraft: false,
+    statusCheckRollup: [{ name: 'CI', conclusion: 'SUCCESS' }]
+  };
+  const runner = createRunner([
+    {
+      status: 1,
+      stdout: '',
+      stderr: 'no pull requests found for branch "codex/tech-debt-audit-20260320"\n'
+    },
+    {
+      status: 0,
+      stdout: JSON.stringify([mockPr]),
+      stderr: ''
+    },
+    {
+      status: 0,
+      stdout: 'merged',
+      stderr: ''
+    }
+  ]);
+
+  const result = await managePrs('', runner);
+  assert.equal(result.status, 'ok');
+  assert.equal(result.prs.length, 1);
+  assert.equal(result.prs[0].number, 282);
+  assert.equal(result.prs[0].outcome.status, 'ready');
+  assert.equal(result.prs[0].outcome.merged, true);
 });
