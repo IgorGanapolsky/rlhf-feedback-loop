@@ -1423,6 +1423,85 @@ Artifacts updated:
 - `proof/automation/report.json`
 - `proof/automation/report.md`
 
+## 2026-03-20 Technical Debt Audit + Test-Gate Hardening Verification
+
+Scope:
+
+- PR-management reliability when operating from a branch without an attached PR.
+- Default test-gate completeness for repository test files.
+- Removal of stale tracked test-output artifacts.
+- Fresh technical-debt audit snapshot and verification evidence.
+
+Baseline before changes:
+
+- Tracked files: `573`
+- Tracked lines: `115434`
+- Coverage baseline from a separate clean `origin/main` worktree:
+  - lines: `89.50%`
+  - branches: `75.64%`
+  - functions: `92.90%`
+- `main` GitHub CI status on `fb78e8ae1a36dbdb92dd93867a278c60c92a41c0`: passing
+
+Audit findings fixed:
+
+1. `npm run pr:manage` failed with `no pull requests found for branch ...` on clean worktree branches.
+2. `npm test` omitted `23` repository test files despite those tests passing independently.
+3. There was no regression guard to stop future `npm test` drift from the actual `tests/**/*.test.js` inventory.
+4. `test_output.txt` was a checked-in command transcript with no code or documentation references.
+
+Targeted proof commands:
+
+```bash
+node --test tests/contextfs.test.js tests/feedback-to-memory.test.js tests/vector-store.test.js
+node --test tests/mcp-server.test.js tests/intent-router.test.js tests/async-job-runner.test.js
+node --test tests/pr-manager.test.js tests/test-suite-parity.test.js
+npm run test:ops
+npm run pr:manage
+```
+
+Observed targeted results:
+
+- Local memory/RAG proof batch: `27/27` passing.
+- Orchestration proof batch: `53/53` passing.
+- PR-manager + parity guard batch: `9/9` passing.
+- `npm run test:ops`: `171/171` passing.
+- `npm run pr:manage`: clean noop with `[PR Manager] No open pull requests found.`
+
+Full verification commands:
+
+```bash
+npm ci
+npm --prefix workers ci
+npm test
+npm run test:coverage
+env RLHF_PROOF_DIR="$(mktemp -d)/proof" npm run prove:adapters
+env RLHF_AUTOMATION_PROOF_DIR="$(mktemp -d)/proof-automation" npm run prove:automation
+npm run self-heal:check
+npm audit --json
+npm --prefix workers audit --json
+git diff --check
+```
+
+Observed final results:
+
+- `npm ci`: exit `0`
+- `npm --prefix workers ci`: exit `0`
+- `npm test`: exit `0`
+- `npm run test:coverage`: exit `0`
+  - lines: `89.57%`
+  - branches: `75.48%`
+  - functions: `93.06%`
+- `npm run prove:adapters`: `48/48` passing
+- `npm run prove:automation`: `55/55` passing
+- `npm run self-heal:check`: `Overall: HEALTHY` with `4/4 healthy`
+- `npm audit --json`: `0` vulnerabilities
+- `npm --prefix workers audit --json`: `0` vulnerabilities
+- `git diff --check`: exit `0`
+
+Artifacts updated:
+
+- `docs/TECHNICAL_DEBT_AUDIT.md`
+
 ## 2026-03-20 Hosted North Star + Sprint Pipeline Verification
 
 Scope:

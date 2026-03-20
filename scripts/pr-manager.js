@@ -9,28 +9,75 @@
 'use strict';
 
 const { spawnSync } = require('child_process');
+const PR_FIELDS = 'number,mergeable,mergeStateStatus,statusCheckRollup,reviewDecision,isDraft,title';
+
+function runGh(args) {
+  return spawnSync('gh', args, { encoding: 'utf-8' });
+}
+
+function formatGhError(result) {
+  return (result.stderr || result.stdout || 'Unknown GH CLI failure').trim();
+}
+
+function isMissingCurrentBranchPr(result, prNumber) {
+  if (prNumber) {
+    return false;
+  }
+
+  return /no pull requests found for branch/i.test(formatGhError(result));
+}
 
 /**
  * Fetch granular PR status using GH CLI
  */
-function getPrStatus(prNumber = '') {
+function getPrStatus(prNumber = '', runner = runGh) {
   const args = ['pr', 'view'];
   if (prNumber) args.push(prNumber);
-  args.push('--json', 'number,mergeable,mergeStateStatus,statusCheckRollup,reviewDecision,isDraft,title');
+  args.push('--json', PR_FIELDS);
 
-  const result = spawnSync('gh', args, { encoding: 'utf-8' });
+  const result = runner(args);
   if (result.status !== 0) {
-    throw new Error(`Failed to fetch PR status: ${result.stderr}`);
+    if (isMissingCurrentBranchPr(result, prNumber)) {
+      return null;
+    }
+
+    throw new Error(`Failed to fetch PR status: ${formatGhError(result)}`);
   }
   return JSON.parse(result.stdout);
+}
+
+function listOpenPrs(runner = runGh) {
+  const result = runner(['pr', 'list', '--state', 'open', '--json', PR_FIELDS]);
+  if (result.status !== 0) {
+    throw new Error(`Failed to list open PRs: ${formatGhError(result)}`);
+  }
+
+  return JSON.parse(result.stdout || '[]');
+}
+
+function loadManagedPrs(prNumber = '', runner = runGh) {
+  if (prNumber) {
+    return [getPrStatus(prNumber, runner)];
+  }
+
+  const currentBranchPr = getPrStatus('', runner);
+  if (currentBranchPr) {
+    return [currentBranchPr];
+  }
+
+  return listOpenPrs(runner);
 }
 
 /**
  * Diagnose and resolve blockers autonomously
  */
-async function resolveBlockers(pr) {
-  console.log(`[PR Manager] Diagnosing PR #${pr.number}: "${pr.title}"`);
-  console.log(`[PR Manager] Merge State: ${pr.mergeStateStatus} | Mergeable: ${pr.mergeable}`);
+async function resolveBlockers(pr, runner = runGh) {
+  const title = pr.title || 'Untitled PR';
+  const mergeState = pr.mergeStateStatus || 'UNKNOWN';
+  const mergeable = pr.mergeable || 'UNKNOWN';
+
+  console.log(`[PR Manager] Diagnosing PR #${pr.number}: "${title}"`);
+  console.log(`[PR Manager] Merge State: ${mergeState} | Mergeable: ${mergeable}`);
 
   if (pr.isDraft) {
     console.log('[PR Manager] PR is a draft. Skipping.');
@@ -40,7 +87,7 @@ async function resolveBlockers(pr) {
   // 1. Handle Outdated Branch (BEHIND)
   if (pr.mergeStateStatus === 'BEHIND') {
     console.log('[PR Manager] PR is behind main. Triggering auto-update...');
-    const update = spawnSync('gh', ['pr', 'update-branch', pr.number.toString()], { encoding: 'utf-8' });
+    const update = runner(['pr', 'update-branch', pr.number.toString()]);
     if (update.status === 0) {
       return { status: 'healing', action: 'update-branch' };
     }
@@ -81,32 +128,58 @@ async function resolveBlockers(pr) {
 /**
  * Perform autonomous merge
  */
-function performMerge(prNumber) {
+function performMerge(prNumber, runner = runGh) {
   console.log(`[PR Manager] Initiating squash merge for PR #${prNumber}...`);
-  const result = spawnSync('gh', ['pr', 'merge', prNumber.toString(), '--squash', '--delete-branch', '--admin'], { encoding: 'utf-8' });
+  const result = runner(['pr', 'merge', prNumber.toString(), '--squash', '--delete-branch', '--admin']);
   if (result.status === 0) {
     console.log(`[PR Manager] Merged PR #${prNumber} successfully.`);
     return true;
   } else {
-    console.error(`[PR Manager] Merge failed: ${result.stderr}`);
+    console.error(`[PR Manager] Merge failed: ${formatGhError(result)}`);
     return false;
   }
 }
 
-if (require.main === module) {
-  const prNum = process.argv[2];
-  try {
-    const pr = getPrStatus(prNum);
-    resolveBlockers(pr).then(res => {
-      if (res.status === 'ready') {
-        performMerge(pr.number);
-      }
-      process.exit(0);
-    });
-  } catch (err) {
-    console.error(err.message);
-    process.exit(1);
+async function managePrs(prNumber = '', runner = runGh) {
+  const prs = loadManagedPrs(prNumber, runner).filter(Boolean);
+
+  if (prs.length === 0) {
+    console.log('[PR Manager] No open pull requests found.');
+    return { status: 'noop', prs: [] };
   }
+
+  const results = [];
+  for (const pr of prs) {
+    const outcome = await resolveBlockers(pr, runner);
+    if (outcome.status === 'ready') {
+      outcome.merged = performMerge(pr.number, runner);
+    }
+
+    results.push({
+      number: pr.number,
+      title: pr.title,
+      outcome,
+    });
+  }
+
+  return { status: 'ok', prs: results };
 }
 
-module.exports = { getPrStatus, resolveBlockers, performMerge };
+if (require.main === module) {
+  const prNum = process.argv[2];
+  managePrs(prNum).then(() => {
+    process.exit(0);
+  }).catch((err) => {
+    console.error(err.message);
+    process.exit(1);
+  });
+}
+
+module.exports = {
+  getPrStatus,
+  listOpenPrs,
+  loadManagedPrs,
+  resolveBlockers,
+  performMerge,
+  managePrs,
+};

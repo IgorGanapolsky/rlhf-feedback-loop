@@ -1,92 +1,80 @@
 # Technical Debt Audit
 
-> Historical audit snapshot from an earlier cleanup branch. The metrics below are not live repository truth. Use the current verification run, PR evidence, and `docs/VERIFICATION_EVIDENCE.md` for current state.
+> Live audit snapshot for March 20, 2026 on `codex/tech-debt-audit-20260320`. This supersedes the older historical note. Verification evidence for this audit is recorded in `docs/VERIFICATION_EVIDENCE.md`.
 
 ## Scope
 
-Repository-wide audit performed in dedicated worktrees only. Metrics below use tracked repository files and exclude `node_modules/` trees.
-The final repo-state totals include `main` changes merged during the audit window; the net audit diff below captures only this PR's cleanup delta.
+Repository-wide audit performed in dedicated worktrees only. Metrics below use tracked repository files and exclude `node_modules/` trees. Runtime `.rlhf/*` artifacts were reviewed locally during the audit but not committed.
 
 ## Audit Report
 
 ```text
-Files scanned: 557
-Issues found: 10
-Issues fixed: 10
-Files deleted: 6
-Lines removed: 1154 net
-RAG entries cleaned: 6 deleted, exact duplicates now deduped on write
+Files scanned: 573
+Issues found: 5
+Issues fixed: 5
+Files deleted: 1
+Lines removed: 3119 net
+RAG entries cleaned: 0 tracked entries changed; local runtime lessons reviewed and kept local-only
 ```
 
 ## Metrics
 
 ```text
-Tracked files before: 557
-Tracked files after: 561
-Tracked lines before: 89658
-Tracked lines after: 88504
-Coverage before: 82.07% lines / 68.96% branches / 85.52% functions (coverage job failed on 4 regressions)
-Coverage after: 82.42% lines / 68.76% branches / 85.10% functions
-CI before: PASSING on main at 57a7498e42578270a2dc1421c1bfd8d06f07dded
-CI after: verified locally before PR merge; GitHub Actions link added after merge
+Tracked files before: 573
+Tracked files after: 573
+Tracked lines before: 115434
+Tracked lines after: 112315
+Coverage before: 89.50% lines / 75.64% branches / 92.90% functions
+Coverage after: 89.57% lines / 75.48% branches / 93.06% functions
+CI before: PASSING on main at fb78e8ae1a36dbdb92dd93867a278c60c92a41c0
+CI after: verified locally before PR creation; GitHub Actions link added after merge
 ```
 
 ## Fixed Debt
 
-1. `scripts/gates-engine.js`: fixed free-tier gate slicing so core safety gates are never dropped.
-2. `tests/gates-engine.test.js`: added a regression proving free-tier core gates stay loaded.
-3. `adapters/mcp/server-stdio.js`: removed dead legacy recall-limit state and switched recall gating to the shared rate limiter.
-4. `tests/recall-limit.test.js`: isolated rate-limiter state and forced free-tier env so recall-limit tests are deterministic under CI secrets.
-5. `scripts/contextfs.js`: added exact duplicate detection for feedback-memory writes.
-6. `tests/contextfs.test.js`: added a regression proving duplicate lessons reuse the same ContextFS object.
-7. `src/api/server.js`: removed a duplicate dead `/healthz` route.
-8. `.github/workflows/ci.yml`: added worker install/test coverage to CI.
-9. `workers/src/billing.ts`: aligned the Stripe API version with the current SDK release line.
-10. `workers/package.json`, `workers/package-lock.json`, `workers/README.md`, and `CLAUDE.md`: removed the direct `wrangler` dependency and codified the global-CLI policy so the worker package is audit-clean without stale local tooling.
+1. `scripts/pr-manager.js`: no longer crashes when the current worktree branch has no PR; it now falls back to repo-wide open PR inspection and returns a clean noop when none exist.
+2. `tests/pr-manager.test.js`: expanded coverage for no-PR, open-PR fallback, noop, and repo-wide merge-ready paths.
+3. `package.json`: `npm test` now includes the previously omitted operational test bucket via `test:ops`.
+4. `tests/test-suite-parity.test.js`: added a guard that fails if any repository test file is omitted from `npm test`.
+5. `test_output.txt`: deleted as a stale checked-in test transcript with no runtime or documentation references.
 
 ## Deleted Files
 
-These tracked files were removed because they were duplicate RLHF memory entries that stored the same lesson content:
-
-- `.rlhf/contextfs/memory/error/1773420645497_mistake-no-test-evidence.json`
-- `.rlhf/contextfs/memory/error/1773420734784_mistake-no-test-evidence.json`
-- `.rlhf/contextfs/memory/learning/1773420645465_success-used-proof-harness-and-verification-logs.json`
-- `.rlhf/contextfs/memory/learning/1773420645706_success-end-to-end-verification-flow.json`
-- `.rlhf/contextfs/memory/learning/1773420734695_success-used-proof-harness-and-verification-logs.json`
-- `.rlhf/contextfs/memory/learning/1773420734791_success-end-to-end-verification-flow.json`
+- `test_output.txt` — obsolete captured `npm test` output. It was not referenced anywhere in code, docs, scripts, or CI.
 
 ## Test Coverage Report
 
 ```text
-Before: 82.07% line coverage (job failed on 4 regressions)
-After: 82.42% line coverage
-New tests added: 2
-Existing tests hardened: 3 recall-limit cases
-Gaps remaining: adapters/mcp/server-stdio.js, bin/cli.js, scripts/feedback-inbox-read.js, scripts/feedback-to-memory.js, scripts/gate-satisfy.js, scripts/pr-manager.js, scripts/autoresearch-runner.js
+Before: 89.50% lines / 75.64% branches / 92.90% functions
+After: 89.57% lines / 75.48% branches / 93.06% functions
+New tests added: 1
+Existing tests hardened: 1
+Gaps remaining: src/api/server.js, scripts/validate-workflow-contract.js, scripts/workflow-sprint-intake.js, scripts/verification-loop.js
 ```
 
 ## CI Health Report
 
 ```text
-Pipeline status: pending post-push at audit commit
-Flaky tests fixed: 1 recall-limit sequence
-New checks added: workers dependency install, workers type-check test
+Pipeline status: locally passing before PR creation
+Flaky tests fixed: 0
+New checks added: test:ops, npm-test parity guard for repository test files
 ```
 
 ## Core-System Snapshot
 
-- AI RAG reliability: `tests/contextfs.test.js` passed before and after; duplicate memory writes are now blocked.
-- Orchestration functionality: `tests/intent-router.test.js` and `tests/verification-loop.test.js` passed in the baseline snapshot; current full suite passes after the gate-loader fix.
-- CI pipeline status: main was green before the audit; the audit branch now includes worker validation inside the main CI workflow.
-- Monitoring and health: `npm run self-heal:check` finished `4/4 healthy`, and the duplicate dead `/healthz` route was removed without changing the active health endpoint behavior.
+- AI RAG reliability: `tests/contextfs.test.js`, `tests/feedback-to-memory.test.js`, and `tests/vector-store.test.js` passed in the baseline snapshot.
+- Orchestration functionality: `tests/mcp-server.test.js`, `tests/intent-router.test.js`, and `tests/async-job-runner.test.js` passed in the baseline snapshot.
+- Monitoring and health: `npm run self-heal:check` finished `4/4 healthy` before and after cleanup.
+- CI pipeline status: GitHub `main` was green on `fb78e8ae1a36dbdb92dd93867a278c60c92a41c0` before the audit started.
 
 ## Security Summary
 
-- Before: `npm --prefix workers audit --json` reported 4 moderate vulnerabilities in the worker toolchain dependency graph.
-- After: `npm --prefix workers audit --json` reported 0 vulnerabilities after externalizing the repo-local Wrangler CLI dependency.
+- `npm audit --json`: `0` vulnerabilities.
+- `npm --prefix workers audit --json`: `0` vulnerabilities.
+- GitHub code scanning, Dependabot, and secret scanning were already at `0` open alerts before this audit branch.
 
 ## RAG Cleanup Summary
 
-- Removed six tracked duplicate lessons.
-- Added exact-match duplicate suppression in `registerFeedback()`.
-- Duplicate suppression now records provenance with `context_object_deduped` instead of silently emitting another memory file.
+- Queried local feedback memory and runtime state before editing.
+- Reviewed the local runtime lessons created during verification.
+- Kept all `.rlhf/*` runtime artifacts local and uncommitted, per repo policy.
