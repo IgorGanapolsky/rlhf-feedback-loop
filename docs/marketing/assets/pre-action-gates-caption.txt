@@ -1,0 +1,4 @@
+Every AI memory tool asks the agent to cooperate. Pre-Action Gates don't ask - they enforce.
+The only MCP tool that learns from failures AND enforces what it learns.
+Free + MIT: npx mcp-memory-gateway init
+#ClaudeCode #AIcoding #MCP #DevTools #PreActionGates #VibeCoding #BuildInPublic #OpenSource

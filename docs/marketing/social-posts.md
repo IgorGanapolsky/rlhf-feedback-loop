@@ -21,6 +21,7 @@ Use this kit instead of older memory-first launch copy when posting about the pr
 - X thread: [x-launch-thread.md](./x-launch-thread.md)
 - Reddit posts: [reddit-posts.md](./reddit-posts.md)
 - Cursor plugin launch kit: [cursor-plugin-launch.md](./cursor-plugin-launch.md)
+- Zero-filming IG + TikTok ops: [social-automation.md](./social-automation.md)
 
 ## Asset Inventory
 
@@ -33,6 +34,8 @@ Local, private-first export-ready assets live under [assets](./assets/README.md)
 - [LinkedIn slide 5](./assets/ai-reliability-system-linkedin-slide-05.svg)
 - [LinkedIn slide 6](./assets/ai-reliability-system-linkedin-slide-06.svg)
 - [X summary card](./assets/ai-reliability-system-x-card.svg)
+- [IG/TikTok carousel HTML](./assets/pre-action-gates-instagram-carousel.html)
+- [IG/TikTok caption](./assets/pre-action-gates-caption.txt)
 
 ## Publishing Order
 
