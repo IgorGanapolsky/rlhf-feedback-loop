@@ -65,3 +65,21 @@ test('private local SVG assets exist for LinkedIn carousel and X card', () => {
     assert.match(fs.readFileSync(assetPath, 'utf8'), /<svg/);
   }
 });
+
+test('zero-filming automation docs and canonical IG/TikTok assets exist', () => {
+  const socialKit = read('docs/marketing/social-posts.md');
+  const automationDoc = read('docs/marketing/social-automation.md');
+  const assetReadme = read('docs/marketing/assets/README.md');
+  const htmlPath = path.join(repoRoot, 'docs', 'marketing', 'assets', 'pre-action-gates-instagram-carousel.html');
+  const captionPath = path.join(repoRoot, 'docs', 'marketing', 'assets', 'pre-action-gates-caption.txt');
+
+  assert.match(socialKit, /\[social-automation\.md\]/);
+  assert.match(automationDoc, /social:prepare/);
+  assert.match(automationDoc, /social:publish:queue/);
+  assert.match(automationDoc, /launchd/i);
+  assert.match(assetReadme, /pre-action-gates-instagram-carousel\.html/);
+  assert.equal(fs.existsSync(htmlPath), true);
+  assert.equal(fs.existsSync(captionPath), true);
+  assert.match(fs.readFileSync(htmlPath, 'utf8'), /15 Memory Tools\./);
+  assert.match(fs.readFileSync(captionPath, 'utf8'), /Pre-Action Gates don't ask - they enforce\./);
+});

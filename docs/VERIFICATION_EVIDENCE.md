@@ -1,3 +1,77 @@
+## March 20, 2026: Zero-filming Instagram + TikTok automation pipeline
+
+Scope:
+
+- Added a repo-owned social pipeline in `scripts/social-pipeline.js` that renders canonical carousel HTML into Instagram PNG slides, generates a TikTok-safe MP4 fallback, writes a bundle manifest, queues local scheduled posts, and can publish through an authenticated Chrome session.
+- Added canonical local source assets at `docs/marketing/assets/pre-action-gates-instagram-carousel.html` and `docs/marketing/assets/pre-action-gates-caption.txt`.
+- Added operational docs in `docs/marketing/social-automation.md` and linked them from the marketing launch kit and asset inventory.
+- Added regression coverage in `tests/social-pipeline.test.js` and `tests/social-marketing-assets.test.js`.
+- Hardened the queue to be idempotent for the same pending bundle/schedule/platform tuple, so repeated scheduling commands do not create duplicate posts.
+- Hardened Chrome tab focus logic so the AppleScript path no longer tries to re-focus a tab that is already frontmost.
+
+Commands run in the dedicated worktree at `/Users/ganapolsky_i/workspace/git/igor/worktrees/rlhf-social-pipeline-automation`:
+
+```bash
+npm ci
+npm run pr:manage
+npm test
+npm test > .artifacts/social/final-npm-test.log 2>&1
+npm run test:coverage
+tmp=$(mktemp -d) && RLHF_PROOF_DIR="$tmp/proof" npm run prove:adapters
+tmp=$(mktemp -d) && RLHF_AUTOMATION_PROOF_DIR="$tmp/proof-automation" npm run prove:automation
+npm run self-heal:check
+node --test tests/social-pipeline.test.js tests/social-marketing-assets.test.js
+node --test tests/social-pipeline.test.js
+npm run social:prepare -- --slug pre-action-gates-proof --output .artifacts/social/pre-action-gates-proof
+sips -g pixelWidth -g pixelHeight .artifacts/social/pre-action-gates-proof/slides/slide-01.png
+ffprobe -v error -select_streams v:0 -show_entries stream=width,height -show_entries format=duration -of default=noprint_wrappers=1:nokey=0 .artifacts/social/pre-action-gates-proof/video/tiktok-fallback.mp4
+npm run social:queue -- --bundle .artifacts/social/pre-action-gates-proof/bundle.json --when 2026-03-21T09:00:00-04:00 --platforms instagram,tiktok
+npm run social:status
+npm run social:scheduler:install -- --dry-run
+npm run social:publish -- --bundle .artifacts/social/pre-action-gates-proof/bundle.json --platforms instagram,tiktok --dry-run
+npm run social:publish -- --bundle .artifacts/social/pre-action-gates-proof/bundle.json --platforms instagram --no-share --cleanup-drafts
+npm audit --json
+git diff --check
+```
+
+Observed result:
+
+- `npm ci` exited `0`.
+- `npm run pr:manage` exited `0`: `No open pull requests found.`
+- `npm test` exited `0`. The final rerun on the post-fix tree was captured via `.artifacts/social/final-npm-test.log`.
+- `npm run test:coverage` exited `0` with all-files coverage at `88.85` lines, `75.71` branches, and `92.63` functions.
+- `RLHF_PROOF_DIR=... npm run prove:adapters` exited `0`: `48` passed, `0` failed.
+- `RLHF_AUTOMATION_PROOF_DIR=... npm run prove:automation` exited `0`: `55` passed, `0` failed.
+- `npm run self-heal:check` exited `0`: `Overall: HEALTHY` with `4/4` healthy checks (`budget_status 216ms`, `tests 60478ms`, `prove_adapters 1223ms`, `prove_automation 1096ms`).
+- `node --test tests/social-pipeline.test.js tests/social-marketing-assets.test.js` exited `0`: `12` passed, `0` failed.
+- `node --test tests/social-pipeline.test.js` exited `0`: `7` passed, `0` failed after the idempotent queue fix.
+- `npm run social:prepare -- --slug pre-action-gates-proof --output .artifacts/social/pre-action-gates-proof` exited `0` and wrote:
+  - `5` isolated slide source documents under `.artifacts/social/pre-action-gates-proof/source/`
+  - `5` Instagram PNG slides under `.artifacts/social/pre-action-gates-proof/slides/`
+  - `instagram.txt` and `tiktok.txt` captions under `.artifacts/social/pre-action-gates-proof/captions/`
+  - `tiktok-fallback.mp4` under `.artifacts/social/pre-action-gates-proof/video/`
+  - `bundle.json` manifest under `.artifacts/social/pre-action-gates-proof/`
+- `sips` verified `slide-01.png` at `1080x1080`.
+- `ffprobe` verified `tiktok-fallback.mp4` at `1080x1920` with `duration=12.500000`.
+- `npm run social:queue ...` exited `0` and returned a pending queue entry for `pre-action-gates-proof` scheduled at `2026-03-21T13:00:00.000Z`.
+- `npm run social:status` exited `0` and showed exactly `1` pending queue entry after local dedupe cleanup.
+- `npm run social:scheduler:install -- --dry-run` exited `0` and generated a valid `launchd` plist targeting `publish-queue` on a `900` second interval at `/Users/ganapolsky_i/Library/LaunchAgents/io.github.IgorGanapolsky.mcp-memory-gateway.social.plist`.
+- `npm run social:publish -- --bundle .artifacts/social/pre-action-gates-proof/bundle.json --platforms instagram,tiktok --dry-run` exited `0` and resolved:
+  - Instagram payload: `assetCount = 5`
+  - TikTok payload: `assetPath = .../video/tiktok-fallback.mp4`
+- A stronger live browser proof was attempted with `npm run social:publish -- --bundle .artifacts/social/pre-action-gates-proof/bundle.json --platforms instagram --no-share --cleanup-drafts`. The repo-side tab-focus bug was fixed first, but the live attempt still failed outside repo control because Google Chrome returned: `Executing JavaScript through AppleScript is turned off. To turn it on, from the menu bar, go to View > Developer > Allow JavaScript from Apple Events.`
+- `npm audit --json` exited `0` with `0` vulnerabilities.
+- `git diff --check` exited `0`.
+
+Requirements verified:
+
+- The product now has a low-debt, repo-owned zero-filming social pipeline instead of an external-only posting playbook.
+- Instagram and TikTok assets are generated from one canonical local source, so the same content can be repurposed without manual screenshots or duplicate copy.
+- TikTok web fallback is explicit and truthful: the automation path generates a `1080x1920` MP4 because the current TikTok desktop surface accepts `video/*` rather than a guaranteed photo-carousel path.
+- Scheduler support is implemented and proven in dry-run form, but should be installed only from a durable checkout path because the generated `launchd` plist points at the installing repo path.
+- The remaining live-posting blocker is a browser runtime setting in Google Chrome, not missing repo logic.
+- No new npm dependencies were added.
+
 ## March 20, 2026: AI workflow control-plane positioning + semantic cache efficiency proof
 
 Scope:

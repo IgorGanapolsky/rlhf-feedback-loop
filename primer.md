@@ -6,21 +6,20 @@
 - **Target Audience:** Developers hitting "Claude amnesia" and context compaction.
 
 ## Current State (2026-03-20)
-- **Revenue Today:** $0.00 booked today; hosted-first status still shows $20.00 lifetime with 2 reconciled paid orders.
-- **Traffic Today:** Hosted production shows 36 visitors, 24 page views, 6 checkout starts, and 2 signups.
-- **Positioning:** Landing page now frames MCP Memory Gateway as an AI workflow control plane, not a generic memory server.
-- **Efficiency Proof:** Dashboard/API now expose semantic cache hit rate, similarity, and reused context-token estimates from existing ContextFS provenance.
+- **Revenue Today:** `node bin/cli.js cfo --today --timezone=America/New_York` still falls back to local operator truth and reports `$0.00` booked today.
+- **Social Ops:** Zero-filming IG + TikTok pipeline now renders the canonical carousel HTML into `1080x1080` slides, builds a TikTok-safe `1080x1920` MP4 fallback, queues scheduled posts, and emits a `launchd` scheduler plist.
+- **Publish Reality:** Browser publish dry-run is verified; live no-share browser proof is currently blocked by Google Chrome reporting `Allow JavaScript from Apple Events` is turned off at runtime.
+- **Positioning:** Landing page still frames MCP Memory Gateway as an AI workflow control plane, not a generic memory server.
 
 ## Last Completed Task
-- Implemented the high-ROI positioning and efficiency-reporting slice from the LLM cost/efficiency review, with proof-backed tests and full verification.
+- Implemented dependency cooldown check
 
 ## Exact Next Step
-- Merge the verified control-plane/efficiency PR, then watch whether sprint CTA clicks and fit-check usage improve from the clearer category framing.
-- If lift is flat, add one pricing-adjacent proof block that shows concrete semantic cache savings from live hosted usage.
+- Wire cooldown into CI pipeline
+- Re-enable Google Chrome `View > Developer > Allow JavaScript from Apple Events` and rerun the no-share browser proof command to validate live draft creation without posting.
 
 ## Open Blockers
-- `RLHF_GA_MEASUREMENT_ID` is still missing in Railway, so GA hooks exist but the GA loader is absent.
-- Workflow Hardening Sprint lead volume is still `0`, so commercial validation remains the main business gap.
+- Need Chainguard API key
 
 ## Behavioral Traits
 
@@ -28,27 +27,28 @@ _No strong behavioral patterns identified yet._
 
 ## Live Git Context
 
-### Branch: codex/llm-efficiency-roi
+### Branch: codex/social-pipeline-automation
 
 ### Last 5 Commits:
 ```
+b789415 fix: match stdio response transport to request transport (NDJSON support)
+3215c0c feat: position gateway as workflow control plane (#292)
+73a63c2 feat: add glama.json, M2.7 self-evolution loop, deny-by-default gates (#291)
+e0e3693 chore: remove duplicate railway deploy lane (#290)
 c8b9976 fix: wait for promoted railway deploys (#289)
-ebd5189 fix: harden deploy build identity and smithery scans (#288)
-df5f93d feat: add dispatch-safe remote ops profile (#287)
-93daccd fix: verify Railway deploy revisions (#286)
-0287301 chore: sync unstaged work, version bump, and new modules (#283)
 ```
 
 ### Modified Files:
 ```
- M bin/obsidian-sync.sh
- M docs/COMMERCIAL_TRUTH.md
  M docs/VERIFICATION_EVIDENCE.md
+ M docs/marketing/assets/README.md
+ M docs/marketing/social-posts.md
+ M package.json
  M primer.md
- M public/index.html
- M scripts/dashboard.js
- M tests/api-server.test.js
- M tests/dashboard.test.js
- M tests/public-landing.test.js
- M tests/session-handoff.test.js
+ M tests/social-marketing-assets.test.js
+?? docs/marketing/assets/pre-action-gates-caption.txt
+?? docs/marketing/assets/pre-action-gates-instagram-carousel.html
+?? docs/marketing/social-automation.md
+?? scripts/social-pipeline.js
+?? tests/social-pipeline.test.js
 ```
