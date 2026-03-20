@@ -10,9 +10,10 @@ const fs = require('fs');
 const path = require('path');
 
 const HOME = process.env.HOME || process.env.USERPROFILE || '';
+const envDir = process.env.RLHF_FEEDBACK_DIR;
 const localRlhf = path.join(process.cwd(), '.rlhf');
 const localClaude = path.join(process.cwd(), '.claude', 'memory', 'feedback');
-const baseDir = fs.existsSync(localRlhf) ? localRlhf : localClaude;
+const baseDir = envDir || (fs.existsSync(localRlhf) ? localRlhf : localClaude);
 
 const FEEDBACK_LOG_PATH = path.join(baseDir, 'feedback-log.jsonl');
 const TRAITS_PATH = path.join(baseDir, 'behavioral-traits.json');
