@@ -29,10 +29,10 @@ Observed result:
 
 - `npm ci` exited `0`.
 - `npm test` exited `0` on the clean rerun after `npm ci`. A prior parallelized local run produced a shared-state false negative in `tests/gates-engine.test.js`, so the final repo-standard verification was repeated sequentially before shipping.
-- `npm run test:coverage` exited `0` with all-files coverage at `88.11` lines, `75.67` branches, and `92.49` functions.
+- `npm run test:coverage` exited `0` with all-files coverage at `88.02` lines, `75.62` branches, and `92.47` functions on the rebased branch head.
 - `RLHF_PROOF_DIR=... npm run prove:adapters` exited `0`: `48` passed, `0` failed.
 - `RLHF_AUTOMATION_PROOF_DIR=... npm run prove:automation` exited `0`: `55` passed, `0` failed.
-- `npm run self-heal:check` exited `0`: `Overall: HEALTHY` with `4/4` healthy checks (`budget_status 145ms`, `tests 61136ms`, `prove_adapters 1893ms`, `prove_automation 2520ms`).
+- `npm run self-heal:check` exited `0`: `Overall: HEALTHY` with `4/4` healthy checks (`budget_status 127ms`, `tests 58606ms`, `prove_adapters 1714ms`, `prove_automation 1824ms`).
 - `node --test tests/social-pipeline.test.js` passed with the hardened bundle-validation, duplicate-protection, inline-caption, and adaptive-TikTok cases.
 - `npm run social:prepare ... --slug first-live-social-post` wrote a bundle rooted at `.artifacts/social/first-live-social-post/` with `5` slide PNGs, `instagram.txt`, `tiktok.txt`, `tiktok-fallback.mp4`, and a manifest containing per-slide metadata plus SHA-256 hashes.
 - The prepared bundle recorded these immutable hashes:
