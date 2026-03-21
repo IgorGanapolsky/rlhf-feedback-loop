@@ -10,19 +10,43 @@ const repoRoot = path.resolve(__dirname, '..');
 const {
   DEFAULT_ASSET_HTML,
   DEFAULT_CAPTION_PATH,
+  DEFAULT_HISTORY_PATH,
+  assertPublishNotDuplicated,
+  buildPublishFingerprint,
   buildChromeJavaScriptAppleScript,
+  buildContentEditableCaptionScript,
   buildLaunchAgentPlist,
   enqueueBundle,
   extractSlideBlocks,
   getDueEntries,
   loadQueueState,
+  loadPublishHistory,
   normalizeTikTokCaption,
   prepareBundle,
+  publishBundle,
+  resolveTikTokPublishTarget,
+  validateSlideImages,
   writeIsolatedSlideDocuments,
 } = require('../scripts/social-pipeline');
 
 function makeTempDir(prefix) {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+}
+
+function makePngBuffer(width, height) {
+  const buffer = Buffer.alloc(33);
+  Buffer.from('89504e470d0a1a0a', 'hex').copy(buffer, 0);
+  buffer.writeUInt32BE(13, 8);
+  buffer.write('IHDR', 12, 'ascii');
+  buffer.writeUInt32BE(width, 16);
+  buffer.writeUInt32BE(height, 20);
+  buffer[24] = 8;
+  buffer[25] = 6;
+  buffer[26] = 0;
+  buffer[27] = 0;
+  buffer[28] = 0;
+  buffer.writeUInt32BE(0, 29);
+  return buffer;
 }
 
 test('canonical IG carousel asset exposes five slide blocks', () => {
@@ -58,7 +82,7 @@ test('prepareBundle writes bundle manifest, captions, and deterministic asset pa
     renderSlidesFn: ({ slideDocuments, outputDir }) => {
       return slideDocuments.map((_, index) => {
         const outPath = path.join(outputDir, `slide-${String(index + 1).padStart(2, '0')}.png`);
-        fs.writeFileSync(outPath, `png-${index + 1}`);
+        fs.writeFileSync(outPath, makePngBuffer(1080, 1080));
         return outPath;
       });
     },
@@ -70,9 +94,12 @@ test('prepareBundle writes bundle manifest, captions, and deterministic asset pa
 
   assert.equal(fs.existsSync(result.manifestPath), true);
   assert.equal(result.manifest.slideImagePaths.length, 5);
+  assert.equal(result.manifest.slideImageMetadata.length, 5);
   assert.equal(fs.existsSync(result.manifest.instagramCaptionPath), true);
   assert.equal(fs.existsSync(result.manifest.tiktokCaptionPath), true);
   assert.equal(fs.existsSync(result.manifest.tiktokVideoPath), true);
+  assert.match(result.manifest.hashes.instagramCaptionSha256, /^[a-f0-9]{64}$/);
+  assert.match(result.manifest.hashes.tiktokVideoSha256, /^[a-f0-9]{64}$/);
   assert.match(
     fs.readFileSync(result.manifest.tiktokCaptionPath, 'utf8'),
     /Pre-Action Gates don't ask - they enforce\./
@@ -151,6 +178,131 @@ test('normalizeTikTokCaption collapses multiline IG captions to one line', () =>
     normalizeTikTokCaption(input),
     'Every AI memory tool asks the agent to cooperate. Pre-Action Gates do not ask - they enforce. #OpenSource'
   );
+});
+
+test('validateSlideImages enforces five non-empty 1080x1080 PNG slides', () => {
+  const tempDir = makeTempDir('social-validate-');
+  const slidePaths = [];
+  for (let index = 0; index < 5; index += 1) {
+    const slidePath = path.join(tempDir, `slide-${index + 1}.png`);
+    fs.writeFileSync(slidePath, makePngBuffer(1080, 1080));
+    slidePaths.push(slidePath);
+  }
+
+  const metadata = validateSlideImages(slidePaths);
+  assert.equal(metadata.length, 5);
+  assert.equal(metadata[0].width, 1080);
+  assert.equal(metadata[0].height, 1080);
+  assert.match(metadata[0].sha256, /^[a-f0-9]{64}$/);
+});
+
+test('prepareBundle accepts inline caption text and persists it as a source file', () => {
+  const tempDir = makeTempDir('social-inline-caption-');
+  const caption = 'The only MCP tool that learns from failures AND enforces what it learns.';
+  const result = prepareBundle({
+    sourceHtmlPath: DEFAULT_ASSET_HTML,
+    captionText: caption,
+    outputDir: tempDir,
+    slug: 'inline-caption',
+    chromeBin: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    ffmpegBin: '/opt/homebrew/bin/ffmpeg',
+    renderSlidesFn: ({ slideDocuments, outputDir }) => slideDocuments.map((_, index) => {
+      const outPath = path.join(outputDir, `slide-${String(index + 1).padStart(2, '0')}.png`);
+      fs.writeFileSync(outPath, makePngBuffer(1080, 1080));
+      return outPath;
+    }),
+    renderTikTokVideoFn: ({ outputPath }) => {
+      fs.writeFileSync(outputPath, 'video');
+      return outputPath;
+    },
+  });
+
+  assert.equal(fs.existsSync(result.manifest.captionPath), true);
+  assert.equal(fs.readFileSync(result.manifest.captionPath, 'utf8').trim(), caption);
+});
+
+test('publishBundle dry-run returns both platforms without requiring a browser session', async () => {
+  const tempDir = makeTempDir('social-post-dry-run-');
+  const prepared = prepareBundle({
+    sourceHtmlPath: DEFAULT_ASSET_HTML,
+    captionPath: DEFAULT_CAPTION_PATH,
+    outputDir: tempDir,
+    slug: 'dry-run-social-post',
+    chromeBin: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    ffmpegBin: '/opt/homebrew/bin/ffmpeg',
+    renderSlidesFn: ({ slideDocuments, outputDir }) => slideDocuments.map((_, index) => {
+      const outPath = path.join(outputDir, `slide-${String(index + 1).padStart(2, '0')}.png`);
+      fs.writeFileSync(outPath, makePngBuffer(1080, 1080));
+      return outPath;
+    }),
+    renderTikTokVideoFn: ({ outputPath }) => {
+      fs.writeFileSync(outputPath, 'video');
+      return outputPath;
+    },
+  });
+
+  const results = await publishBundle(prepared.manifestPath, {
+    platforms: 'instagram,tiktok',
+    dryRun: true,
+    browserBackend: 'apple-events',
+  });
+
+  assert.equal(results.length, 2);
+  assert.deepEqual(results.map((entry) => entry.platform), ['instagram', 'tiktok']);
+  assert.equal(results[0].mode, 'dry-run');
+  assert.equal(results[1].publishType, 'video');
+});
+
+test('duplicate publish protection blocks an already-published matching payload', () => {
+  const tempDir = makeTempDir('social-history-');
+  const historyPath = path.join(tempDir, 'history.jsonl');
+  const assetPath = path.join(tempDir, 'slide-01.png');
+  fs.writeFileSync(assetPath, makePngBuffer(1080, 1080));
+  const fingerprint = buildPublishFingerprint({
+    platform: 'instagram',
+    captionText: 'Repeated content',
+    assetPaths: [assetPath],
+  });
+
+  fs.writeFileSync(historyPath, JSON.stringify({
+    platform: 'instagram',
+    status: 'published',
+    fingerprint,
+    publishedAt: '2026-03-21T12:00:00.000Z',
+  }) + '\n');
+
+  assert.throws(
+    () => assertPublishNotDuplicated({ historyPath, fingerprint, platform: 'instagram' }),
+    /Duplicate instagram publish blocked/
+  );
+  assert.equal(loadPublishHistory(historyPath).length, 1);
+});
+
+test('contenteditable caption script embeds the caption without requiring System Events', () => {
+  const script = buildContentEditableCaptionScript('Pre-Action Gates');
+  assert.match(script, /Pre-Action Gates/);
+  assert.doesNotMatch(script, /System Events/);
+});
+
+test('TikTok publish target prefers photo carousel when the surface supports image uploads', () => {
+  const bundle = {
+    slideImagePaths: ['/tmp/slide-01.png', '/tmp/slide-02.png'],
+    tiktokCaptionPath: '/tmp/tiktok.txt',
+    platforms: {
+      tiktok: {
+        photoAssetPaths: ['/tmp/slide-01.png', '/tmp/slide-02.png'],
+        videoAssetPath: '/tmp/fallback.mp4',
+      },
+    },
+  };
+
+  const photoTarget = resolveTikTokPublishTarget(bundle, { state: 'photo-upload-ready' });
+  const videoTarget = resolveTikTokPublishTarget(bundle, { state: 'video-upload-ready' });
+
+  assert.equal(photoTarget.type, 'photo-carousel');
+  assert.deepEqual(photoTarget.assetPaths, ['/tmp/slide-01.png', '/tmp/slide-02.png']);
+  assert.equal(videoTarget.type, 'video');
+  assert.deepEqual(videoTarget.assetPaths, ['/tmp/fallback.mp4']);
 });
 
 test('launchd plist targets publish-queue on a fixed interval', () => {

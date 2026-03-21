@@ -48,6 +48,7 @@
     "stripe:live": "node scripts/stripe-live-status.js",
     "gtm:revenue-loop": "node scripts/autonomous-sales-agent.js",
     "social:prepare": "node scripts/social-pipeline.js prepare",
+    "social:post": "node scripts/social-pipeline.js post",
     "social:queue": "node scripts/social-pipeline.js queue",
     "social:publish": "node scripts/social-pipeline.js publish",
     "social:publish:queue": "node scripts/social-pipeline.js publish-queue",
@@ -133,6 +134,7 @@
     "@huggingface/transformers": "^3.8.1",
     "@lancedb/lancedb": "^0.26.2",
     "apache-arrow": "^18.1.0",
+    "playwright-core": "^1.58.2",
     "stripe": "^20.4.1"
   },
   "mcpName": "io.github.IgorGanapolsky/mcp-memory-gateway"

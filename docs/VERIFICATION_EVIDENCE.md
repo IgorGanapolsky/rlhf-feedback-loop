@@ -1,3 +1,50 @@
+## March 21, 2026: Social pipeline hardening + archive-WIP retirement decision
+
+Scope:
+
+- Hardened `scripts/social-pipeline.js` so bundle preparation now validates exactly `5` non-empty `1080x1080` PNG slides and records slide/caption/video SHA-256 hashes in the manifest.
+- Added inline caption support, publish-history-backed duplicate protection, and publish attempt proof records under each bundle output.
+- Upgraded TikTok publishing to prefer a photo carousel when the live surface exposes image uploads, while still falling back to MP4 when TikTok Studio remains `video/*` only.
+- Confirmed the archived local WIP commit `2063a6e` remains intentionally unshipped because it deletes `scripts/behavioral-extraction.js`, adds a broken `scripts/gsd-final-verification.js`, and duplicates behavior already superseded on `main`.
+
+Commands run in the dedicated worktree at `/Users/ganapolsky_i/workspace/git/igor/worktrees/rlhf-social-archive`:
+
+```bash
+npm ci
+npm test
+npm run test:coverage
+tmp=$(mktemp -d) && RLHF_PROOF_DIR="$tmp/proof" npm run prove:adapters
+tmp=$(mktemp -d) && RLHF_AUTOMATION_PROOF_DIR="$tmp/proof-automation" npm run prove:automation
+npm run self-heal:check
+node --test tests/social-pipeline.test.js
+npm run social:prepare -- \
+  --source /Users/ganapolsky_i/Downloads/instagram-carousel-slides.html \
+  --caption-text "Every AI memory tool asks the agent to cooperate. Pre-Action Gates don't ask - they enforce.\nThe only MCP tool that learns from failures AND enforces what it learns.\nFree + MIT: npx mcp-memory-gateway init\n#ClaudeCode #AIcoding #MCP #DevTools #PreActionGates #VibeCoding #BuildInPublic #OpenSource" \
+  --slug first-live-social-post
+git cherry -v main codex/archive-primary-dirty-20260320
+git show --stat --summary 2063a6e57a37663603245298716c24dd32de0982
+```
+
+Observed result:
+
+- `npm ci` exited `0`.
+- `npm test` exited `0` on the clean rerun after `npm ci`. A prior parallelized local run produced a shared-state false negative in `tests/gates-engine.test.js`, so the final repo-standard verification was repeated sequentially before shipping.
+- `npm run test:coverage` exited `0` with all-files coverage at `88.02` lines, `75.62` branches, and `92.47` functions on the rebased branch head.
+- `RLHF_PROOF_DIR=... npm run prove:adapters` exited `0`: `48` passed, `0` failed.
+- `RLHF_AUTOMATION_PROOF_DIR=... npm run prove:automation` exited `0`: `55` passed, `0` failed.
+- `npm run self-heal:check` exited `0`: `Overall: HEALTHY` with `4/4` healthy checks (`budget_status 127ms`, `tests 58606ms`, `prove_adapters 1714ms`, `prove_automation 1824ms`).
+- `node --test tests/social-pipeline.test.js` passed with the hardened bundle-validation, duplicate-protection, inline-caption, and adaptive-TikTok cases.
+- `npm run social:prepare ... --slug first-live-social-post` wrote a bundle rooted at `.artifacts/social/first-live-social-post/` with `5` slide PNGs, `instagram.txt`, `tiktok.txt`, `tiktok-fallback.mp4`, and a manifest containing per-slide metadata plus SHA-256 hashes.
+- The prepared bundle recorded these immutable hashes:
+  - caption SHA-256: `419176eedb316a4d88c75159fcda7a63134aee7d10c277fed53036576c4d602c`
+  - TikTok fallback MP4 SHA-256: `1d9ab0a7cb237e750907c88b68eed1d0d909269a858deb90fa65f7a86260d693`
+  - slide SHA-256 values: `d2dfd30faefab16a2e5280a35233d761a4b45ee27c611ba1120abc817071bb7c`, `3b87cce4a311d8a77b005ed4c98b98988a60213514b4b576edc7dd49f9e86eac`, `ed1c8bef64842219744f1146693ed02335812182ec94fcafb41aa37c5de6eb9c`, `0d5dcbacdafecff4c73f035286e9e852e16adfb6de55ebc519149e9550a92a71`, `aaf7b3c8a0e97fd9d2fa02b6d65ad0a2e586bcee577eae889954810df3b458fb`.
+- Live Instagram verification on March 21, 2026 confirmed the new carousel is visible on the authenticated profile at `/igorganapolsky/p/DWJ5ajRDW7h/`.
+- Live TikTok Studio verification on March 21, 2026 confirmed the newest published item is `/@igorg0285/video/7619760352628165919`, timestamp `Mar 21, 1:22 PM`, with privacy set to `Followers`.
+- Live TikTok Studio inspection on March 21, 2026 showed the current authenticated web surface still exposes a single hidden `input[type=file]` with `accept="video/*"` and no image uploader, so same-image photo carousel publishing is not truthfully available from this web surface at this time.
+- `git cherry -v main codex/archive-primary-dirty-20260320` showed only one unique local archive commit, `2063a6e`.
+- `git show --stat --summary 2063a6e...` proved that archive commit is not a safe promotion candidate: it deletes `scripts/behavioral-extraction.js`, adds a scratch verifier, and does not represent shippable repo state.
+
 ## March 20, 2026: Zero-filming Instagram + TikTok automation pipeline
 
 Scope:
