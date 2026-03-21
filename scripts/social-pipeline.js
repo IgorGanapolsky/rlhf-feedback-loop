@@ -1,7 +1,9 @@
 'use strict';
 
 const cp = require('child_process');
+const crypto = require('crypto');
 const fs = require('fs');
+const net = require('net');
 const os = require('os');
 const path = require('path');
 const { pathToFileURL } = require('url');
@@ -23,8 +25,20 @@ const DEFAULT_CAPTION_PATH = path.join(
 );
 const DEFAULT_OUTPUT_ROOT = path.join(REPO_ROOT, '.artifacts', 'social');
 const DEFAULT_QUEUE_PATH = path.join(REPO_ROOT, '.rlhf', 'social-post-queue.json');
+const DEFAULT_HISTORY_PATH = path.join(REPO_ROOT, '.rlhf', 'social-post-history.jsonl');
 const DEFAULT_LAUNCHD_LABEL = 'io.github.IgorGanapolsky.mcp-memory-gateway.social';
 const DEFAULT_SCHEDULE_INTERVAL_MINUTES = 15;
+const DEFAULT_CHROME_PROFILE_ROOT = path.join(
+  os.homedir(),
+  'Library',
+  'Application Support',
+  'Google',
+  'Chrome'
+);
+const DEFAULT_CHROME_PROFILE_DIR = 'Default';
+const DEFAULT_EXPECTED_SLIDE_COUNT = 5;
+const DEFAULT_EXPECTED_SLIDE_WIDTH = 1080;
+const DEFAULT_EXPECTED_SLIDE_HEIGHT = 1080;
 const INSTAGRAM_URL = 'https://www.instagram.com/';
 const TIKTOK_UPLOAD_URL = 'https://www.tiktok.com/tiktokstudio/upload?lang=en';
 const TIKTOK_CONTENT_URL = 'https://www.tiktok.com/tiktokstudio/content';
@@ -83,6 +97,21 @@ function writeJson(filePath, value) {
   fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`);
 }
 
+function appendJsonLine(filePath, value) {
+  ensureDir(path.dirname(filePath));
+  fs.appendFileSync(filePath, `${JSON.stringify(value)}\n`);
+}
+
+function loadJsonLines(filePath) {
+  if (!fs.existsSync(filePath)) {
+    return [];
+  }
+  return fs.readFileSync(filePath, 'utf8')
+    .split('\n')
+    .filter(Boolean)
+    .map((line) => JSON.parse(line));
+}
+
 function slugify(input) {
   return String(input || '')
     .trim()
@@ -99,8 +128,23 @@ function resolvePath(input, fallback) {
   return path.isAbsolute(target) ? target : path.resolve(REPO_ROOT, target);
 }
 
+function resolveChromeProfileRoot(input = DEFAULT_CHROME_PROFILE_ROOT) {
+  if (!input) {
+    return null;
+  }
+  return path.isAbsolute(input) ? input : path.resolve(REPO_ROOT, input);
+}
+
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function hashText(value) {
+  return crypto.createHash('sha256').update(String(value || ''), 'utf8').digest('hex');
+}
+
+function hashFile(filePath) {
+  return crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('hex');
 }
 
 function mimeTypeForPath(filePath) {
@@ -111,6 +155,57 @@ function mimeTypeForPath(filePath) {
   if (ext === '.mp4') return 'video/mp4';
   if (ext === '.mov') return 'video/quicktime';
   return 'application/octet-stream';
+}
+
+function readPngDimensions(filePath) {
+  const buffer = fs.readFileSync(filePath);
+  const pngSignature = '89504e470d0a1a0a';
+  if (buffer.length < 24 || buffer.subarray(0, 8).toString('hex') !== pngSignature) {
+    throw new Error(`Expected a PNG file at ${filePath}`);
+  }
+  return {
+    width: buffer.readUInt32BE(16),
+    height: buffer.readUInt32BE(20),
+  };
+}
+
+function validateSlideImages(
+  slideImagePaths,
+  {
+    expectedCount = DEFAULT_EXPECTED_SLIDE_COUNT,
+    expectedWidth = DEFAULT_EXPECTED_SLIDE_WIDTH,
+    expectedHeight = DEFAULT_EXPECTED_SLIDE_HEIGHT,
+  } = {}
+) {
+  if (!Array.isArray(slideImagePaths) || slideImagePaths.length !== expectedCount) {
+    throw new Error(`Expected ${expectedCount} rendered slide images, received ${slideImagePaths ? slideImagePaths.length : 0}.`);
+  }
+
+  return slideImagePaths.map((slidePath, index) => {
+    if (!fs.existsSync(slidePath)) {
+      throw new Error(`Rendered slide ${index + 1} is missing at ${slidePath}`);
+    }
+
+    const stats = fs.statSync(slidePath);
+    if (stats.size <= 0) {
+      throw new Error(`Rendered slide ${index + 1} is empty at ${slidePath}`);
+    }
+
+    const { width, height } = readPngDimensions(slidePath);
+    if (width !== expectedWidth || height !== expectedHeight) {
+      throw new Error(
+        `Rendered slide ${index + 1} must be ${expectedWidth}x${expectedHeight}; received ${width}x${height} at ${slidePath}`
+      );
+    }
+
+    return {
+      path: slidePath,
+      sha256: hashFile(slidePath),
+      sizeBytes: stats.size,
+      width,
+      height,
+    };
+  });
 }
 
 function extractHeadContent(html) {
@@ -217,6 +312,25 @@ function writeIsolatedSlideDocuments({ sourceHtmlPath, outputDir }) {
   });
 
   return slideDocuments;
+}
+
+function resolveCaptionSource({ sourceDir, captionPath, captionText }) {
+  if (captionText !== undefined && captionText !== null) {
+    const inlineCaptionPath = path.join(sourceDir, 'caption-source.txt');
+    writeText(inlineCaptionPath, `${String(captionText).trim()}\n`);
+    return {
+      captionPath: inlineCaptionPath,
+      caption: String(captionText).trim(),
+      source: 'inline',
+    };
+  }
+
+  const resolvedCaptionPath = resolvePath(captionPath, DEFAULT_CAPTION_PATH);
+  return {
+    captionPath: resolvedCaptionPath,
+    caption: readText(resolvedCaptionPath).trim(),
+    source: 'file',
+  };
 }
 
 function findExecutable(candidates) {
@@ -358,9 +472,13 @@ function buildBundleManifest({
   outputDir,
   slideDocumentPaths,
   slideImagePaths,
+  slideImageMetadata,
   tiktokVideoPath,
   instagramCaptionPath,
   tiktokCaptionPath,
+  instagramCaptionHash,
+  tiktokCaptionHash,
+  tiktokVideoHash,
   createdAt,
 }) {
   return {
@@ -371,16 +489,24 @@ function buildBundleManifest({
     outputDir,
     slideDocumentPaths,
     slideImagePaths,
+    slideImageMetadata,
     instagramCaptionPath,
     tiktokCaptionPath,
     tiktokVideoPath,
+    hashes: {
+      instagramCaptionSha256: instagramCaptionHash,
+      tiktokCaptionSha256: tiktokCaptionHash,
+      tiktokVideoSha256: tiktokVideoHash,
+    },
     platforms: {
       instagram: {
         type: 'carousel',
         assetPaths: slideImagePaths,
       },
       tiktok: {
-        type: 'video',
+        preferredType: 'photo-carousel',
+        photoAssetPaths: slideImagePaths,
+        videoAssetPath: tiktokVideoPath,
         assetPath: tiktokVideoPath,
       },
     },
@@ -390,6 +516,7 @@ function buildBundleManifest({
 function prepareBundle({
   sourceHtmlPath,
   captionPath,
+  captionText,
   outputDir,
   slug,
   slideDurationSeconds = 2.4,
@@ -425,8 +552,14 @@ function prepareBundle({
     chromeBin: resolvedChromeBin,
     dryRun,
   });
+  const slideImageMetadata = validateSlideImages(slideImagePaths);
 
-  const caption = readText(captionPath).trim();
+  const resolvedCaptionSource = resolveCaptionSource({
+    sourceDir,
+    captionPath,
+    captionText,
+  });
+  const caption = resolvedCaptionSource.caption;
   const instagramCaptionPath = path.join(captionsDir, 'instagram.txt');
   const tiktokCaptionPath = path.join(captionsDir, 'tiktok.txt');
   writeText(instagramCaptionPath, `${caption}\n`);
@@ -444,13 +577,17 @@ function prepareBundle({
     id: bundleId,
     createdAt: new Date().toISOString(),
     sourceHtmlPath,
-    captionPath,
+    captionPath: resolvedCaptionSource.captionPath,
     outputDir: bundleRoot,
     slideDocumentPaths,
     slideImagePaths,
+    slideImageMetadata,
     tiktokVideoPath,
     instagramCaptionPath,
     tiktokCaptionPath,
+    instagramCaptionHash: hashFile(instagramCaptionPath),
+    tiktokCaptionHash: hashFile(tiktokCaptionPath),
+    tiktokVideoHash: hashFile(tiktokVideoPath),
   });
 
   const manifestPath = path.join(bundleRoot, 'bundle.json');
@@ -515,6 +652,390 @@ function getDueEntries(queueState, now = new Date()) {
   return (queueState.entries || []).filter((entry) => (
     entry.status === 'pending' && new Date(entry.scheduledAt).getTime() <= now.getTime()
   ));
+}
+
+function loadPublishHistory(historyPath = DEFAULT_HISTORY_PATH) {
+  return loadJsonLines(historyPath);
+}
+
+function buildPublishFingerprint({ platform, captionText, assetPaths = [] }) {
+  const fingerprintPayload = {
+    platform,
+    captionSha256: hashText(captionText),
+    assetHashes: assetPaths.map((assetPath) => ({
+      path: path.basename(assetPath),
+      sha256: hashFile(assetPath),
+    })),
+  };
+  return hashText(JSON.stringify(fingerprintPayload));
+}
+
+function assertPublishNotDuplicated({ historyPath = DEFAULT_HISTORY_PATH, fingerprint, platform }) {
+  const existing = loadPublishHistory(historyPath).find((entry) => (
+    entry.platform === platform &&
+    entry.status === 'published' &&
+    entry.fingerprint === fingerprint
+  ));
+
+  if (existing) {
+    throw new Error(
+      `Duplicate ${platform} publish blocked. Matching content was already published at ${existing.publishedAt}. Use --force to bypass.`
+    );
+  }
+}
+
+function createPublishAttempt(bundle, platform) {
+  const attemptId = `${platform}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const attemptDir = path.join(bundle.outputDir, 'publish-attempts', attemptId);
+  ensureDir(attemptDir);
+  return {
+    attemptId,
+    attemptDir,
+    recordPath: path.join(attemptDir, 'attempt.json'),
+  };
+}
+
+function writePublishAttemptRecord(recordPath, payload) {
+  writeJson(recordPath, payload);
+}
+
+function resolveTikTokPublishTarget(bundle, readyState = {}) {
+  const photoAssetPaths = bundle.platforms?.tiktok?.photoAssetPaths || bundle.slideImagePaths || [];
+  const videoAssetPath = bundle.platforms?.tiktok?.videoAssetPath || bundle.platforms?.tiktok?.assetPath || bundle.tiktokVideoPath;
+  const hasPhotoSurface = readyState.state === 'photo-upload-ready';
+
+  if (hasPhotoSurface && photoAssetPaths.length > 0) {
+    return {
+      type: 'photo-carousel',
+      assetPaths: photoAssetPaths,
+      captionPath: bundle.tiktokCaptionPath,
+    };
+  }
+
+  if (!videoAssetPath) {
+    throw new Error('TikTok publish requires either photo assets or a fallback MP4 asset.');
+  }
+
+  return {
+    type: 'video',
+    assetPaths: [videoAssetPath],
+    captionPath: bundle.tiktokCaptionPath,
+  };
+}
+
+function parseBrowserResult(raw) {
+  if (typeof raw !== 'string') {
+    return raw;
+  }
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return raw;
+  }
+}
+
+function shouldCopyChromePath(relativePath) {
+  const normalized = String(relativePath || '').replace(/\\/g, '/');
+  return ![
+    'Cache',
+    'Code Cache',
+    'GPUCache',
+    'GrShaderCache',
+    'ShaderCache',
+    'Crashpad',
+    'DawnGraphiteCache',
+    'DawnWebGPUCache',
+    'Service Worker/CacheStorage',
+    'Service Worker/ScriptCache',
+  ].some((prefix) => normalized === prefix || normalized.startsWith(`${prefix}/`));
+}
+
+function copyChromeProfileForAutomation({
+  profileRoot = DEFAULT_CHROME_PROFILE_ROOT,
+  profileDir = DEFAULT_CHROME_PROFILE_DIR,
+}) {
+  const resolvedProfileRoot = resolveChromeProfileRoot(profileRoot);
+  const sourceProfileDir = path.join(resolvedProfileRoot, profileDir);
+  if (!fs.existsSync(sourceProfileDir)) {
+    throw new Error(`Chrome profile directory not found: ${sourceProfileDir}`);
+  }
+
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'social-chrome-profile-'));
+  const localStatePath = path.join(resolvedProfileRoot, 'Local State');
+  if (fs.existsSync(localStatePath)) {
+    fs.copyFileSync(localStatePath, path.join(tempRoot, 'Local State'));
+  }
+
+  const destinationProfileDir = path.join(tempRoot, profileDir);
+  fs.cpSync(sourceProfileDir, destinationProfileDir, {
+    recursive: true,
+    force: true,
+    filter: (sourcePath) => {
+      const relativePath = path.relative(sourceProfileDir, sourcePath);
+      return shouldCopyChromePath(relativePath);
+    },
+  });
+
+  return {
+    tempRoot,
+    profileDir,
+  };
+}
+
+function getAvailablePort() {
+  return new Promise((resolve, reject) => {
+    const server = net.createServer();
+    server.listen(0, '127.0.0.1', () => {
+      const address = server.address();
+      const port = address && address.port;
+      server.close((error) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve(port);
+      });
+    });
+    server.on('error', reject);
+  });
+}
+
+async function waitForChromeCdp(port, timeoutMs = 20000) {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    try {
+      const response = await fetch(`http://127.0.0.1:${port}/json/version`);
+      if (response.ok) {
+        return response.json();
+      }
+    } catch {
+      // Keep polling until Chrome exposes CDP.
+    }
+    await sleep(250);
+  }
+  throw new Error(`Timed out waiting for Chrome DevTools on port ${port}`);
+}
+
+function createAppleScriptBrowserSession() {
+  return {
+    name: 'apple-events',
+    async healthCheck() {
+      executeChromeJavaScript({
+        urlPrefix: 'chrome://newtab/',
+        openUrl: 'chrome://newtab/',
+        js: 'JSON.stringify({ ok: true, href: location.href })',
+      });
+    },
+    async evaluate(spec) {
+      return executeChromeJavaScript(spec);
+    },
+    async poll(spec) {
+      return pollChromeState(spec);
+    },
+    async screenshot() {
+      return null;
+    },
+    async setInputFiles() {
+      return null;
+    },
+    async close() {
+      return null;
+    },
+  };
+}
+
+async function createPlaywrightBrowserSession({
+  chromeBin,
+  profileRoot = DEFAULT_CHROME_PROFILE_ROOT,
+  profileDir = DEFAULT_CHROME_PROFILE_DIR,
+  headless = false,
+}) {
+  const { chromium } = require('playwright-core');
+  const { tempRoot } = copyChromeProfileForAutomation({
+    profileRoot,
+    profileDir,
+  });
+  const port = await getAvailablePort();
+  const chromeArgs = [
+    `--remote-debugging-port=${port}`,
+    `--user-data-dir=${tempRoot}`,
+    `--profile-directory=${profileDir}`,
+    '--disable-blink-features=AutomationControlled',
+    '--allow-file-access-from-files',
+    '--disable-background-networking',
+    '--no-default-browser-check',
+    '--no-first-run',
+    '--no-sandbox',
+  ];
+  if (headless) {
+    chromeArgs.push('--headless=new', '--disable-gpu', '--hide-scrollbars');
+  }
+  chromeArgs.push('about:blank');
+
+  const chromeProcess = cp.spawn(chromeBin, chromeArgs, {
+    stdio: ['ignore', 'ignore', 'pipe'],
+  });
+
+  let stderr = '';
+  chromeProcess.stderr.on('data', (chunk) => {
+    stderr += chunk.toString('utf8');
+  });
+
+  let browser = null;
+  try {
+    await waitForChromeCdp(port);
+    browser = await chromium.connectOverCDP(`http://127.0.0.1:${port}`);
+  } catch (error) {
+    if (!chromeProcess.killed) {
+      chromeProcess.kill('SIGTERM');
+    }
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+    throw new Error(`Failed to launch copied-profile Chrome automation session: ${error.message}${stderr ? `\n${stderr.trim()}` : ''}`);
+  }
+  const context = browser.contexts()[0];
+  if (!context) {
+    await browser.close();
+    if (!chromeProcess.killed) {
+      chromeProcess.kill('SIGTERM');
+    }
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+    throw new Error(`Chrome launched without a CDP context. stderr: ${stderr.trim()}`);
+  }
+
+  async function getPage({ urlPrefix, openUrl }) {
+    let page = context.pages().find((candidate) => candidate.url().startsWith(urlPrefix));
+    if (!page) {
+      page = await context.newPage();
+      await page.goto(openUrl || urlPrefix, {
+        waitUntil: 'domcontentloaded',
+      });
+    } else {
+      await page.bringToFront();
+    }
+    await page.waitForLoadState('domcontentloaded');
+    return page;
+  }
+
+  async function setInputFiles({ urlPrefix, openUrl, files, accept = 'any', multiple = false }) {
+    const page = await getPage({ urlPrefix, openUrl });
+    const handles = await page.locator('input[type=file]').elementHandles();
+    for (const handle of handles) {
+      const acceptAttribute = (await handle.getAttribute('accept')) || '';
+      const allowsMultiple = (await handle.getAttribute('multiple')) !== null;
+      const matchesAccept = accept === 'any' ||
+        (accept === 'image' && (/image\//i.test(acceptAttribute) || allowsMultiple)) ||
+        (accept === 'video' && /video\//i.test(acceptAttribute));
+      const matchesMultiple = !multiple || allowsMultiple;
+      if (!matchesAccept || !matchesMultiple) {
+        continue;
+      }
+      await handle.setInputFiles(files);
+      return {
+        ok: true,
+        filesLength: files.length,
+        accept: acceptAttribute,
+        multiple: allowsMultiple,
+      };
+    }
+    return {
+      ok: false,
+      reason: 'no-matching-file-input',
+      filesLength: 0,
+    };
+  }
+
+  return {
+    name: 'playwright',
+    async healthCheck() {
+      const page = await getPage({
+        urlPrefix: 'chrome://newtab/',
+        openUrl: 'chrome://newtab/',
+      });
+      await page.evaluate(() => document.title);
+    },
+    async evaluate(spec) {
+      const page = await getPage(spec);
+      return page.evaluate((script) => window.eval(script), spec.js);
+    },
+    async poll({ urlPrefix, openUrl, js, timeoutMs = 20000, intervalMs = 1000, isReady }) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const parsed = parseBrowserResult(await this.evaluate({ urlPrefix, openUrl, js }));
+        if (isReady(parsed)) {
+          return parsed;
+        }
+        await sleep(intervalMs);
+      }
+      throw new Error(`Timed out waiting for browser state on ${urlPrefix}`);
+    },
+    async screenshot({ urlPrefix, openUrl, outputPath }) {
+      const page = await getPage({ urlPrefix, openUrl });
+      ensureDir(path.dirname(outputPath));
+      await page.screenshot({ path: outputPath, fullPage: false });
+      return outputPath;
+    },
+    async setInputFiles(spec) {
+      return setInputFiles(spec);
+    },
+    async close() {
+      await browser.close();
+      if (!chromeProcess.killed) {
+        chromeProcess.kill('SIGTERM');
+      }
+      fs.rmSync(tempRoot, { recursive: true, force: true });
+    },
+  };
+}
+
+async function createBrowserSession({
+  browserBackend = 'auto',
+  chromeBin = resolveChromeBinary(),
+  profileRoot = DEFAULT_CHROME_PROFILE_ROOT,
+  profileDir = DEFAULT_CHROME_PROFILE_DIR,
+  headless = false,
+} = {}) {
+  if (browserBackend === 'apple-events') {
+    const session = createAppleScriptBrowserSession();
+    await session.healthCheck();
+    return session;
+  }
+
+  if (browserBackend === 'playwright') {
+    return createPlaywrightBrowserSession({
+      chromeBin,
+      profileRoot,
+      profileDir,
+      headless,
+    });
+  }
+
+  const appleEventsSession = createAppleScriptBrowserSession();
+  try {
+    await appleEventsSession.healthCheck();
+    return appleEventsSession;
+  } catch {
+    return createPlaywrightBrowserSession({
+      chromeBin,
+      profileRoot,
+      profileDir,
+      headless,
+    });
+  }
+}
+
+async function captureAttemptScreenshot(session, attempt, name, spec) {
+  if (!attempt || !session || typeof session.screenshot !== 'function') {
+    return null;
+  }
+  const outputPath = path.join(attempt.attemptDir, `${name}.png`);
+  try {
+    return await session.screenshot({
+      ...spec,
+      outputPath,
+    });
+  } catch {
+    return null;
+  }
 }
 
 function escapeAppleScriptString(value) {
@@ -674,10 +1195,30 @@ const INSTAGRAM_EDITOR_JS = `
     const text = (element) => (element.innerText || element.getAttribute('aria-label') || '').trim();
     const editor = document.querySelector('textarea,[contenteditable=true]');
     const share = [...document.querySelectorAll('button,[role=button],a')].find((element) => /^share$/i.test(text(element)));
+    const next = [...document.querySelectorAll('button,[role=button],a')].find((element) => /^next$/i.test(text(element)));
     return JSON.stringify({
       hasEditor: Boolean(editor),
       shareVisible: Boolean(share),
+      nextVisible: Boolean(next),
       body: document.body ? document.body.innerText.slice(0, 2400) : ''
+    });
+  })()
+`;
+
+const INSTAGRAM_PREFLIGHT_JS = `
+  (() => {
+    const text = (element) => (element.innerText || element.getAttribute('aria-label') || '').trim();
+    const post = [...document.querySelectorAll('button,[role=button],a')].find((element) => /^post$/i.test(text(element)));
+    const create = [...document.querySelectorAll('button,[role=button],a')].find((element) => /^create$/i.test(text(element)));
+    const multiInput = document.querySelector('input[type=file][multiple]');
+    const loginInput = document.querySelector('input[name="username"], input[name="password"], input[autocomplete="username"], input[autocomplete="current-password"]');
+    const body = document.body ? document.body.innerText.slice(0, 2400) : '';
+    return JSON.stringify({
+      url: location.href,
+      title: document.title,
+      body,
+      loggedOut: Boolean(loginInput) || location.pathname.startsWith('/accounts/login'),
+      state: multiInput ? 'ready' : post ? 'post-visible' : create ? 'create-visible' : 'waiting',
     });
   })()
 `;
@@ -702,6 +1243,23 @@ function buildInstagramCaptionScript(caption) {
       document.execCommand('insertText', false, caption);
       editor.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: caption }));
       return JSON.stringify({ ok: true, mode: 'contenteditable', text: editor.innerText.slice(0, 400) });
+    })()
+  `;
+}
+
+function buildContentEditableCaptionScript(caption) {
+  return `
+    (() => {
+      const caption = ${JSON.stringify(caption)};
+      const editor = document.querySelector('[contenteditable=true]');
+      if (!editor) {
+        return JSON.stringify({ ok: false, reason: 'no-editor' });
+      }
+      editor.focus();
+      document.execCommand('selectAll', false);
+      document.execCommand('insertText', false, caption);
+      editor.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: caption }));
+      return JSON.stringify({ ok: true, text: editor.innerText.slice(0, 400) });
     })()
   `;
 }
@@ -768,11 +1326,38 @@ const TIKTOK_READY_JS = `
     if (document.querySelector('[contenteditable=true]')) {
       return JSON.stringify({ state: 'editor-ready' });
     }
-    const input = [...document.querySelectorAll('input[type=file]')].find((element) => /video\\//i.test(element.accept || ''));
-    if (input) {
-      return JSON.stringify({ state: 'upload-ready' });
+    const photoInput = [...document.querySelectorAll('input[type=file]')].find((element) => /image\\//i.test(element.accept || '') || element.multiple);
+    if (photoInput) {
+      return JSON.stringify({ state: 'photo-upload-ready', accept: photoInput.accept || '', multiple: !!photoInput.multiple });
+    }
+    const videoInput = [...document.querySelectorAll('input[type=file]')].find((element) => /video\\//i.test(element.accept || ''));
+    if (videoInput) {
+      return JSON.stringify({ state: 'video-upload-ready', accept: videoInput.accept || '', multiple: !!videoInput.multiple });
     }
     return JSON.stringify({ state: 'waiting', body: document.body ? document.body.innerText.slice(0, 1600) : '' });
+  })()
+`;
+
+const TIKTOK_PREFLIGHT_JS = `
+  (() => {
+    const text = (element) => (element.innerText || element.getAttribute('aria-label') || '').trim();
+    const body = document.body ? document.body.innerText.slice(0, 2400) : '';
+    const loginInput = document.querySelector('input[name="username"], input[type="password"], input[autocomplete="username"], input[autocomplete="current-password"]');
+    const buttons = [...document.querySelectorAll('button,[role=button],a')];
+    const editor = document.querySelector('[contenteditable=true]');
+    const photoInput = [...document.querySelectorAll('input[type=file]')].find((element) => /image\\//i.test(element.accept || '') || element.multiple);
+    const videoInput = [...document.querySelectorAll('input[type=file]')].find((element) => /video\\//i.test(element.accept || ''));
+    const loginButton = buttons.find((element) => /^(log in|login|sign up)$/i.test(text(element)));
+    const state = editor ? 'editor-ready' : photoInput ? 'photo-upload-ready' : videoInput ? 'video-upload-ready' : 'waiting';
+    return JSON.stringify({
+      url: location.href,
+      title: document.title,
+      body,
+      state,
+      accept: (photoInput || videoInput || {}).accept || '',
+      multiple: Boolean(photoInput && photoInput.multiple),
+      loggedOut: Boolean(loginInput) || (Boolean(loginButton) && !editor && !photoInput && !videoInput),
+    });
   })()
 `;
 
@@ -832,20 +1417,56 @@ const TIKTOK_DISCARD_JS = `
   })()
 `;
 
-function pasteIntoActiveChrome(text) {
-  const script = [
-    `set the clipboard to ${escapeAppleScriptString(text)}`,
-    'delay 0.2',
-    'tell application "System Events"',
-    '  keystroke "a" using command down',
-    '  delay 0.2',
-    '  keystroke "v" using command down',
-    'end tell',
-  ].join('\n');
-  runAppleScript(script);
+async function preflightInstagramSession(session, attempt = null) {
+  const state = await session.poll({
+    urlPrefix: INSTAGRAM_URL,
+    openUrl: INSTAGRAM_URL,
+    js: INSTAGRAM_PREFLIGHT_JS,
+    isReady: (value) => value && (value.loggedOut || typeof value.body === 'string'),
+  });
+  if (attempt) {
+    writePublishAttemptRecord(attempt.recordPath, {
+      attemptId: attempt.attemptId,
+      platform: 'instagram',
+      status: 'preflight',
+      recordedAt: new Date().toISOString(),
+      state,
+    });
+  }
+  if (state.loggedOut) {
+    throw new Error('Instagram session unavailable in the selected Chrome profile.');
+  }
+  return state;
 }
 
-async function prepareInstagramDraft(bundle, { dryRun = false }) {
+async function preflightTikTokSession(session, attempt = null) {
+  const state = await session.poll({
+    urlPrefix: 'https://www.tiktok.com/tiktokstudio/',
+    openUrl: TIKTOK_UPLOAD_URL,
+    js: TIKTOK_PREFLIGHT_JS,
+    isReady: (value) => value && (
+      value.loggedOut ||
+      value.state === 'editor-ready' ||
+      value.state === 'photo-upload-ready' ||
+      value.state === 'video-upload-ready'
+    ),
+  });
+  if (attempt) {
+    writePublishAttemptRecord(attempt.recordPath, {
+      attemptId: attempt.attemptId,
+      platform: 'tiktok',
+      status: 'preflight',
+      recordedAt: new Date().toISOString(),
+      state,
+    });
+  }
+  if (state.loggedOut) {
+    throw new Error('TikTok session unavailable in the selected Chrome profile.');
+  }
+  return state;
+}
+
+async function prepareInstagramDraft(bundle, session, { dryRun = false, attempt = null }) {
   const instagramAssets = bundle.platforms.instagram.assetPaths;
   if (!instagramAssets || instagramAssets.length === 0) {
     throw new Error('Instagram publish requires slide image assets.');
@@ -859,31 +1480,38 @@ async function prepareInstagramDraft(bundle, { dryRun = false }) {
     };
   }
 
-  await pollChromeState({
+  await session.poll({
     urlPrefix: INSTAGRAM_URL,
     openUrl: INSTAGRAM_URL,
     js: INSTAGRAM_COMPOSER_JS,
     isReady: (state) => state && state.state === 'ready',
   });
 
-  const uploadState = JSON.parse(executeChromeJavaScript({
-    urlPrefix: INSTAGRAM_URL,
-    openUrl: INSTAGRAM_URL,
-    js: buildBrowserUploadScript(instagramAssets),
-  }));
+  const uploadState = session.setInputFiles
+    ? await session.setInputFiles({
+      urlPrefix: INSTAGRAM_URL,
+      openUrl: INSTAGRAM_URL,
+      files: instagramAssets,
+      accept: 'image',
+      multiple: true,
+    })
+    : parseBrowserResult(await session.evaluate({
+      urlPrefix: INSTAGRAM_URL,
+      openUrl: INSTAGRAM_URL,
+      js: buildBrowserUploadScript(instagramAssets),
+    }));
 
   if (!uploadState.ok || uploadState.filesLength !== instagramAssets.length) {
     throw new Error(`Instagram upload failed: ${JSON.stringify(uploadState)}`);
   }
+  await captureAttemptScreenshot(session, attempt, 'instagram-uploaded', {
+    urlPrefix: INSTAGRAM_URL,
+    openUrl: INSTAGRAM_URL,
+  });
 
-  for (let index = 0; index < 3; index += 1) {
-    executeChromeJavaScript({
-      urlPrefix: INSTAGRAM_URL,
-      openUrl: INSTAGRAM_URL,
-      js: INSTAGRAM_NEXT_JS,
-    });
-    await sleep(1000);
-    const editorState = JSON.parse(executeChromeJavaScript({
+  let editorState = null;
+  for (let index = 0; index < 5; index += 1) {
+    editorState = parseBrowserResult(await session.evaluate({
       urlPrefix: INSTAGRAM_URL,
       openUrl: INSTAGRAM_URL,
       js: INSTAGRAM_EDITOR_JS,
@@ -891,10 +1519,24 @@ async function prepareInstagramDraft(bundle, { dryRun = false }) {
     if (editorState.hasEditor || editorState.shareVisible) {
       break;
     }
+    if (!editorState.nextVisible) {
+      await sleep(1000);
+      continue;
+    }
+    await session.evaluate({
+      urlPrefix: INSTAGRAM_URL,
+      openUrl: INSTAGRAM_URL,
+      js: INSTAGRAM_NEXT_JS,
+    });
+    await sleep(1500);
+  }
+
+  if (!editorState || (!editorState.hasEditor && !editorState.shareVisible)) {
+    throw new Error(`Instagram editor did not become ready: ${JSON.stringify(editorState)}`);
   }
 
   const caption = readText(bundle.instagramCaptionPath).trim();
-  const captionState = JSON.parse(executeChromeJavaScript({
+  const captionState = parseBrowserResult(await session.evaluate({
     urlPrefix: INSTAGRAM_URL,
     openUrl: INSTAGRAM_URL,
     js: buildInstagramCaptionScript(caption),
@@ -903,21 +1545,37 @@ async function prepareInstagramDraft(bundle, { dryRun = false }) {
   if (!captionState.ok) {
     throw new Error(`Instagram caption write failed: ${JSON.stringify(captionState)}`);
   }
+  await captureAttemptScreenshot(session, attempt, 'instagram-draft-ready', {
+    urlPrefix: INSTAGRAM_URL,
+    openUrl: INSTAGRAM_URL,
+  });
 
-  return {
+  const result = {
     platform: 'instagram',
     mode: 'draft-ready',
     assetCount: instagramAssets.length,
   };
+  if (attempt) {
+    writePublishAttemptRecord(attempt.recordPath, {
+      attemptId: attempt.attemptId,
+      platform: 'instagram',
+      status: 'draft-ready',
+      recordedAt: new Date().toISOString(),
+      uploadState,
+      captionState,
+      result,
+    });
+  }
+  return result;
 }
 
-async function publishInstagram(bundle, { dryRun = false, noShare = false }) {
-  const draftState = await prepareInstagramDraft(bundle, { dryRun });
+async function publishInstagram(bundle, session, { dryRun = false, noShare = false, attempt = null }) {
+  const draftState = await prepareInstagramDraft(bundle, session, { dryRun, attempt });
   if (dryRun || noShare) {
     return draftState;
   }
 
-  const shareState = JSON.parse(executeChromeJavaScript({
+  const shareState = parseBrowserResult(await session.evaluate({
     urlPrefix: INSTAGRAM_URL,
     openUrl: INSTAGRAM_URL,
     js: INSTAGRAM_SHARE_JS,
@@ -928,98 +1586,182 @@ async function publishInstagram(bundle, { dryRun = false, noShare = false }) {
   }
 
   await sleep(4000);
-  return {
+  const confirmationState = parseBrowserResult(await session.evaluate({
+    urlPrefix: INSTAGRAM_URL,
+    openUrl: INSTAGRAM_URL,
+    js: `(() => JSON.stringify({
+      url: location.href,
+      title: document.title,
+      body: document.body ? document.body.innerText.slice(0, 800) : ''
+    }))()`,
+  }));
+  await captureAttemptScreenshot(session, attempt, 'instagram-published', {
+    urlPrefix: INSTAGRAM_URL,
+    openUrl: INSTAGRAM_URL,
+  });
+  const result = {
     platform: 'instagram',
     mode: 'published',
+    finalUrl: confirmationState.url,
+    confirmationState,
   };
+  if (attempt) {
+    writePublishAttemptRecord(attempt.recordPath, {
+      attemptId: attempt.attemptId,
+      platform: 'instagram',
+      status: 'published',
+      recordedAt: new Date().toISOString(),
+      shareState,
+      result,
+    });
+  }
+  return result;
 }
 
-async function cleanupInstagramDraft() {
-  executeChromeJavaScript({
+async function cleanupInstagramDraft(session) {
+  await session.evaluate({
     urlPrefix: INSTAGRAM_URL,
     openUrl: INSTAGRAM_URL,
     js: INSTAGRAM_CLOSE_JS,
   });
   await sleep(500);
-  executeChromeJavaScript({
+  await session.evaluate({
     urlPrefix: INSTAGRAM_URL,
     openUrl: INSTAGRAM_URL,
     js: INSTAGRAM_CLOSE_JS,
   });
 }
 
-async function prepareTikTokDraft(bundle, { dryRun = false }) {
-  const tiktokAsset = bundle.platforms.tiktok.assetPath;
-  if (!tiktokAsset) {
-    throw new Error('TikTok publish requires a fallback MP4 asset.');
-  }
-
+async function prepareTikTokDraft(bundle, session, {
+  dryRun = false,
+  attempt = null,
+  readyState = { state: 'video-upload-ready' },
+} = {}) {
+  const previewTarget = resolveTikTokPublishTarget(bundle, readyState);
   if (dryRun) {
     return {
       platform: 'tiktok',
       mode: 'dry-run',
-      assetPath: tiktokAsset,
+      publishType: previewTarget.type,
+      assetPaths: previewTarget.assetPaths,
     };
   }
 
-  await pollChromeState({
+  await session.poll({
     urlPrefix: 'https://www.tiktok.com/tiktokstudio/',
     openUrl: TIKTOK_UPLOAD_URL,
     js: TIKTOK_READY_JS,
-    isReady: (state) => state && (state.state === 'upload-ready' || state.state === 'editor-ready'),
+    isReady: (state) => state && (
+      state.state === 'photo-upload-ready' ||
+      state.state === 'video-upload-ready' ||
+      state.state === 'editor-ready'
+    ),
   });
 
-  const readyState = JSON.parse(executeChromeJavaScript({
+  const freshReadyState = parseBrowserResult(await session.evaluate({
     urlPrefix: 'https://www.tiktok.com/tiktokstudio/',
     openUrl: TIKTOK_UPLOAD_URL,
     js: TIKTOK_READY_JS,
   }));
+  const target = resolveTikTokPublishTarget(bundle, freshReadyState);
 
-  if (readyState.state !== 'editor-ready') {
-    const uploadState = JSON.parse(executeChromeJavaScript({
+  if (freshReadyState.state !== 'editor-ready') {
+    const uploadState = session.setInputFiles
+      ? await session.setInputFiles({
+        urlPrefix: 'https://www.tiktok.com/tiktokstudio/',
+        openUrl: TIKTOK_UPLOAD_URL,
+        files: target.assetPaths,
+        accept: target.type === 'photo-carousel' ? 'image' : 'video',
+        multiple: target.type === 'photo-carousel',
+      })
+      : parseBrowserResult(await session.evaluate({
+        urlPrefix: 'https://www.tiktok.com/tiktokstudio/',
+        openUrl: TIKTOK_UPLOAD_URL,
+        js: buildBrowserUploadScript(target.assetPaths),
+      }));
+    if (!uploadState.ok || uploadState.filesLength !== target.assetPaths.length) {
+      throw new Error(`TikTok upload failed: ${JSON.stringify(uploadState)}`);
+    }
+    await captureAttemptScreenshot(session, attempt, 'tiktok-uploaded', {
       urlPrefix: 'https://www.tiktok.com/tiktokstudio/',
       openUrl: TIKTOK_UPLOAD_URL,
-      js: buildBrowserUploadScript([tiktokAsset]),
-    }));
-    if (!uploadState.ok || uploadState.filesLength !== 1) {
-      throw new Error(`TikTok upload failed: ${JSON.stringify(uploadState)}`);
+    });
+    if (attempt) {
+      writePublishAttemptRecord(attempt.recordPath, {
+        attemptId: attempt.attemptId,
+        platform: 'tiktok',
+        status: 'upload-complete',
+        recordedAt: new Date().toISOString(),
+        readyState: freshReadyState,
+        uploadState,
+        target,
+      });
     }
   }
 
-  await pollChromeState({
+  await session.poll({
     urlPrefix: 'https://www.tiktok.com/tiktokstudio/',
     openUrl: TIKTOK_UPLOAD_URL,
     js: TIKTOK_READY_JS,
     isReady: (state) => state && state.state === 'editor-ready',
   });
 
-  executeChromeJavaScript({
+  await session.evaluate({
     urlPrefix: 'https://www.tiktok.com/tiktokstudio/',
     openUrl: TIKTOK_UPLOAD_URL,
     js: TIKTOK_FOCUS_EDITOR_JS,
   });
-  pasteIntoActiveChrome(readText(bundle.tiktokCaptionPath).trim());
+  const captionState = parseBrowserResult(await session.evaluate({
+    urlPrefix: 'https://www.tiktok.com/tiktokstudio/',
+    openUrl: TIKTOK_UPLOAD_URL,
+    js: buildContentEditableCaptionScript(readText(bundle.tiktokCaptionPath).trim()),
+  }));
+  if (!captionState.ok) {
+    throw new Error(`TikTok caption write failed: ${JSON.stringify(captionState)}`);
+  }
 
-  executeChromeJavaScript({
+  await session.evaluate({
     urlPrefix: 'https://www.tiktok.com/tiktokstudio/',
     openUrl: TIKTOK_UPLOAD_URL,
     js: TIKTOK_SET_FOLLOWERS_JS,
   });
+  await captureAttemptScreenshot(session, attempt, 'tiktok-draft-ready', {
+    urlPrefix: 'https://www.tiktok.com/tiktokstudio/',
+    openUrl: TIKTOK_UPLOAD_URL,
+  });
 
-  return {
+  const result = {
     platform: 'tiktok',
     mode: 'draft-ready',
-    assetPath: tiktokAsset,
+    publishType: target.type,
+    assetPaths: target.assetPaths,
   };
+  if (attempt) {
+    writePublishAttemptRecord(attempt.recordPath, {
+      attemptId: attempt.attemptId,
+      platform: 'tiktok',
+      status: 'draft-ready',
+      recordedAt: new Date().toISOString(),
+      readyState: freshReadyState,
+      captionState,
+      result,
+    });
+  }
+  return result;
 }
 
-async function publishTikTok(bundle, { dryRun = false, noShare = false }) {
-  const draftState = await prepareTikTokDraft(bundle, { dryRun });
+async function publishTikTok(bundle, session, {
+  dryRun = false,
+  noShare = false,
+  attempt = null,
+  readyState = { state: 'video-upload-ready' },
+} = {}) {
+  const draftState = await prepareTikTokDraft(bundle, session, { dryRun, attempt, readyState });
   if (dryRun || noShare) {
     return draftState;
   }
 
-  const postState = JSON.parse(executeChromeJavaScript({
+  const postState = parseBrowserResult(await session.evaluate({
     urlPrefix: 'https://www.tiktok.com/tiktokstudio/',
     openUrl: TIKTOK_UPLOAD_URL,
     js: TIKTOK_POST_JS,
@@ -1029,7 +1771,7 @@ async function publishTikTok(bundle, { dryRun = false, noShare = false }) {
     throw new Error('TikTok post button was not available.');
   }
 
-  await pollChromeState({
+  await session.poll({
     urlPrefix: TIKTOK_CONTENT_URL,
     openUrl: TIKTOK_CONTENT_URL,
     js: `
@@ -1045,14 +1787,43 @@ async function publishTikTok(bundle, { dryRun = false, noShare = false }) {
       : state && typeof state.body === 'string' && state.body.includes(readText(bundle.tiktokCaptionPath).trim().slice(0, 60)),
   });
 
-  return {
+  const confirmationState = parseBrowserResult(await session.evaluate({
+    urlPrefix: TIKTOK_CONTENT_URL,
+    openUrl: TIKTOK_CONTENT_URL,
+    js: `
+      (() => JSON.stringify({
+        url: location.href,
+        title: document.title,
+        body: document.body ? document.body.innerText.slice(0, 2400) : ''
+      }))()
+    `,
+  }));
+  await captureAttemptScreenshot(session, attempt, 'tiktok-published', {
+    urlPrefix: TIKTOK_CONTENT_URL,
+    openUrl: TIKTOK_CONTENT_URL,
+  });
+  const result = {
     platform: 'tiktok',
     mode: 'published',
+    publishType: draftState.publishType,
+    finalUrl: confirmationState.url,
+    confirmationState,
   };
+  if (attempt) {
+    writePublishAttemptRecord(attempt.recordPath, {
+      attemptId: attempt.attemptId,
+      platform: 'tiktok',
+      status: 'published',
+      recordedAt: new Date().toISOString(),
+      postState,
+      result,
+    });
+  }
+  return result;
 }
 
-async function cleanupTikTokDraft() {
-  executeChromeJavaScript({
+async function cleanupTikTokDraft(session) {
+  await session.evaluate({
     urlPrefix: 'https://www.tiktok.com/tiktokstudio/',
     openUrl: TIKTOK_UPLOAD_URL,
     js: TIKTOK_DISCARD_JS,
@@ -1072,31 +1843,202 @@ async function publishBundle(bundlePath, options = {}) {
       .filter(Boolean)
   );
 
+  const historyPath = options.historyPath || DEFAULT_HISTORY_PATH;
+  const attempts = {};
+  const fingerprints = {};
+  const completedPlatforms = new Set();
   const results = [];
+  let session = null;
+
   if (platformSet.has('instagram')) {
-    results.push(await publishInstagram(bundle, options));
-  }
-  if (platformSet.has('tiktok')) {
-    results.push(await publishTikTok(bundle, options));
+    attempts.instagram = createPublishAttempt(bundle, 'instagram');
+    fingerprints.instagram = buildPublishFingerprint({
+      platform: 'instagram',
+      captionText: readText(bundle.instagramCaptionPath).trim(),
+      assetPaths: bundle.platforms.instagram.assetPaths,
+    });
+    writePublishAttemptRecord(attempts.instagram.recordPath, {
+      attemptId: attempts.instagram.attemptId,
+      platform: 'instagram',
+      status: 'started',
+      fingerprint: fingerprints.instagram,
+      recordedAt: new Date().toISOString(),
+    });
   }
 
-  if (options.noShare && options.cleanupDrafts && !options.dryRun) {
+  if (platformSet.has('tiktok')) {
+    attempts.tiktok = createPublishAttempt(bundle, 'tiktok');
+    fingerprints.tiktok = buildPublishFingerprint({
+      platform: 'tiktok',
+      captionText: readText(bundle.tiktokCaptionPath).trim(),
+      assetPaths: bundle.platforms.tiktok.photoAssetPaths || bundle.slideImagePaths || [],
+    });
+    writePublishAttemptRecord(attempts.tiktok.recordPath, {
+      attemptId: attempts.tiktok.attemptId,
+      platform: 'tiktok',
+      status: 'started',
+      fingerprint: fingerprints.tiktok,
+      recordedAt: new Date().toISOString(),
+    });
+  }
+
+  if (!options.force && !options.dryRun && !options.noShare) {
     if (platformSet.has('instagram')) {
-      await cleanupInstagramDraft();
+      assertPublishNotDuplicated({
+        historyPath,
+        fingerprint: fingerprints.instagram,
+        platform: 'instagram',
+      });
     }
     if (platformSet.has('tiktok')) {
-      await cleanupTikTokDraft();
+      assertPublishNotDuplicated({
+        historyPath,
+        fingerprint: fingerprints.tiktok,
+        platform: 'tiktok',
+      });
     }
   }
 
-  return results;
+  if (options.dryRun) {
+    if (platformSet.has('instagram')) {
+      results.push({
+        platform: 'instagram',
+        mode: 'dry-run',
+        assetCount: bundle.platforms.instagram.assetPaths.length,
+      });
+    }
+    if (platformSet.has('tiktok')) {
+      const previewTarget = resolveTikTokPublishTarget(bundle, { state: 'video-upload-ready' });
+      results.push({
+        platform: 'tiktok',
+        mode: 'dry-run',
+        publishType: previewTarget.type,
+        assetPaths: previewTarget.assetPaths,
+      });
+    }
+    return results;
+  }
+
+  try {
+    session = await createBrowserSession({
+      browserBackend: options.browserBackend || 'auto',
+      chromeBin: options.chromeBin || resolveChromeBinary(),
+      profileRoot: options.profileRoot || DEFAULT_CHROME_PROFILE_ROOT,
+      profileDir: options.profileDir || DEFAULT_CHROME_PROFILE_DIR,
+      headless: Boolean(options.headless),
+    });
+
+    const preflightState = {};
+    if (platformSet.has('instagram')) {
+      preflightState.instagram = await preflightInstagramSession(session, attempts.instagram);
+      await captureAttemptScreenshot(session, attempts.instagram, 'instagram-preflight', {
+        urlPrefix: INSTAGRAM_URL,
+        openUrl: INSTAGRAM_URL,
+      });
+    }
+    if (platformSet.has('tiktok')) {
+      preflightState.tiktok = await preflightTikTokSession(session, attempts.tiktok);
+      await captureAttemptScreenshot(session, attempts.tiktok, 'tiktok-preflight', {
+        urlPrefix: 'https://www.tiktok.com/tiktokstudio/',
+        openUrl: TIKTOK_UPLOAD_URL,
+      });
+    }
+
+    if (platformSet.has('instagram')) {
+      const result = await publishInstagram(bundle, session, { ...options, attempt: attempts.instagram });
+      appendJsonLine(historyPath, {
+        platform: 'instagram',
+        bundleId: bundle.id,
+        fingerprint: fingerprints.instagram,
+        status: result.mode,
+        publishedAt: new Date().toISOString(),
+        attemptId: attempts.instagram.attemptId,
+        attemptDir: attempts.instagram.attemptDir,
+        finalUrl: result.finalUrl || null,
+        browserBackend: session.name,
+      });
+      completedPlatforms.add('instagram');
+      results.push(result);
+    }
+
+    if (platformSet.has('tiktok')) {
+      const result = await publishTikTok(bundle, session, {
+        ...options,
+        attempt: attempts.tiktok,
+        readyState: preflightState.tiktok,
+      });
+      appendJsonLine(historyPath, {
+        platform: 'tiktok',
+        bundleId: bundle.id,
+        fingerprint: fingerprints.tiktok,
+        status: result.mode,
+        publishType: result.publishType || null,
+        publishedAt: new Date().toISOString(),
+        attemptId: attempts.tiktok.attemptId,
+        attemptDir: attempts.tiktok.attemptDir,
+        finalUrl: result.finalUrl || null,
+        browserBackend: session.name,
+      });
+      completedPlatforms.add('tiktok');
+      results.push(result);
+    }
+
+    if (options.noShare && options.cleanupDrafts && !options.dryRun) {
+      if (platformSet.has('instagram')) {
+        await cleanupInstagramDraft(session);
+      }
+      if (platformSet.has('tiktok')) {
+        await cleanupTikTokDraft(session);
+      }
+    }
+
+    return results;
+  } catch (error) {
+    if (platformSet.has('instagram') && !completedPlatforms.has('instagram')) {
+      appendJsonLine(historyPath, {
+        platform: 'instagram',
+        bundleId: bundle.id,
+        fingerprint: fingerprints.instagram || null,
+        status: 'failed',
+        publishedAt: new Date().toISOString(),
+        attemptId: attempts.instagram ? attempts.instagram.attemptId : null,
+        attemptDir: attempts.instagram ? attempts.instagram.attemptDir : null,
+        browserBackend: session ? session.name : options.browserBackend || 'auto',
+        error: error.message,
+      });
+    }
+    if (platformSet.has('tiktok') && !completedPlatforms.has('tiktok')) {
+      appendJsonLine(historyPath, {
+        platform: 'tiktok',
+        bundleId: bundle.id,
+        fingerprint: fingerprints.tiktok || null,
+        status: 'failed',
+        publishedAt: new Date().toISOString(),
+        attemptId: attempts.tiktok ? attempts.tiktok.attemptId : null,
+        attemptDir: attempts.tiktok ? attempts.tiktok.attemptDir : null,
+        browserBackend: session ? session.name : options.browserBackend || 'auto',
+        error: error.message,
+      });
+    }
+    throw error;
+  } finally {
+    if (session) {
+      await session.close();
+    }
+  }
 }
 
 async function publishDueQueueEntries({
   queuePath = DEFAULT_QUEUE_PATH,
+  historyPath = DEFAULT_HISTORY_PATH,
   dryRun = false,
   noShare = false,
   cleanupDrafts = false,
+  force = false,
+  browserBackend = 'auto',
+  profileRoot = DEFAULT_CHROME_PROFILE_ROOT,
+  profileDir = DEFAULT_CHROME_PROFILE_DIR,
+  headless = false,
   now = new Date(),
 }) {
   const queueState = loadQueueState(queuePath);
@@ -1107,9 +2049,15 @@ async function publishDueQueueEntries({
     try {
       const publishResults = await publishBundle(entry.bundlePath, {
         platforms: entry.platforms.join(','),
+        historyPath,
         dryRun,
         noShare,
         cleanupDrafts,
+        force,
+        browserBackend,
+        profileRoot,
+        profileDir,
+        headless,
       });
       entry.status = dryRun || noShare ? 'prepared' : 'published';
       entry.publishedAt = new Date().toISOString();
@@ -1205,17 +2153,46 @@ async function main(argv = process.argv.slice(2)) {
 
   if (command === 'prepare') {
     const sourceHtmlPath = resolvePath(args.source, DEFAULT_ASSET_HTML);
-    const captionPath = resolvePath(args.caption, DEFAULT_CAPTION_PATH);
     const outputDir = resolvePath(args.output, path.join(DEFAULT_OUTPUT_ROOT, slugify(args.slug || 'pre-action-gates')));
     const { manifestPath, manifest } = prepareBundle({
       sourceHtmlPath,
-      captionPath,
+      captionPath: resolvePath(args.caption, DEFAULT_CAPTION_PATH),
+      captionText: args['caption-text'],
       outputDir,
       slug: args.slug || 'pre-action-gates',
       slideDurationSeconds: Number(args['slide-seconds'] || 2.4),
       dryRun: Boolean(args['dry-run']),
     });
     console.log(JSON.stringify({ manifestPath, manifest }, null, 2));
+    return;
+  }
+
+  if (command === 'post') {
+    const sourceHtmlPath = resolvePath(args.source, DEFAULT_ASSET_HTML);
+    const slug = args.slug || path.basename(sourceHtmlPath, path.extname(sourceHtmlPath));
+    const outputDir = resolvePath(args.output, path.join(DEFAULT_OUTPUT_ROOT, slugify(slug)));
+    const { manifestPath, manifest } = prepareBundle({
+      sourceHtmlPath,
+      captionPath: resolvePath(args.caption, DEFAULT_CAPTION_PATH),
+      captionText: args['caption-text'],
+      outputDir,
+      slug,
+      slideDurationSeconds: Number(args['slide-seconds'] || 2.4),
+      dryRun: Boolean(args['dry-run']),
+    });
+    const results = await publishBundle(manifestPath, {
+      platforms: args.platforms || 'instagram,tiktok',
+      historyPath: resolvePath(args.history, DEFAULT_HISTORY_PATH),
+      dryRun: Boolean(args['dry-run']),
+      noShare: Boolean(args['no-share']),
+      cleanupDrafts: Boolean(args['cleanup-drafts']),
+      force: Boolean(args.force),
+      browserBackend: args.backend || 'auto',
+      profileRoot: resolveChromeProfileRoot(args['profile-root'] || DEFAULT_CHROME_PROFILE_ROOT),
+      profileDir: args['profile-dir'] || DEFAULT_CHROME_PROFILE_DIR,
+      headless: Boolean(args.headless),
+    });
+    console.log(JSON.stringify({ manifestPath, manifest, results }, null, 2));
     return;
   }
 
@@ -1233,9 +2210,15 @@ async function main(argv = process.argv.slice(2)) {
   if (command === 'publish') {
     const results = await publishBundle(resolvePath(args.bundle), {
       platforms: args.platforms || 'instagram,tiktok',
+      historyPath: resolvePath(args.history, DEFAULT_HISTORY_PATH),
       dryRun: Boolean(args['dry-run']),
       noShare: Boolean(args['no-share']),
       cleanupDrafts: Boolean(args['cleanup-drafts']),
+      force: Boolean(args.force),
+      browserBackend: args.backend || 'auto',
+      profileRoot: resolveChromeProfileRoot(args['profile-root'] || DEFAULT_CHROME_PROFILE_ROOT),
+      profileDir: args['profile-dir'] || DEFAULT_CHROME_PROFILE_DIR,
+      headless: Boolean(args.headless),
     });
     console.log(JSON.stringify(results, null, 2));
     return;
@@ -1244,9 +2227,15 @@ async function main(argv = process.argv.slice(2)) {
   if (command === 'publish-queue') {
     const results = await publishDueQueueEntries({
       queuePath: resolvePath(args.queue, DEFAULT_QUEUE_PATH),
+      historyPath: resolvePath(args.history, DEFAULT_HISTORY_PATH),
       dryRun: Boolean(args['dry-run']),
       noShare: Boolean(args['no-share']),
       cleanupDrafts: Boolean(args['cleanup-drafts']),
+      force: Boolean(args.force),
+      browserBackend: args.backend || 'auto',
+      profileRoot: resolveChromeProfileRoot(args['profile-root'] || DEFAULT_CHROME_PROFILE_ROOT),
+      profileDir: args['profile-dir'] || DEFAULT_CHROME_PROFILE_DIR,
+      headless: Boolean(args.headless),
       now: args.now ? new Date(args.now) : new Date(),
     });
     console.log(JSON.stringify(results, null, 2));
@@ -1269,6 +2258,8 @@ async function main(argv = process.argv.slice(2)) {
     const queueState = loadQueueState(queuePath);
     console.log(JSON.stringify({
       queuePath,
+      historyPath: resolvePath(args.history, DEFAULT_HISTORY_PATH),
+      publishHistory: loadPublishHistory(resolvePath(args.history, DEFAULT_HISTORY_PATH)),
       entries: queueState.entries || [],
     }, null, 2));
     return;
@@ -1280,27 +2271,38 @@ async function main(argv = process.argv.slice(2)) {
 module.exports = {
   DEFAULT_ASSET_HTML,
   DEFAULT_CAPTION_PATH,
+  DEFAULT_CHROME_PROFILE_DIR,
+  DEFAULT_CHROME_PROFILE_ROOT,
+  DEFAULT_HISTORY_PATH,
   DEFAULT_QUEUE_PATH,
   DEFAULT_LAUNCHD_LABEL,
+  assertPublishNotDuplicated,
   buildBundleManifest,
+  buildPublishFingerprint,
   buildChromeJavaScriptAppleScript,
   buildFfmpegConcatManifest,
   buildIsolatedSlideDocument,
   buildLaunchAgentPlist,
   buildBrowserUploadScript,
+  buildContentEditableCaptionScript,
   enqueueBundle,
   extractHeadContent,
   extractSlideBlocks,
   getDueEntries,
   loadQueueState,
+  loadPublishHistory,
   normalizePlatformList,
   mimeTypeForPath,
   normalizeTikTokCaption,
   prepareBundle,
+  publishBundle,
+  resolveChromeProfileRoot,
   renderSlides,
   renderTikTokVideo,
+  resolveTikTokPublishTarget,
   saveQueueState,
   slugify,
+  validateSlideImages,
   writeIsolatedSlideDocuments,
 };
 
