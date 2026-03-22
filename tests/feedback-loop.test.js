@@ -352,14 +352,12 @@ test('captureFeedback: waitForBackgroundSideEffects drains deferred vector write
   process.env.RLHF_FEEDBACK_DIR = tmpDir;
   await waitForBackgroundSideEffects();
 
-  // getVectorStoreModule prefers filesystem-search over vector-store when available
-  let searchModule;
-  try { searchModule = require('../scripts/filesystem-search'); } catch { searchModule = require('../scripts/vector-store'); }
+  let searchModule; try { searchModule = require('../scripts/filesystem-search'); } catch { searchModule = require('../scripts/vector-store'); }
   const originalUpsertFeedback = searchModule.upsertFeedback;
   let flushed = false;
 
   searchModule.upsertFeedback = async () => {
-    await new Promise((resolve) => setTimeout(resolve, 25));
+    await new Promise((resolve) => setTimeout(resolve, 100));
     flushed = true;
   };
 
