@@ -12,10 +12,10 @@
 - **Positioning:** Landing page still frames MCP Memory Gateway as an AI workflow control plane, not a generic memory server.
 
 ## Last Completed Task
-- Implemented ShieldCortex-backed RLHF memory-ingress blocking and removed stale ShieldCortex runtime source labels.
+- Rebased the ShieldCortex RLHF hardening branch onto current `main`, re-verified the full suite, and fixed the social analytics `:memory:` test pollution bug discovered during verification.
 
 ## Exact Next Step
-- Complete the rebase for `fix/rlhf-source-labels`, rerun the verification suite, and force-push PR `#303`.
+- Force-push `fix/rlhf-source-labels`, monitor PR `#303`, and merge after green CI.
 - After merge, inspect whether the stale tracked `proof/*.json` contract should be fixed in a follow-up PR.
 
 ## Open Blockers
@@ -32,25 +32,16 @@ _No strong behavioral patterns identified yet._
 
 ### Last 5 Commits:
 ```
+6e4c906 fix: harden RLHF memory ingress with ShieldCortex
 421ad42 feat: unified social analytics pipeline (9 platforms) (#301)
 a82c6d7 fix: harden social publish verification (#300)
 0740b58 fix: harden social publish runtime cleanup (#299)
 8e25c22 feat: harden social publish automation (#298)
-37bc326 fix: handle ping and notifications in MCP stdio transport for Glama compatibility (#295)
 ```
 
 ### Modified Files:
 ```
- M .env.example
- M README.md
- M docs/VERIFICATION_EVIDENCE.md
- M package-lock.json
- M package.json
  M primer.md
- M scripts/context-engine.js
- M scripts/feedback-loop.js
- M tests/feedback-loop.test.js
- M tests/intelligence.test.js
-?? scripts/memory-firewall.js
-?? scripts/shieldcortex-memory-firewall-runner.mjs
+ M scripts/social-analytics/store.js
+ M tests/social-analytics.test.js
 ```

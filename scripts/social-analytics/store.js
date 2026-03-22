@@ -15,17 +15,20 @@ const SCHEMA_PATH = path.join(__dirname, 'db', 'schema.sql');
  * @returns {import('better-sqlite3').Database}
  */
 function initDb(dbPath = DEFAULT_DB_PATH) {
-  const resolvedPath = path.resolve(dbPath);
-  const dir = path.dirname(resolvedPath);
+  const isInMemoryDatabase = dbPath === ':memory:';
+  const resolvedPath = isInMemoryDatabase ? dbPath : path.resolve(dbPath);
+  const dir = isInMemoryDatabase ? null : path.dirname(resolvedPath);
 
-  if (!fs.existsSync(dir)) {
+  if (dir && !fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
 
   const db = new Database(resolvedPath);
 
   // Enable WAL mode for better concurrent read performance.
-  db.pragma('journal_mode = WAL');
+  if (!isInMemoryDatabase) {
+    db.pragma('journal_mode = WAL');
+  }
   db.pragma('foreign_keys = ON');
 
   const schema = fs.readFileSync(SCHEMA_PATH, 'utf8');

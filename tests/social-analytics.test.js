@@ -197,8 +197,13 @@ describe('social-analytics normalizer', () => {
 
 describe('social-analytics store', () => {
   const { initDb, upsertMetric, upsertFollowerSnapshot, queryMetrics, topContent, getFollowerHistory } = require('../scripts/social-analytics/store');
+  const strayMemoryPath = path.resolve(':memory:');
 
   it('initializes an in-memory database and performs CRUD', () => {
+    if (fs.existsSync(strayMemoryPath)) {
+      fs.unlinkSync(strayMemoryPath);
+    }
+
     const db = initDb(':memory:');
 
     upsertMetric(db, {
@@ -240,6 +245,7 @@ describe('social-analytics store', () => {
     assert.ok(Array.isArray(top));
 
     db.close();
+    assert.equal(fs.existsSync(strayMemoryPath), false);
   });
 
   it('upserts are idempotent (no duplicates)', () => {
@@ -269,6 +275,17 @@ describe('social-analytics store', () => {
     assert.equal(rows[0].impressions, 200);
 
     db.close();
+  });
+
+  it('does not create a literal :memory: database file in the repo root', () => {
+    if (fs.existsSync(strayMemoryPath)) {
+      fs.unlinkSync(strayMemoryPath);
+    }
+
+    const db = initDb(':memory:');
+    db.close();
+
+    assert.equal(fs.existsSync(strayMemoryPath), false);
   });
 });
 
