@@ -1,3 +1,93 @@
+## March 21, 2026: ShieldCortex-backed memory ingress hardening and runtime source label cleanup
+
+Scope:
+
+- Added `scripts/memory-firewall.js` as the single ingress decision point for feedback/memory writes, with provider selection for `auto`, `shieldcortex`, `local`, and `off`.
+- Added `scripts/shieldcortex-memory-firewall-runner.mjs` so the gateway can use the optional `shieldcortex` package without making it a hard runtime dependency.
+- Hardened `scripts/feedback-loop.js` to block secret-bearing feedback before any raw write to `feedback-log.jsonl` or `memory-log.jsonl`, while recording only redacted diagnostics.
+- Replaced the stale runtime source label `shieldcortex` in `scripts/context-engine.js` with the truthful live storage labels `jsonl-memory` and `lancedb-vectors`.
+- Added regression coverage in `tests/feedback-loop.test.js` and `tests/intelligence.test.js`.
+- Documented the optional ingress firewall controls in `README.md` and `.env.example`.
+- Added `shieldcortex` as an optional dependency, not a required runtime dependency.
+
+Commands run in the dedicated worktree at `/Users/ganapolsky_i/workspace/git/mcp-memory-gateway/.worktrees/fix-rlhf-source-labels`:
+
+```bash
+npm ci
+node --check scripts/memory-firewall.js
+node --check scripts/feedback-loop.js
+node - <<'PY'
+const { evaluateMemoryIngress } = require('./scripts/memory-firewall');
+(async () => {
+  const decision = await evaluateMemoryIngress({
+    feedbackEvent: {
+      signal: 'down',
+      context: 'Accidentally pasted anthropic API key sk-ant-api03-abcdefghijklmnopqrstuvwxyz1234567890 into feedback.'
+    },
+    memoryRecord: {
+      title: 'Dangerous memory',
+      text: 'anthropic api key sk-ant-api03-abcdefghijklmnopqrstuvwxyz1234567890 leaked'
+    },
+    options: { provider: 'shieldcortex', mode: 'strict' }
+  });
+  console.log(JSON.stringify({
+    allowed: decision.allowed,
+    provider: decision.provider,
+    mode: decision.mode,
+    degraded: decision.degraded,
+    reason: decision.reason,
+    threatIndicators: decision.threatIndicators,
+    blockedPatterns: decision.blockedPatterns
+  }, null, 2));
+})();
+PY
+node --test tests/feedback-loop.test.js tests/intelligence.test.js
+npm test >/tmp/mcp_npm_test_fix_rlhf_source_labels.log 2>&1
+npm run test:coverage >/tmp/mcp_test_coverage_fix_rlhf_source_labels.log 2>&1
+RLHF_PROOF_DIR=/tmp/mcp_proof_adapters_fix_rlhf npm run prove:adapters >/tmp/mcp_prove_adapters_fix_rlhf.log 2>&1
+RLHF_AUTOMATION_PROOF_DIR=/tmp/mcp_proof_automation_fix_rlhf npm run prove:automation >/tmp/mcp_prove_automation_fix_rlhf.log 2>&1
+npm run self-heal:check >/tmp/mcp_self_heal_check_fix_rlhf.log 2>&1
+git diff --check
+```
+
+Observed result:
+
+- `npm ci` exited `0`: `added 296 packages` and `found 0 vulnerabilities`.
+- `node --check scripts/memory-firewall.js` exited `0`.
+- `node --check scripts/feedback-loop.js` exited `0`.
+- The direct ShieldCortex ingress probe exited `0` and returned:
+  - `allowed: false`
+  - `provider: "shieldcortex"`
+  - `mode: "strict"`
+  - `reason: "Blocked: credential leak detected (anthropic api_key)"`
+  - `threatIndicators: ["credential_leak"]`
+- `node --test tests/feedback-loop.test.js tests/intelligence.test.js` exited `0`: `74` passed, `0` failed.
+- `npm test` exited `0` on the patched worktree (`/tmp/mcp_npm_test_fix_rlhf_source_labels.log`).
+- The full-suite rerun included the new RLHF/security checks:
+  - `evaluateMemoryIngress: ShieldCortex blocks secret-bearing payload when explicitly enabled`
+  - `captureFeedback: blocks secret-bearing feedback before any raw memory write`
+- `npm run test:coverage` exited `0` with all-files coverage at:
+  - `89.71` lines
+  - `75.40` branches
+  - `93.21` functions
+- `RLHF_PROOF_DIR=/tmp/mcp_proof_adapters_fix_rlhf npm run prove:adapters` exited `0`: `48` passed, `0` failed.
+- `RLHF_AUTOMATION_PROOF_DIR=/tmp/mcp_proof_automation_fix_rlhf npm run prove:automation` exited `0`: `55` passed, `0` failed.
+- `npm run self-heal:check` exited `0`: `Overall: HEALTHY` with `4/4 healthy` checks.
+- `git diff --check` exited `0`.
+
+Evidence caveat:
+
+- The `prove:adapters` and `prove:automation` commands in this repo are test harnesses (`node --test ...`), not a fresh tracked-artifact publisher.
+- The current run proved those contracts through the green harness output and exit codes above.
+- The checked-in `proof/compatibility/report.json` and `proof/automation/report.json` files still carry older `generatedAt` timestamps, so they must not be claimed as freshly regenerated evidence for this specific run.
+
+Requirements verified:
+
+- Secret-bearing or hostile feedback can now be blocked before any raw memory promotion write.
+- When ShieldCortex is installed, the ingress firewall can use it directly; when it is absent, the gateway falls back to the local secret scanner without breaking runtime operation.
+- The runtime memory manifest no longer falsely claims `shieldcortex` as a live memory source.
+- The change did not break the RLHF feedback loop, adapter contracts, automation contracts, or self-healing checks.
+
 ## March 20, 2026: Hosted analytics and revenue audit hardening
 
 Scope:
