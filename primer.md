@@ -12,38 +12,69 @@
 - **Positioning:** Landing page still frames MCP Memory Gateway as an AI workflow control plane, not a generic memory server.
 
 ## Last Completed Task
-- Hardened the zero-filming social automation lane: fixed self-heal output buffering, removed copied-profile teardown flake, widened Chrome CDP startup budget, made TikTok preflight failures explicit, and made Instagram draft creation recover from the discard-confirmation modal.
+- Implemented dependency cooldown check
 
 ## Exact Next Step
-- Push and merge the `codex/social-proof-hardening` branch once PR checks are green.
+- Wire cooldown into CI pipeline
 - After merge, authenticate TikTok in a Chrome profile and rerun the combined `social:publish` lane to capture the first true dual-platform no-share proof, then switch to an actual publish.
 
 ## Open Blockers
-- TikTok is not authenticated in the available Chrome profiles, so the combined lane correctly halts before any partial publish.
-- GitHub Marketplace paid events still lack amount metadata in the local ledger, so local booked revenue stays at `$0.00` until pricing is supplied or backfilled.
+- Need Chainguard API key
 
 ## Behavioral Traits
 
-_No strong behavioral patterns identified yet._
+- User prefers surgical edits over full file rewrites.
 
 ## Live Git Context
 
-### Branch: codex/social-proof-hardening
+### Branch: feat/filesystem-search
 
 ### Last 5 Commits:
 ```
-f1a1a06 fix: harden social publish verification
-328ca92 docs: refresh social verification evidence
-a73e426 feat: harden social publish automation
-37bc326 fix: handle ping and notifications in MCP stdio transport for Glama compatibility (#295)
-beec535 feat: add zero-filming social automation pipeline (#294)
+3264b70 feat: add filesystem-based search replacing LanceDB vector store
+421ad42 feat: unified social analytics pipeline (9 platforms) (#301)
+a82c6d7 fix: harden social publish verification (#300)
+0740b58 fix: harden social publish runtime cleanup (#299)
+8e25c22 feat: harden social publish automation (#298)
 ```
 
 ### Modified Files:
 ```
- M docs/VERIFICATION_EVIDENCE.md
- M docs/marketing/social-automation.md
+ M package.json
  M primer.md
- M scripts/social-pipeline.js
- M tests/social-pipeline.test.js
+ M scripts/contextfs.js
+ M scripts/gates-engine.js
+ M scripts/social-analytics/publishers/threads.js
+ M tests/contextfs.test.js
+ M tests/feedback-loop.test.js
+?? :memory:
+?? docs/CLAUDE_AMNESIA_FIX.md
+?? docs/G_STACK_PLAN.md
+?? docs/OBSIDIAN_CONTRACT.md
+?? docs/marketing/demo-scripts-keshavsuki.sh
+?? docs/marketing/flow-science/KOTLER_OUTREACH.md
+?? docs/marketing/flow-science/STRATEGY.md
+?? docs/marketing/flow-science/caption.txt
+?? docs/marketing/flow-science/instagram-carousel-flow-science.html
+?? docs/marketing/flow-science/instagram-carousel-flow-science_1.html
+?? docs/marketing/flow-science/instagram-carousel-slides.html
+?? docs/marketing/instagram-response-keshavsuki.md
+?? docs/marketing/reel-scripts.md
+?? instagram-post-shared.png
+?? instagram-pre-share.png
+?? scripts/__pycache__/
+?? scripts/fabric-sync.js
+?? scripts/memalign-recall.js
+?? scripts/memory-firewall.js
+?? scripts/persona-primer.js
+?? scripts/principle-extractor.js
+?? scripts/revenue-sentry.js
+?? test-vault-gsd/
+?? tests/gtc-2026-features.test.js
+?? tests/hybrid-raft-proof.test.js
+?? tests/memalign.test.js
+?? tests/memory-firewall.test.js
+?? tiktok-followers-updated.png
+?? tiktok-pre-post.png
+?? tiktok-video-published.png
 ```
