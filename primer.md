@@ -15,7 +15,7 @@
 - Rebased the ShieldCortex RLHF hardening branch onto current `main`, re-verified the full suite, and fixed the social analytics `:memory:` test pollution bug discovered during verification.
 
 ## Exact Next Step
-- Force-push `fix/rlhf-source-labels`, monitor PR `#303`, and merge after green CI.
+- Force-push `fix/rlhf-source-labels`, monitor PR `#307`, and merge after green CI.
 - After merge, inspect whether the stale tracked `proof/*.json` contract should be fixed in a follow-up PR.
 
 ## Open Blockers
@@ -32,16 +32,14 @@ _No strong behavioral patterns identified yet._
 
 ### Last 5 Commits:
 ```
-6e4c906 fix: harden RLHF memory ingress with ShieldCortex
+5306f15 fix: keep social analytics memory db in-memory
+ab2d5d9 fix: harden RLHF memory ingress with ShieldCortex
+d1b70d3 feat: MemAlign dual-memory recall + tech debt audit (#306)
 421ad42 feat: unified social analytics pipeline (9 platforms) (#301)
 a82c6d7 fix: harden social publish verification (#300)
-0740b58 fix: harden social publish runtime cleanup (#299)
-8e25c22 feat: harden social publish automation (#298)
 ```
 
 ### Modified Files:
 ```
  M primer.md
- M scripts/social-analytics/store.js
- M tests/social-analytics.test.js
 ```
