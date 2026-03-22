@@ -9,7 +9,7 @@
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/igorganapolsky)
 [![Pro Pack](https://img.shields.io/badge/Pro%20Pack-%2449%20one--time-635bff?logo=stripe&logoColor=white)](https://rlhf-feedback-loop-production.up.railway.app/checkout/pro)
 
-**Pre-action gates that physically block AI coding agents from repeating known mistakes.** Captures feedback, auto-promotes failures into prevention rules, and enforces them via PreToolUse hooks. Works with Claude Code, Codex, Gemini, Amp, Cursor.
+**Pre-action gates that physically block AI coding agents from repeating known mistakes. Dual-memory recall (MemAlign-inspired principles + episodic context).** Captures feedback, auto-promotes failures into prevention rules, and enforces them via PreToolUse hooks. Works with Claude Code, Codex, Gemini, Amp, Cursor.
 
 > **Honest disclaimer:** This is a **context injection system**, not RLHF. LLM weights are not updated by thumbs-up/down signals. What actually happens: feedback is validated, promoted to searchable memory, and recalled at session start so agents have project history they'd otherwise lose. That's genuinely valuable — but it's context engineering, not reinforcement learning.
 
@@ -143,12 +143,13 @@ npx mcp-memory-gateway capture --feedback=down \
 1. **Capture** — `capture_feedback` MCP tool accepts signals with structured context (vague "thumbs down" is rejected)
 2. **Validate** — Rubric engine gates promotion — requires specific failure descriptions, not vibes
 3. **Remember** — Promoted memories stored in JSONL + LanceDB vectors for semantic search
-4. **Prevent** — Repeated failures auto-generate prevention rules (the actual value — agents follow these when loaded)
-5. **Gate** — Pre-action blocking via PreToolUse hooks — physically prevents known mistakes before they happen
-6. **Recall** — `recall` tool injects relevant past context into current session (this is the mechanism that works)
-7. **Session Handoff** — `session_handoff` captures git state, last task, next step, and blockers; `session_primer` restores it at next session start
-8. **Export** — DPO/KTO pairs for optional downstream fine-tuning (separate from runtime behavior)
-9. **Bridge** — JSONL file watcher auto-ingests signals from external sources (Amp plugins, hooks, scripts)
+4. **Distill** — Principle extraction distills NL feedback into reusable semantic principles (MemAlign-inspired)
+5. **Prevent** — Repeated failures auto-generate prevention rules (the actual value — agents follow these when loaded)
+6. **Gate** — Pre-action blocking via PreToolUse hooks — physically prevents known mistakes before they happen
+7. **Recall** — `recall` tool injects relevant past context into current session (this is the mechanism that works)
+8. **Session Handoff** — `session_handoff` captures git state, last task, next step, and blockers; `session_primer` restores it at next session start
+9. **Export** — DPO/KTO pairs for optional downstream fine-tuning (separate from runtime behavior)
+10. **Bridge** — JSONL file watcher auto-ingests signals from external sources (Amp plugins, hooks, scripts)
 
 ### What Works vs. What Doesn't
 
@@ -424,7 +425,7 @@ The watcher tracks its position via `.rlhf/.watcher-offset` for crash-safe, idem
 
 ### Pipeline
 
-Six-phase pipeline: **Capture** → **Validate** → **Remember** → **Prevent** → **Gate** → **Export**
+Seven-phase pipeline: **Capture** → **Validate** → **Remember** → **Distill** → **Prevent** → **Gate** → **Export**
 
 ![Context Engineering Architecture](https://raw.githubusercontent.com/IgorGanapolsky/mcp-memory-gateway/main/docs/diagrams/rlhf-architecture-pb.png)
 
