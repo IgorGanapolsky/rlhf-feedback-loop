@@ -256,6 +256,8 @@ async function searchSimilar(queryText, limit = 5, options = {}) {
 async function upsertFeedback(feedbackEvent) {
   // No-op: feedback is already written to JSONL by feedback-loop.js.
   // The filesystem IS the index. No separate upsert needed.
+  // Yield to microtask queue so trackBackgroundSideEffect captures a pending promise.
+  await Promise.resolve();
   return feedbackEvent;
 }
 
