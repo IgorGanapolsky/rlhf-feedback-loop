@@ -1,3 +1,47 @@
+# MCP Memory Gateway — Verification Evidence
+
+> Every feature ships with proof. This document is the complete audit trail of verification runs, test output, and deployment evidence.
+
+## What's verified
+
+| Category | Evidence |
+|----------|---------|
+| **Pre-action gates** | Block known mistakes before tool use — tested with real feedback patterns |
+| **Feedback capture** | Up/down signals with context, tags, rubric scores — schema-validated |
+| **Prevention rules** | Auto-promoted from repeated failures — regression-tested |
+| **Filesystem search** | 1,651 ContextFS files searchable without embeddings — 17 tests |
+| **Social analytics** | 10-platform polling pipeline — 26 Zernio + 16 analytics tests |
+| **RLHF search** | Two-tier search (MCP tool + REST API) — 18 tests |
+| **MCP/API parity** | Every MCP tool has a matching REST endpoint — proven by OpenAPI parity tests |
+| **CI pipeline** | All PRs require green CI (tests + CodeQL + GitGuardian + Socket Security) |
+| **Railway deployment** | Auto-deploy on merge, SHA-verified, health-checked |
+
+## Verify it yourself
+
+```bash
+git clone https://github.com/IgorGanapolsky/mcp-memory-gateway.git
+cd mcp-memory-gateway && npm ci
+npm test                    # 500+ tests across 25+ suites
+npm run prove:adapters      # Adapter compatibility proof
+npm run prove:automation    # Automation proof harness
+npm run test:coverage       # Coverage report
+```
+
+## Search through lessons learned
+
+```bash
+# Free tier — any LLM invokes search_rlhf via MCP
+# Tool: search_rlhf { query: "database mock", source: "all" }
+
+# Paid tier — authenticated REST API
+curl -H "Authorization: Bearer YOUR_KEY" \
+  "https://rlhf-feedback-loop-production.up.railway.app/v1/search?q=test+failure"
+```
+
+---
+
+# Verification log
+
 ## March 21, 2026: ShieldCortex-backed memory ingress hardening and runtime source label cleanup
 
 Scope:
