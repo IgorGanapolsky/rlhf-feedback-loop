@@ -91,7 +91,8 @@ async function pollZernio(db) {
   console.log(`[zernio:poller] Polling ${accounts.length} account(s)`);
 
   for (const account of accounts) {
-    const { accountId, platform } = account;
+    const accountId = account.accountId || account._id || account.id;
+    const platform = account.platform;
 
     if (!accountId) {
       console.warn('[zernio:poller] Account missing accountId — skipping');

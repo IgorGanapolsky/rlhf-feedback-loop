@@ -104,7 +104,7 @@ async function pollGitHub(db) {
   const { views, clones, referrers, repoStats } = await fetchGitHubTraffic(token, repo);
 
   // Lazy-require sibling modules so they can be built/tested independently.
-  const { normalizeMetric } = require('../normalizer');
+  const { normalizeGitHubMetric: normalizeMetric } = require('../normalizer');
   const { upsertMetric, upsertFollowerSnapshot } = require('../store');
 
   const repoName = repo.split('/').pop();
@@ -125,7 +125,7 @@ async function pollGitHub(db) {
     const metricDate = entry.timestamp.slice(0, 10);
     const cloneCount = clonesByDate[metricDate] || 0;
 
-    const raw = {
+    const record = {
       platform: 'github',
       content_type: 'repo',
       post_id: repoName,
@@ -144,8 +144,7 @@ async function pollGitHub(db) {
       fetched_at: fetchedAt,
     };
 
-    const normalized = normalizeMetric(raw);
-    upsertMetric(db, normalized);
+    upsertMetric(db, record);
     upsertedDates.push(metricDate);
   }
 
