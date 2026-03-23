@@ -148,7 +148,7 @@
   "dependencies": {
     "@google/genai": "^1.46.0",
     "@huggingface/transformers": "^3.8.1",
-    "@lancedb/lancedb": "^0.26.2",
+    "@lancedb/lancedb": "^0.27.1",
     "apache-arrow": "^18.1.0",
     "better-sqlite3": "^12.8.0",
     "playwright-core": "^1.58.2",
