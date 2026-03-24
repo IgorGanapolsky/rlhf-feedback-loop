@@ -12,14 +12,16 @@
       "name": "mcp-memory-gateway",
       "source": "plugins/cursor-marketplace",
       "description": "Pre-action gates that block AI agents from repeating known mistakes. Captures feedback, auto-generates prevention rules, and enforces them via PreToolUse hooks.",
-      "category": "developer-tools",
+      "category": "agent-orchestration",
       "tags": [
-        "mcp",
         "cursor",
+        "cursor-plugin",
+        "mcp",
+        "agent-orchestration",
         "pre-action-gates",
         "ai-agent-safety",
-        "prevention-rules",
-        "agent-reliability"
+        "guardrails",
+        "prevention-rules"
       ]
     }
   ]
