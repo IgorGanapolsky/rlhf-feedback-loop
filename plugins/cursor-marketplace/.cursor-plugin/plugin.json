@@ -11,11 +11,13 @@
   "license": "MIT",
   "keywords": [
     "cursor",
+    "cursor-plugin",
     "mcp",
+    "agent-orchestration",
     "pre-action-gates",
     "ai-agent-safety",
-    "prevention-rules",
-    "agent-reliability"
+    "guardrails",
+    "prevention-rules"
   ],
   "logo": "assets/logo-400x400.png"
 }

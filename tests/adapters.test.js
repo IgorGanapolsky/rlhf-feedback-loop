@@ -25,7 +25,7 @@ test('adapter files exist', () => {
     '.claude-plugin/bundle/icon.png',
     'plugins/opencode-profile/INSTALL.md',
     'plugins/cursor-marketplace/.cursor-plugin/plugin.json',
-    'plugins/cursor-marketplace/.mcp.json',
+    'plugins/cursor-marketplace/mcp.json',
     'plugins/cursor-marketplace/README.md',
     'docs/guides/opencode-integration.md',
   ];
@@ -130,7 +130,7 @@ test('chatgpt openapi.yaml contains /v1/feedback/capture path', () => {
 test('cursor marketplace plugin keeps metadata versioned while runtime tracks the latest npm tag', () => {
   const marketplacePath = path.join(root, '.cursor-plugin', 'marketplace.json');
   const pluginManifestPath = path.join(root, 'plugins', 'cursor-marketplace', '.cursor-plugin', 'plugin.json');
-  const pluginConfigPath = path.join(root, 'plugins', 'cursor-marketplace', '.mcp.json');
+  const pluginConfigPath = path.join(root, 'plugins', 'cursor-marketplace', 'mcp.json');
 
   const marketplace = JSON.parse(fs.readFileSync(marketplacePath, 'utf-8'));
   const pluginManifest = JSON.parse(fs.readFileSync(pluginManifestPath, 'utf-8'));

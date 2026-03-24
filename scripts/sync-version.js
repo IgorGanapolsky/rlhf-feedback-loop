@@ -138,7 +138,7 @@ function syncVersion(opts) {
   }
 
   // 7. plugin Cursor MCP config
-  const cursorPluginConfigPath = 'plugins/cursor-marketplace/.mcp.json';
+  const cursorPluginConfigPath = 'plugins/cursor-marketplace/mcp.json';
   if (fs.existsSync(path.join(PROJECT_ROOT, cursorPluginConfigPath))) {
     const cursorPluginConfig = readJson(cursorPluginConfigPath);
     const server = cursorPluginConfig.mcpServers && cursorPluginConfig.mcpServers.rlhf;
