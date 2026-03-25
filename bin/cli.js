@@ -555,6 +555,23 @@ function stats() {
   proNudge();
 }
 
+function compact() {
+  const { compactMemories } = require(path.join(PKG_ROOT, 'scripts', 'feedback-loop'));
+  const result = compactMemories();
+
+  console.log('\n🧹 Memory Compaction Complete');
+  console.log('─'.repeat(50));
+  console.log(`  Before : ${result.before} memories`);
+  console.log(`  After  : ${result.after} memories`);
+  console.log(`  Removed: ${result.removed} duplicates`);
+
+  if (result.removed > 0) {
+    console.log(`\n✅ Eliminated ${Math.round((result.removed / result.before) * 100)}% noise.`);
+  } else {
+    console.log('\n✅ No duplicates found — memory log is clean.');
+  }
+}
+
 function cfo() {
   const args = parseArgs(process.argv.slice(3));
   const { getOperationalBillingSummary } = require(path.join(PKG_ROOT, 'scripts', 'operational-summary'));
@@ -1154,6 +1171,9 @@ switch (COMMAND) {
   case '--help':
   case '-h':
     help();
+    break;
+  case 'compact':
+    compact();
     break;
   default:
     if (COMMAND) {
