@@ -82,6 +82,7 @@ test('public landing copy stays vendor-neutral and honest about editor support',
   assert.match(landingPage, /Amp/i);
   assert.match(landingPage, /OpenCode/i);
   assert.match(landingPage, /VS Code works when you run an MCP-compatible agent inside it/i);
+  assert.doesNotMatch(landingPage, /auto-detects supported local agent installs/i);
   assert.doesNotMatch(landingPage, /claude --mcp mcp-memory-gateway/i);
 });
 

@@ -203,6 +203,8 @@ test('public server card exposes MCP tool schemas for directory scanners', async
   assert.equal(body.name, 'mcp-memory-gateway');
   assert.ok(Array.isArray(body.tools));
   assert.ok(body.tools.length > 0);
+  assert.match(body.description, /OpenCode/);
+  assert.match(body.description, /any MCP-compatible agent/i);
 
   const captureFeedbackTool = body.tools.find((tool) => tool.name === 'capture_feedback');
   assert.ok(captureFeedbackTool);
