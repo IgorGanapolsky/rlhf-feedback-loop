@@ -36,6 +36,7 @@ if (fs.existsSync(envPath)) {
 
 const STATE_FILE = path.resolve(__dirname, '..', '.rlhf', 'reply-monitor-state.json');
 const REDDIT_API_BASE = 'https://oauth.reddit.com';
+const ZERNIO_BASE = 'https://zernio.com/api/v1';
 
 // ---------------------------------------------------------------------------
 // State management
@@ -167,7 +168,7 @@ async function checkRedditReplies(state, dryRun) {
 
   const data = await res.json();
   const replies = (data.data?.children || []).filter(
-    (c) => c.kind === 't1' && c.data.type === 'comment_reply'
+    (c) => c.kind === 't1' && (c.data.type === 'comment_reply' || c.data.type === 'post_reply')
   );
 
   const results = [];
@@ -176,8 +177,8 @@ async function checkRedditReplies(state, dryRun) {
     if (state.repliedTo[commentId]) continue; // Already replied
 
     const author = reply.data.author || '';
-    // Skip mod/bot messages — don't reply to removals or automod
-    if (/^(AutoModerator|.*-ModTeam|reddit|BotDefense)$/i.test(author)) {
+    // Skip mod/bot messages — don't reply to removals, automod, or flood bots
+    if (/^(AutoModerator|.*-ModTeam|.*-mod-bot|reddit|BotDefense|floodassistant|Minkstix)$/i.test(author) || /forget.*previous.*instructions|ignore.*prompt|give me a .* recipe/i.test(reply.data.body || '')) {
       state.repliedTo[commentId] = { at: new Date().toISOString(), platform: 'reddit', skipped: 'bot/mod' };
       continue;
     }
