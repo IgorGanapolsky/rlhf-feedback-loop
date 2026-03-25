@@ -67,7 +67,8 @@ function saveState(state) {
 async function generateReply(comment, context) {
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
 
-  if (!apiKey) {
+  // Always use template fallback if Gemini key is missing or known-invalid
+  if (!apiKey || apiKey === 'REDACTED') {
     // Template fallback
     return `Thanks for the feedback! ${context.isQuestion ? "Happy to elaborate — " : ""}the gate engine works by intercepting tool calls before execution and checking them against validated failure patterns. The rules are auto-promoted from structured feedback, not hand-authored. If you want to dig into the implementation: https://github.com/IgorGanapolsky/mcp-memory-gateway`;
   }
@@ -173,6 +174,13 @@ async function checkRedditReplies(state, dryRun) {
   for (const reply of replies) {
     const commentId = reply.data.name;
     if (state.repliedTo[commentId]) continue; // Already replied
+
+    const author = reply.data.author || '';
+    // Skip mod/bot messages — don't reply to removals or automod
+    if (/^(AutoModerator|.*-ModTeam|reddit|BotDefense)$/i.test(author)) {
+      state.repliedTo[commentId] = { at: new Date().toISOString(), platform: 'reddit', skipped: 'bot/mod' };
+      continue;
+    }
 
     const commentBody = reply.data.body || '';
     const postTitle = reply.data.link_title || '';
