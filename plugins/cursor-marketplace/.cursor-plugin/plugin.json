@@ -1,7 +1,7 @@
 {
   "name": "mcp-memory-gateway",
-  "displayName": "MCP Memory Gateway",
-  "description": "Pre-action gates that block AI agents from repeating known mistakes. Captures feedback, auto-generates prevention rules, and enforces them via PreToolUse hooks.",
+  "displayName": "Never Twice",
+  "description": "Your AI agent made a mistake? Thumbs down. It won't happen again. 👍👎 feedback that teaches your coding agent to stop repeating errors.",
   "version": "0.8.0",
   "author": {
     "name": "Igor Ganapolsky"
@@ -12,12 +12,12 @@
   "keywords": [
     "cursor",
     "cursor-plugin",
-    "mcp",
-    "agent-orchestration",
-    "pre-action-gates",
-    "ai-agent-safety",
-    "guardrails",
-    "prevention-rules"
+    "feedback",
+    "thumbs-up-down",
+    "never-twice",
+    "ai-agent-memory",
+    "mistake-prevention",
+    "coding-agent"
   ],
   "logo": "assets/logo-400x400.png"
 }

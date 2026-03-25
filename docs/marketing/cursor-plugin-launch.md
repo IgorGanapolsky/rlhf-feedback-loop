@@ -2,29 +2,30 @@
 
 ## Core message
 
-Pre-Action Gates stop Cursor agents from repeating known mistakes.
+Your AI agent made a mistake? Thumbs down. It won't happen again.
 
 Lead with the outcome first:
 
-- pre-action gates before tool use
-- prevention rules from repeated failures
-- proof-backed feedback with verification evidence
+- 👎 thumbs down a mistake — it gets blocked
+- 👍 thumbs up good work — agent remembers
+- cross-session memory — lessons persist
+- zero config — install and start giving feedback
 
 Keep these terms in the body, tags, or follow-up copy:
 
-- feedback-to-enforcement pipeline
-- Pre-Action Gates
-- DPO exports
-- Thompson Sampling
+- Never Twice
+- thumbs up/down feedback
+- mistake prevention
+- agent memory
 
 ## Directory blurb
 
-Pre-action gates that block AI agents from repeating known mistakes. Captures feedback, auto-generates prevention rules, and enforces them via PreToolUse hooks.
+Your AI agent made a mistake? Thumbs down. It won't happen again. 👍👎 feedback that teaches your coding agent to stop repeating errors.
 
 ## Manual submission fields
 
-- Name: `MCP Memory Gateway`
-- Description: `Pre-action gates that block AI agents from repeating known mistakes. Captures feedback, auto-generates prevention rules, and enforces them via PreToolUse hooks.`
+- Name: `Never Twice`
+- Description: `Your AI agent made a mistake? Thumbs down. It won't happen again. 👍👎 feedback that teaches your coding agent to stop repeating errors.`
 - Repository URL: `https://github.com/IgorGanapolsky/mcp-memory-gateway`
 - Homepage: `https://rlhf-feedback-loop-production.up.railway.app`
 

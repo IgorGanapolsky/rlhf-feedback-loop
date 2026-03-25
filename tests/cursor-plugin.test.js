@@ -31,7 +31,7 @@ function parseFrontmatter(filePath) {
   return fm;
 }
 
-const canonicalDescription = 'Pre-action gates that block AI agents from repeating known mistakes. Captures feedback, auto-generates prevention rules, and enforces them via PreToolUse hooks.';
+const canonicalDescription = 'Your AI agent made a mistake? Thumbs down. It won\'t happen again. 👍👎 feedback that teaches your coding agent to stop repeating errors.';
 
 test('cursor marketplace manifest points at a valid plugin directory', () => {
   const packageJson = readJson('package.json');
@@ -42,7 +42,7 @@ test('cursor marketplace manifest points at a valid plugin directory', () => {
   assert.equal(marketplace.name, 'mcp-memory-gateway-marketplace');
   assert.equal(marketplace.owner.name, 'Igor Ganapolsky');
   assert.equal(marketplace.metadata.version, packageJson.version);
-  assert.match(marketplace.metadata.description, /Pre-Action Gates|repeating.*mistakes/i);
+  assert.match(marketplace.metadata.description, /Thumbs down|never.*again|mistake/i);
   assert.ok(pluginEntry, 'marketplace entry for mcp-memory-gateway should exist');
   assert.equal(pluginEntry.name, pluginManifest.name, 'marketplace entry should match plugin manifest name');
   assert.equal(pluginEntry.source, 'plugins/cursor-marketplace');
@@ -59,7 +59,7 @@ test('cursor plugin manifest uses marketplace-safe metadata and committed assets
 
   assert.match(pluginManifest.name, /^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/);
   assert.equal(pluginManifest.name, 'mcp-memory-gateway');
-  assert.equal(pluginManifest.displayName, 'MCP Memory Gateway');
+  assert.equal(pluginManifest.displayName, 'Never Twice');
   assert.equal(pluginManifest.description, canonicalDescription);
   assert.equal(path.isAbsolute(pluginManifest.logo), false, 'logo must be repo-relative');
   assert.equal(pluginManifest.logo.includes('..'), false, 'logo path must not use path traversal');
@@ -89,14 +89,14 @@ test('cursor plugin docs explain runtime updates versus listing updates', () => 
 
   assert.match(readme, /Cursor Directory/i);
   assert.match(readme, /does not refresh|does not auto-refresh/i);
-  assert.match(readme, /MCP Memory Gateway/);
+  assert.match(readme, /Never Twice/);
   assert.match(readme, /mcp-memory-gateway/);
   assert.match(readme, new RegExp(canonicalDescription.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   assert.match(readme, /mcp-memory-gateway@latest/);
   assert.equal(fs.existsSync(opsDocPath), true, 'Cursor plugin operations doc should exist');
   assert.match(opsDoc, /Cursor Marketplace/i);
   assert.match(opsDoc, /Cursor Directory/i);
-  assert.match(opsDoc, /Display name: `MCP Memory Gateway`/);
+  assert.match(opsDoc, /Display name: `Never Twice`/);
   assert.match(opsDoc, /Plugin slug: `mcp-memory-gateway`/);
   assert.match(opsDoc, /npm publish/i);
   assert.match(opsDoc, /VERIFICATION_EVIDENCE\.md/);

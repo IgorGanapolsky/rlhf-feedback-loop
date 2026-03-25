@@ -1,19 +1,19 @@
-# MCP Memory Gateway for Cursor
+# Never Twice — for Cursor
 
-`MCP Memory Gateway` is the human-facing plugin name in Cursor listings.
+`Never Twice` is the human-facing plugin name in Cursor listings.
 `mcp-memory-gateway` stays the plugin slug, npm package, and launcher target.
 
 The canonical short description is:
 
-> Pre-action gates that block AI agents from repeating known mistakes. Captures feedback, auto-generates prevention rules, and enforces them via PreToolUse hooks.
+> Your AI agent made a mistake? Thumbs down. It won't happen again. 👍👎 feedback that teaches your coding agent to stop repeating errors.
 
-The plugin gives Cursor agents a full reliability layer:
+How it works:
 
-- keep project memory across sessions
-- run Pre-Action Gates before risky tool use
-- capture proof-backed runs and feedback with evidence
-- promote repeated failures into prevention rules
-- export analytics bundles and DPO-style preference pairs
+- 👎 **Thumbs down** a mistake — it gets blocked from happening again
+- 👍 **Thumbs up** good work — the agent remembers the pattern
+- **Cross-session memory** — lessons persist between conversations
+- **Automatic enforcement** — repeated failures become prevention rules
+- **Zero config** — install and start giving feedback
 
 ## What's included
 
