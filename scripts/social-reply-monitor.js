@@ -18,25 +18,8 @@
 const fs = require('fs');
 const path = require('path');
 
-// Load .env if available
-const envPath = path.resolve(__dirname, '..', '.env');
-if (fs.existsSync(envPath)) {
-  const envContent = fs.readFileSync(envPath, 'utf8');
-  for (const line of envContent.split('\n')) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) continue;
-    const eqIdx = trimmed.indexOf('=');
-    if (eqIdx > 0) {
-      const key = trimmed.slice(0, eqIdx);
-      const value = trimmed.slice(eqIdx + 1);
-      if (!process.env[key]) process.env[key] = value;
-    }
-  }
-}
-
 const STATE_FILE = path.resolve(__dirname, '..', '.rlhf', 'reply-monitor-state.json');
 const REDDIT_API_BASE = 'https://oauth.reddit.com';
-const ZERNIO_BASE = 'https://zernio.com/api/v1';
 
 // ---------------------------------------------------------------------------
 // State management
@@ -68,8 +51,7 @@ function saveState(state) {
 async function generateReply(comment, context) {
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
 
-  // Always use template fallback if Gemini key is missing or looks like a placeholder
-  if (!apiKey || apiKey.startsWith('AIzaSy') && apiKey.length < 40) {
+  if (!apiKey) {
     // Template fallback
     return `Thanks for the feedback! ${context.isQuestion ? "Happy to elaborate — " : ""}the gate engine works by intercepting tool calls before execution and checking them against validated failure patterns. The rules are auto-promoted from structured feedback, not hand-authored. If you want to dig into the implementation: https://github.com/IgorGanapolsky/mcp-memory-gateway`;
   }
@@ -168,20 +150,13 @@ async function checkRedditReplies(state, dryRun) {
 
   const data = await res.json();
   const replies = (data.data?.children || []).filter(
-    (c) => c.kind === 't1' && (c.data.type === 'comment_reply' || c.data.type === 'post_reply')
+    (c) => c.kind === 't1' && c.data.type === 'comment_reply'
   );
 
   const results = [];
   for (const reply of replies) {
     const commentId = reply.data.name;
     if (state.repliedTo[commentId]) continue; // Already replied
-
-    const author = reply.data.author || '';
-    // Skip mod/bot messages — don't reply to removals, automod, or flood bots
-    if (/^(AutoModerator|.*-ModTeam|.*-mod-bot|reddit|BotDefense|floodassistant|Minkstix)$/i.test(author) || /forget.*previous.*instructions|ignore.*prompt|give me a .* recipe/i.test(reply.data.body || '')) {
-      state.repliedTo[commentId] = { at: new Date().toISOString(), platform: 'reddit', skipped: 'bot/mod' };
-      continue;
-    }
 
     const commentBody = reply.data.body || '';
     const postTitle = reply.data.link_title || '';
