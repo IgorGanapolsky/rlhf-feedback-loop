@@ -8,7 +8,7 @@
 
 ## Canonical identity
 
-- Display name: `MCP Memory Gateway`
+- Display name: `ThumbGate`
 - Plugin slug: `mcp-memory-gateway`
 - npm package: `mcp-memory-gateway`
 - MCP server label inside the plugin config: `rlhf`
