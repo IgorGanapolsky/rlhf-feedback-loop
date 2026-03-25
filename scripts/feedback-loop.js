@@ -160,6 +160,22 @@ function appendJSONL(filePath, record) {
   fs.appendFileSync(filePath, `${JSON.stringify(record)}\n`);
 }
 
+/**
+ * Check if a memory from the same feedback event already exists (retry/race dedup).
+ * Only blocks true duplicates (same sourceFeedbackId). Different feedback events
+ * that produce identical content are allowed — they represent real repeated signal.
+ */
+function findDuplicateMemory(memoryLogPath, newRecord) {
+  const feedbackId = newRecord.sourceFeedbackId;
+  if (!feedbackId) return null;
+
+  const existing = readJSONL(memoryLogPath);
+  for (let i = existing.length - 1; i >= 0; i--) {
+    if (existing[i].sourceFeedbackId === feedbackId) return existing[i];
+  }
+  return null;
+}
+
 function toStoredDiagnosis(diagnosis) {
   if (!diagnosis || diagnosis.diagnosed === false || !diagnosis.rootCauseCategory) {
     return null;
@@ -909,7 +925,12 @@ function captureFeedback(params) {
   }
 
   appendJSONL(FEEDBACK_LOG_PATH, feedbackEvent);
-  appendJSONL(MEMORY_LOG_PATH, memoryRecord);
+
+  // Dedup: skip memory write if an identical memory already exists
+  const duplicateMemory = findDuplicateMemory(MEMORY_LOG_PATH, memoryRecord);
+  if (!duplicateMemory) {
+    appendJSONL(MEMORY_LOG_PATH, memoryRecord);
+  }
 
   // Dual-write to SQLite lesson DB (non-blocking — JSONL is source of truth)
   let correctiveActions = [];
@@ -1491,8 +1512,43 @@ function runTests() {
   process.exit(failed > 0 ? 1 : 0);
 }
 
+/**
+ * Compact the memory JSONL log — remove exact-content duplicates, keep the most recent.
+ * @returns {{ before: number, after: number, removed: number }}
+ */
+function compactMemories() {
+  const { MEMORY_LOG_PATH } = getFeedbackPaths();
+  const all = readJSONL(MEMORY_LOG_PATH);
+  const seen = new Map();
+
+  // Walk newest-first so we keep the latest version of each memory
+  for (let i = all.length - 1; i >= 0; i--) {
+    const m = all[i];
+    const key = (m.content || '').trim().toLowerCase();
+    if (!key) {
+      // Keep records with no content (edge case)
+      seen.set(`__empty_${i}`, m);
+      continue;
+    }
+    if (!seen.has(key)) {
+      seen.set(key, m);
+    }
+  }
+
+  const deduped = [...seen.values()].reverse();
+  ensureDir(path.dirname(MEMORY_LOG_PATH));
+  fs.writeFileSync(MEMORY_LOG_PATH, deduped.map((r) => JSON.stringify(r)).join('\n') + (deduped.length ? '\n' : ''));
+
+  return {
+    before: all.length,
+    after: deduped.length,
+    removed: all.length - deduped.length,
+  };
+}
+
 module.exports = {
   captureFeedback,
+  compactMemories,
   analyzeFeedback,
   buildPreventionRules,
   writePreventionRules,
