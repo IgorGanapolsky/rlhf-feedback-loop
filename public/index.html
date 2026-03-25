@@ -251,7 +251,7 @@ __GA_BOOTSTRAP__
     <div class="compatibility-grid">
       <div class="compat-card">
         <h3>AI CLIs</h3>
-        <p>Claude Code, Codex, Gemini CLI, Amp, and OpenCode all use the same gateway and memory model instead of separate rule systems.</p>
+        <p>Claude Code, Codex, Gemini CLI, Amp, and OpenCode all use the same gateway and memory model instead of separate rule systems, with surface-specific setup guides where needed.</p>
       </div>
       <div class="compat-card">
         <h3>Editor workflows</h3>
@@ -259,7 +259,7 @@ __GA_BOOTSTRAP__
       </div>
       <div class="compat-card">
         <h3>Install path</h3>
-        <p><code>npx mcp-memory-gateway init</code> auto-detects supported local agent installs, and the repo carries surface-specific guides when a plugin or profile is needed.</p>
+        <p><code>npx mcp-memory-gateway init</code> bootstraps the shared gateway files, and the repo carries surface-specific guides when a CLI or editor needs its own profile, hook, or plugin bundle.</p>
       </div>
     </div>
   </div>
@@ -309,8 +309,8 @@ __GA_BOOTSTRAP__
         <div><span class="comment"># Rule auto-generated from your previous 👎</span></div>
         <div>&nbsp;</div>
         <div><span class="comment"># Works with your existing setup</span></div>
-        <div><span class="fn">npx</span> mcp-memory-gateway init <span class="comment"># auto-detects supported local agents</span></div>
-        <div><span class="comment"># Claude Code · Codex · Gemini · Amp · OpenCode · Cursor plugin</span></div>
+        <div><span class="fn">npx</span> mcp-memory-gateway init <span class="comment"># bootstraps .rlhf and .mcp.json</span></div>
+        <div><span class="comment"># Use repo guides for Claude Code, Cursor plugin, and OpenCode profiles</span></div>
       </div>
     </div>
   </div>

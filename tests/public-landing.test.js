@@ -49,6 +49,9 @@ test('public landing page promotes multi-agent support and honest editor compati
   assert.match(landingPage, /Cursor ships with a bundled marketplace plugin\./);
   assert.match(landingPage, /VS Code works when you run an MCP-compatible agent inside it/);
   assert.match(landingPage, /does not ship a standalone VS Code extension today/);
+  assert.match(landingPage, /bootstraps the shared gateway files/);
+  assert.match(landingPage, /Use repo guides for Claude Code, Cursor plugin, and OpenCode profiles/);
+  assert.doesNotMatch(landingPage, /auto-detects supported local agent installs/);
   assert.doesNotMatch(landingPage, /claude --mcp mcp-memory-gateway/);
 });
 
