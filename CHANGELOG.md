@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.2 - 2026-03-26
+
+- Bumped all version surfaces to 0.8.2 (package.json, server.json, mcpize.yaml, landing page).
+- Branch coverage improvements: added tests for 10 lowest-coverage files and 15 previously untested scripts.
+- Railway deploy fix: switched to `--detach` mode with health-check polling to avoid intermittent "Failed to retrieve build log" CLI streaming errors.
+
 ## 0.8.1 - 2026-03-26
 
 - Unified ThumbGate branding across all public surfaces (README, AGENTS.md, CLAUDE.md, GEMINI.md, landing page, package.json).
