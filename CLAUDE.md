@@ -31,6 +31,21 @@ capture explicit feedback, convert valid memories, prevent repeated failures via
 6. Respect autonomous GitOps: PR gate first, then auto-merge policies.
 7. Regenerate prevention rules from repeated mistakes.
 
+## Deployment Verification Gate (MANDATORY)
+
+**NEVER say "done", "deployed", "live", "shipped", or "merged and working" without FIRST running a curl verification against the live production URL and showing the grep output as proof.**
+
+Sequence:
+1. Merge PR
+2. Wait 2-3 minutes for Railway Docker rebuild
+3. Run: `curl -s <PROD_URL>/<path> | grep '<new_function_or_string>'`
+4. Show the grep output to the CEO
+5. ONLY THEN say "deployed"
+
+If the grep returns 0 matches, say: "Merged but Railway hasn't rebuilt yet. Will verify when live."
+
+Violation of this rule is a trust-destroying failure. It happened 3 times on 2026-03-26 and the CEO lost trust. This gate exists because memory alone did not prevent the behavior — only enforcement will.
+
 ## Verification Discipline
 
 - Never use a dirty primary checkout as the source of truth for verification.
