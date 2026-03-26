@@ -262,6 +262,22 @@ function syncVersion(opts) {
     targets.push(publicIndexPath);
   }
 
+  // mcpize.yaml
+  const mcpizePath = 'mcpize.yaml';
+  const mcpizeFile = path.join(PROJECT_ROOT, mcpizePath);
+  if (fs.existsSync(mcpizeFile)) {
+    const mcpizeContent = fs.readFileSync(mcpizeFile, 'utf-8');
+    const mcpizeVersionRegex = /^version:\s*"[^"]+"/m;
+    const mcpizeExpected = `version: "${version}"`;
+    if (!mcpizeContent.includes(mcpizeExpected)) {
+      drifted.push({ path: mcpizePath, field: 'version', expected: version, actual: mcpizeContent.match(/version:\s*"([^"]+)"/)?.[1] || 'unknown' });
+      if (!checkOnly) {
+        fs.writeFileSync(mcpizeFile, mcpizeContent.replace(mcpizeVersionRegex, mcpizeExpected));
+      }
+    }
+    targets.push(mcpizePath);
+  }
+
   return {
     version,
     targets,
