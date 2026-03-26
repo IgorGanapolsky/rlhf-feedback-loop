@@ -60,11 +60,11 @@ test('continuity guide frames the gateway as downstream reliability, not a new o
 });
 
 test('launch-content variants align with reliability-over-orchestration positioning', () => {
-  const launchContent = readText(path.join('docs', 'marketing', 'LAUNCH_CONTENT.md'));
+  const launchContent = readText(path.join('docs', 'marketing', 'launch-content.md'));
 
   assert.match(launchContent, /ThumbGate/i);
   assert.match(launchContent, /Pre-Action Gates/i);
-  assert.match(launchContent, /feedback-to-enforcement pipeline|repeated mistakes/i);
+  assert.match(launchContent, /repeating known mistakes|block tool calls/i);
   assert.doesNotMatch(launchContent, /Agentic Feedback Studio/i);
   assert.doesNotMatch(launchContent, /persistent memory layer that fixes this/i);
 });
