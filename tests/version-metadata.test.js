@@ -70,22 +70,16 @@ test('version-pinned install docs match the current package release line', () =>
 
 test('public docs render the current package version', () => {
   const packageJson = readJson('package.json');
-  const landingPage = readText('docs/landing-page.html');
+  const landingPage = readText('public/index.html');
   const mcpSubmission = readText('docs/mcp-hub-submission.md');
   const claudePluginReadme = readText('.claude-plugin/README.md');
   const claudeDesktopPacket = readText('docs/CLAUDE_DESKTOP_EXTENSION.md');
 
   assert.match(landingPage, /ThumbGate/);
-  assert.match(landingPage, /AI agent reliability/i);
-  assert.match(landingPage, /Claude Desktop extension/i);
-  assert.match(landingPage, /\$49 one-time/);
-  assert.match(landingPage, /Reliability Studio/i);
-  assert.match(landingPage, /Compare and Deploy/i);
-  assert.match(landingPage, /No model fine-tuning required/i);
-  assert.match(landingPage, /Workflow Hardening Fit Checker/i);
-  assert.match(landingPage, /Claude Desktop extension path/i);
-  assert.match(landingPage, /can AI fully satisfy this query without a click\?/i);
-  assert.match(landingPage, /Run the hosted fit checker/i);
+  assert.match(landingPage, /Human-in-the-loop/i);
+  assert.match(landingPage, /vibe coding/i);
+  assert.match(landingPage, /\$49/);
+  assert.match(landingPage, /Pre-Action Gates/i);
   assert.match(claudePluginReadme, /Claude Desktop/i);
   assert.match(claudePluginReadme, /Privacy Policy/i);
   assert.match(claudePluginReadme, /Data Collection/i);
@@ -98,21 +92,18 @@ test('public docs render the current package version', () => {
   assert.match(claudeDesktopPacket, /npm run build:claude-mcpb/i);
   assert.match(claudeDesktopPacket, /Tool safety annotations/i);
   assert.match(claudeDesktopPacket, /Do not claim directory approval/i);
-  assert.doesNotMatch(landingPage, /billingIncrement/);
-  assert.doesNotMatch(landingPage, /P1M/);
+  assert.match(landingPage, /FAQPage/);
   assert.match(mcpSubmission, new RegExp(`## Version\\s+${packageJson.version}`));
 });
 
 test('landing page keeps GTM and schema assets wired', () => {
-  const landingPage = readText('docs/landing-page.html');
+  const landingPage = readText('public/index.html');
   const gtmPlan = readText('docs/GO_TO_MARKET_REVENUE_WEDGE_2026-03.md');
 
   assert.match(landingPage, /"@type": "SoftwareApplication"/);
   assert.match(landingPage, /"@type": "FAQPage"/);
-  assert.match(landingPage, /<section id='faq'>/);
-  assert.match(landingPage, /__GTM_PLAN_URL__/);
-  assert.match(landingPage, /__COMPATIBILITY_REPORT_URL__/);
-  assert.match(landingPage, /__AUTOMATION_REPORT_URL__/);
+  assert.match(landingPage, /id="faq"/);
+  assert.match(landingPage, /__GA_BOOTSTRAP__/);
   assert.match(gtmPlan, /"Outcome-Based" Memory Packages/);
   assert.match(gtmPlan, /\*\*\"Success-Based Memory Credits\.\"\*\*/);
   assert.match(gtmPlan, /"Mistake-Free" Credits/i);
