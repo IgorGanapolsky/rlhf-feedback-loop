@@ -163,7 +163,7 @@
   <div class="tab-content active" id="tab-search">
     <div class="search-section">
       <div class="search-bar">
-        <input type="text" class="search-input" id="searchQuery" placeholder="Search your memories... (e.g. 'git push', 'database migration')" onkeydown="if(event.key==='Enter')search()" />
+        <input type="text" class="search-input" id="searchQuery" placeholder="Search memories... (try: git, test, deploy, secrets, database)" onkeydown="if(event.key==='Enter')search()" />
         <button class="btn" onclick="search()">Search</button>
       </div>
       <div class="search-filters">
@@ -209,6 +209,8 @@
 <script>
 let API_KEY = '';
 let currentSource = 'all';
+let isDemo = false;
+let demoData = [];
 
 function getHeaders() {
   return { 'Authorization': 'Bearer ' + API_KEY, 'Content-Type': 'application/json' };
@@ -252,6 +254,21 @@ async function search() {
   if (!query) return;
   const container = document.getElementById('searchResults');
   container.innerHTML = '<div class="loading">Searching...</div>';
+
+  // Demo mode: filter client-side
+  if (isDemo) {
+    var q = query.toLowerCase();
+    var results = demoData.filter(function(r) {
+      return (r.title + ' ' + r.context + ' ' + (r.tags || []).join(' ')).toLowerCase().indexOf(q) !== -1;
+    });
+    if (!results.length) {
+      container.innerHTML = '<div class="empty">No demo results for "' + escHtml(query) + '". Try: git, test, deploy, secrets, database</div>';
+      return;
+    }
+    container.innerHTML = results.map(renderResult).join('');
+    return;
+  }
+
   try {
     const res = await fetch('/v1/search', {
       method: 'POST',
@@ -355,6 +372,8 @@ function loadDemo() {
     { signal: 'up', title: 'Atomic commits improved bisect speed', context: 'Splitting a large feature into 8 atomic commits made git bisect find the regression in under 2 minutes instead of manual debugging.', tags: ['git', 'debugging'], timestamp: '2025-03-15T16:45:00Z' },
     { signal: 'up', title: 'Pre-action gate caught .env commit', context: 'Gate blocked a git add that included .env with production API keys. Saved from leaking secrets to a public repo.', tags: ['security', 'prevention', 'secrets'], timestamp: '2025-03-12T11:30:00Z' }
   ];
+  isDemo = true;
+  demoData = demoResults;
   document.getElementById('searchResults').innerHTML = demoResults.map(renderResult).join('');
   // Sample gates
   var demoGates = [
