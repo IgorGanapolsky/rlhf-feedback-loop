@@ -1554,22 +1554,9 @@ function createApiServer() {
     }
 
     if (isGetLikeRequest && pathname === '/dashboard') {
-      const hasProMode = process.env.RLHF_PRO_MODE === '1';
-      const apiKey = extractApiKey(req);
-      const hasValidKey = apiKey && isStaticAdminAuthorized(req, process.env.RLHF_API_KEY);
-      if (!hasProMode && !hasValidKey) {
-        if (wantsJson(req, parsed)) {
-          sendJson(res, 402, {
-            error: 'Dashboard requires Pro.',
-            upgrade: '/checkout/pro',
-            local: 'npx mcp-memory-gateway-pro',
-          });
-        } else {
-          res.writeHead(302, { Location: '/?upgrade=pro' });
-          res.end();
-        }
-        return;
-      }
+      // Always serve the dashboard HTML — it has its own auth flow
+      // and a "Try Demo" button with sample data for non-Pro visitors.
+      // The API endpoints behind the dashboard still require auth.
       try {
         const html = fs.readFileSync(DASHBOARD_PAGE_PATH, 'utf-8');
         sendHtml(res, 200, html, {}, { headOnly: isHeadRequest });
