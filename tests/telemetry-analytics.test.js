@@ -75,6 +75,22 @@ test('sanitizeTelemetryPayload normalizes buyer-loss and SEO fields', () => {
   assert.equal(entry.trafficChannel, 'direct');
 });
 
+test('sanitizeTelemetryPayload preserves SEO content classification fields', () => {
+  const entry = sanitizeTelemetryPayload({
+    eventType: 'landing_page_view',
+    clientType: 'web',
+    page: '/compare/speclock',
+    pageType: 'comparison',
+    contentPillar: 'comparison',
+    primaryQuery: 'thumbgate vs speclock',
+  });
+
+  assert.equal(entry.page, '/compare/speclock');
+  assert.equal(entry.pageType, 'comparison');
+  assert.equal(entry.contentPillar, 'comparison');
+  assert.equal(entry.primaryQuery, 'thumbgate vs speclock');
+});
+
 test('inferTrafficChannel prefers explicit source and deterministic referrer heuristics', () => {
   assert.equal(inferTrafficChannel({ source: 'reddit' }, null), 'reddit');
   assert.equal(inferTrafficChannel({ source: 'ai_search' }, null), 'ai_search');

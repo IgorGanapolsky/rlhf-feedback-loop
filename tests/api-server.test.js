@@ -148,6 +148,15 @@ test('public HEAD routes stay unauthenticated and side-effect free', async () =>
     0
   );
 
+  const compareRes = await fetch(apiUrl('/compare/speclock'), { method: 'HEAD' });
+  assert.equal(compareRes.status, 200);
+  assert.match(String(compareRes.headers.get('content-type')), /text\/html/);
+  assert.equal(await compareRes.text(), '');
+  assert.equal(
+    typeof compareRes.headers.getSetCookie === 'function' ? compareRes.headers.getSetCookie().length : 0,
+    0
+  );
+
   const privacyRes = await fetch(apiUrl('/privacy'), { method: 'HEAD' });
   assert.equal(privacyRes.status, 200);
   assert.match(String(privacyRes.headers.get('content-type')), /text\/html/);
@@ -294,6 +303,57 @@ test('root reuses journey cookies and records SEO landing telemetry from search 
   assert.equal(seoEvent.seoQuery, 'workflow hardening sprint');
 });
 
+test('SEO comparison pages serve HTML, reuse journey cookies, and record page-specific search telemetry', async () => {
+  const cookieHeader = [
+    'rlhf_visitor_id=visitor_compare',
+    'rlhf_session_id=session_compare',
+    'rlhf_acquisition_id=acq_compare',
+  ].join('; ');
+  const res = await fetch(apiUrl('/compare/speclock'), {
+    headers: {
+      cookie: cookieHeader,
+      referer: 'https://www.google.com/search?q=thumbgate+vs+speclock',
+    },
+  });
+  assert.equal(res.status, 200);
+  assert.match(String(res.headers.get('content-type')), /text\/html/);
+
+  const setCookies = typeof res.headers.getSetCookie === 'function'
+    ? res.headers.getSetCookie()
+    : [];
+  assert.equal(setCookies.length, 0);
+
+  const body = await res.text();
+  assert.match(body, /ThumbGate vs SpecLock/);
+  assert.match(body, /Verification evidence/);
+  assert.match(body, /FAQPage/);
+
+  const telemetryEvents = readJsonl(path.join(tmpFeedbackDir, 'telemetry-pings.jsonl'));
+  const landingEvent = telemetryEvents.find((entry) => (
+    entry.eventType === 'landing_page_view' &&
+    entry.visitorId === 'visitor_compare' &&
+    entry.sessionId === 'session_compare' &&
+    entry.acquisitionId === 'acq_compare' &&
+    entry.page === '/compare/speclock'
+  ));
+  assert.ok(landingEvent);
+  assert.equal(landingEvent.pageType, 'comparison');
+  assert.equal(landingEvent.contentPillar, 'comparison');
+  assert.equal(landingEvent.primaryQuery, 'thumbgate vs speclock');
+  assert.equal(landingEvent.source, 'organic_search');
+
+  const seoEvent = telemetryEvents.find((entry) => (
+    entry.eventType === 'seo_landing_view' &&
+    entry.visitorId === 'visitor_compare' &&
+    entry.sessionId === 'session_compare' &&
+    entry.acquisitionId === 'acq_compare' &&
+    entry.page === '/compare/speclock'
+  ));
+  assert.ok(seoEvent);
+  assert.equal(seoEvent.pageType, 'comparison');
+  assert.equal(seoEvent.seoQuery, 'thumbgate vs speclock');
+});
+
 test('robots and sitemap endpoints publish crawl metadata for the canonical app origin', async () => {
   const robotsRes = await fetch(apiUrl('/robots.txt'));
   assert.equal(robotsRes.status, 200);
@@ -308,7 +368,13 @@ test('robots and sitemap endpoints publish crawl metadata for the canonical app 
   assert.match(String(sitemapRes.headers.get('content-type')), /application\/xml/);
   const sitemapBody = await sitemapRes.text();
   assert.match(sitemapBody, /<loc>https:\/\/app\.example\.com\/<\/loc>/);
+  assert.match(sitemapBody, /<loc>https:\/\/app\.example\.com\/compare\/speclock<\/loc>/);
+  assert.match(sitemapBody, /<loc>https:\/\/app\.example\.com\/compare\/mem0<\/loc>/);
+  assert.match(sitemapBody, /<loc>https:\/\/app\.example\.com\/guides\/pre-action-gates<\/loc>/);
+  assert.match(sitemapBody, /<loc>https:\/\/app\.example\.com\/guides\/claude-code-feedback<\/loc>/);
   assert.match(sitemapBody, /<changefreq>weekly<\/changefreq>/);
+  assert.match(sitemapBody, /<priority>0\.9<\/priority>/);
+  assert.match(sitemapBody, /<priority>0\.8<\/priority>/);
 });
 
 test('provisioning endpoint works', async () => {

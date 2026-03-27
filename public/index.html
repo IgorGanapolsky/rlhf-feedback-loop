@@ -197,6 +197,34 @@ __GA_BOOTSTRAP__
   .compat-card p { font-size: 14px; color: var(--text-muted); line-height: 1.6; }
   .compat-card code { font-family: var(--mono); font-size: 12px; background: rgba(34,211,238,0.08); color: var(--cyan); padding: 2px 6px; border-radius: 4px; }
 
+  /* SEO PAGES */
+  .seo-pages { padding: 0 0 80px; }
+  .seo-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+  .seo-card {
+    background: linear-gradient(180deg, rgba(17,17,19,0.98) 0%, rgba(22,22,24,0.96) 100%);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.2s, transform 0.15s;
+  }
+  .seo-card:hover { border-color: rgba(34,211,238,0.3); transform: translateY(-2px); }
+  .seo-card h3 { font-size: 18px; margin-bottom: 10px; letter-spacing: -0.02em; }
+  .seo-card p { font-size: 14px; color: var(--text-muted); line-height: 1.6; }
+  .seo-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--cyan);
+    margin-bottom: 12px;
+    font-weight: 700;
+  }
+  .seo-card .card-arrow { font-size: 13px; color: var(--cyan); margin-top: 12px; font-weight: 500; }
+
   /* HOW IT WORKS */
   .how-it-works { padding: 80px 0; }
   .section-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--cyan); font-weight: 600; margin-bottom: 12px; text-align: center; }
@@ -270,6 +298,7 @@ __GA_BOOTSTRAP__
   @media (max-width: 700px) {
     .steps { grid-template-columns: 1fr; }
     .compatibility-grid { grid-template-columns: 1fr; }
+    .seo-grid { grid-template-columns: 1fr; }
     .pricing-grid { grid-template-columns: 1fr; }
     .hero { padding: 72px 0 56px; }
     .nav-links a:not(.nav-cta) { display: none; }
@@ -287,6 +316,7 @@ __GA_BOOTSTRAP__
     <div class="nav-links">
       <a href="#how-it-works">How It Works</a>
       <a href="#compatibility">Compatibility</a>
+      <a href="#compare-guides">Guides</a>
       <a href="#pricing">Pricing</a>
       <a href="#faq">FAQ</a>
       <a href="https://github.com/IgorGanapolsky/ThumbGate" target="_blank" rel="noopener">GitHub</a>
@@ -344,6 +374,39 @@ __GA_BOOTSTRAP__
         <h3>⚡ Install in 30 seconds</h3>
         <p><code>npx mcp-memory-gateway init</code> bootstraps everything — gates, memory, and MCP config. One command, zero config.</p>
         <div class="card-arrow">View on npm →</div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section class="seo-pages" id="compare-guides">
+  <div class="container">
+    <div class="section-label">GSD Pages</div>
+    <h2 class="section-title">High-intent comparison and guide pages built to convert search demand</h2>
+    <div class="seo-grid">
+      <a class="seo-card" href="/compare/speclock">
+        <div class="seo-kicker">Comparison · Bottom of funnel</div>
+        <h3>ThumbGate vs SpecLock</h3>
+        <p>Show why thumbs-up/down feedback and pre-action gates solve repeated mistakes faster than a manual spec-authoring loop.</p>
+        <div class="card-arrow">Read the comparison →</div>
+      </a>
+      <a class="seo-card" href="/compare/mem0">
+        <div class="seo-kicker">Comparison · Memory vs enforcement</div>
+        <h3>ThumbGate vs Mem0</h3>
+        <p>Make the enforcement distinction obvious for buyers who start with memory tooling and later realize retrieval alone is not enough.</p>
+        <div class="card-arrow">See the enforcement angle →</div>
+      </a>
+      <a class="seo-card" href="/guides/pre-action-gates">
+        <div class="seo-kicker">Guide · Category creation</div>
+        <h3>What Are Pre-Action Gates?</h3>
+        <p>Explain the core category in plain language and connect thumbs up, thumbs down, runtime enforcement, and proof-backed reliability.</p>
+        <div class="card-arrow">Read the guide →</div>
+      </a>
+      <a class="seo-card" href="/guides/claude-code-feedback">
+        <div class="seo-kicker">Integration · Claude Code</div>
+        <h3>Claude Code Feedback Memory That Enforces</h3>
+        <p>Convert Claude Code searchers by showing why structured feedback memory matters more when it also becomes a live gate.</p>
+        <div class="card-arrow">Read the integration guide →</div>
       </a>
     </div>
   </div>

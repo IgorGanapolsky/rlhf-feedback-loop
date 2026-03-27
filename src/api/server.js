@@ -104,6 +104,11 @@ const {
 } = require('../../scripts/rate-limiter');
 const { sendProblem, PROBLEM_TYPES } = require('../../scripts/problem-detail');
 const { TOOLS: MCP_TOOLS } = require('../../scripts/tool-registry');
+const {
+  findSeoPageByPath,
+  renderSeoPageHtml,
+  THUMBGATE_SEO_SITEMAP_ENTRIES,
+} = require('../../scripts/seo-gsd');
 
 const LANDING_PAGE_PATH = path.resolve(__dirname, '../../public/index.html');
 const DASHBOARD_PAGE_PATH = path.resolve(__dirname, '../../public/dashboard.html');
@@ -732,17 +737,109 @@ function renderRobotsTxt(runtimeConfig) {
 }
 
 function renderSitemapXml(runtimeConfig) {
-  const homeUrl = `${runtimeConfig.appOrigin}/`;
+  const entries = [
+    { path: '/', changefreq: 'weekly', priority: '1.0' },
+    ...THUMBGATE_SEO_SITEMAP_ENTRIES,
+  ];
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-    '  <url>',
-    `    <loc>${homeUrl}</loc>`,
-    '    <changefreq>weekly</changefreq>',
-    '    <priority>1.0</priority>',
-    '  </url>',
+    ...entries.map((entry) => {
+      const loc = entry.path === '/'
+        ? `${runtimeConfig.appOrigin}/`
+        : `${runtimeConfig.appOrigin}${entry.path}`;
+      return [
+        '  <url>',
+        `    <loc>${loc}</loc>`,
+        `    <changefreq>${entry.changefreq}</changefreq>`,
+        `    <priority>${entry.priority}</priority>`,
+        '  </url>',
+      ].join('\n');
+    }),
     '</urlset>',
   ].join('\n');
+}
+
+function isSeoAttributionSource(source) {
+  return source === 'organic_search' || source === 'ai_search';
+}
+
+function servePublicMarketingPage({
+  req,
+  res,
+  parsed,
+  hostedConfig,
+  isHeadRequest,
+  renderHtml,
+  extraTelemetry = {},
+}) {
+  if (isHeadRequest) {
+    sendHtml(res, 200, renderHtml(hostedConfig), {}, {
+      headOnly: true,
+    });
+    return;
+  }
+
+  const { FEEDBACK_DIR } = getFeedbackPaths();
+  const journeyState = resolveJourneyState(req, parsed);
+  const landingAttribution = buildLandingAttribution(parsed, req);
+  const telemetryPayload = {
+    eventType: 'landing_page_view',
+    clientType: 'web',
+    visitorId: journeyState.visitorId,
+    sessionId: journeyState.sessionId,
+    acquisitionId: journeyState.acquisitionId,
+    ...landingAttribution,
+    ...extraTelemetry,
+  };
+  const landingTelemetryCaptured = appendBestEffortTelemetry(
+    FEEDBACK_DIR,
+    telemetryPayload,
+    req.headers,
+    'landing_page_view'
+  );
+
+  if (isSeoAttributionSource(landingAttribution.source)) {
+    appendBestEffortTelemetry(FEEDBACK_DIR, {
+      eventType: 'seo_landing_view',
+      clientType: 'web',
+      visitorId: journeyState.visitorId,
+      sessionId: journeyState.sessionId,
+      acquisitionId: journeyState.acquisitionId,
+      source: landingAttribution.source,
+      utmSource: landingAttribution.utmSource,
+      utmMedium: landingAttribution.utmMedium,
+      utmCampaign: landingAttribution.utmCampaign,
+      utmContent: landingAttribution.utmContent,
+      utmTerm: landingAttribution.utmTerm,
+      community: landingAttribution.community,
+      postId: landingAttribution.postId,
+      commentId: landingAttribution.commentId,
+      campaignVariant: landingAttribution.campaignVariant,
+      offerCode: landingAttribution.offerCode,
+      landingPath: landingAttribution.landingPath,
+      page: landingAttribution.page,
+      referrer: landingAttribution.referrer,
+      referrerHost: landingAttribution.referrerHost,
+      seoSurface: landingAttribution.seoSurface || landingAttribution.source,
+      seoQuery: landingAttribution.seoQuery,
+      ...extraTelemetry,
+    }, req.headers, 'seo_landing_view');
+  }
+
+  const html = renderHtml(hostedConfig, {
+    serverVisitorId: journeyState.visitorId,
+    serverSessionId: journeyState.sessionId,
+    serverAcquisitionId: journeyState.acquisitionId,
+    serverTelemetryCaptured: landingTelemetryCaptured,
+  });
+
+  sendHtml(
+    res,
+    200,
+    html,
+    journeyState.setCookieHeaders.length ? { 'Set-Cookie': journeyState.setCookieHeaders } : {}
+  );
 }
 
 function renderCheckoutSuccessPage(runtimeConfig) {
@@ -1567,6 +1664,28 @@ function createApiServer() {
       return;
     }
 
+    const seoPage = findSeoPageByPath(pathname);
+    if (isGetLikeRequest && seoPage) {
+      try {
+        servePublicMarketingPage({
+          req,
+          res,
+          parsed,
+          hostedConfig,
+          isHeadRequest,
+          renderHtml: (runtimeConfig) => renderSeoPageHtml(seoPage, runtimeConfig),
+          extraTelemetry: {
+            pageType: seoPage.pageType,
+            contentPillar: seoPage.pillar,
+            primaryQuery: seoPage.query,
+          },
+        });
+      } catch (err) {
+        sendText(res, 500, err.message || 'SEO page unavailable');
+      }
+      return;
+    }
+
     if (isGetLikeRequest && pathname === '/guide') {
       try {
         const html = fs.readFileSync(GUIDE_PAGE_PATH, 'utf-8');
@@ -1591,64 +1710,18 @@ function createApiServer() {
         return;
       }
 
-      if (isHeadRequest) {
-        sendHtml(res, 200, loadLandingPageHtml(hostedConfig), {}, {
-          headOnly: true,
-        });
-        return;
-      }
-
       try {
-        const { FEEDBACK_DIR } = getFeedbackPaths();
-        const journeyState = resolveJourneyState(req, parsed);
-        const landingAttribution = buildLandingAttribution(parsed, req);
-        const landingTelemetryCaptured = appendBestEffortTelemetry(FEEDBACK_DIR, {
-          eventType: 'landing_page_view',
-          clientType: 'web',
-          visitorId: journeyState.visitorId,
-          sessionId: journeyState.sessionId,
-          acquisitionId: journeyState.acquisitionId,
-          ...landingAttribution,
-        }, req.headers, 'landing_page_view');
-        if (landingAttribution.source === 'organic_search' || landingAttribution.source === 'ai_search') {
-          appendBestEffortTelemetry(FEEDBACK_DIR, {
-            eventType: 'seo_landing_view',
-            clientType: 'web',
-            visitorId: journeyState.visitorId,
-            sessionId: journeyState.sessionId,
-            acquisitionId: journeyState.acquisitionId,
-            source: landingAttribution.source,
-            utmSource: landingAttribution.utmSource,
-            utmMedium: landingAttribution.utmMedium,
-            utmCampaign: landingAttribution.utmCampaign,
-            utmContent: landingAttribution.utmContent,
-            utmTerm: landingAttribution.utmTerm,
-            community: landingAttribution.community,
-            postId: landingAttribution.postId,
-            commentId: landingAttribution.commentId,
-            campaignVariant: landingAttribution.campaignVariant,
-            offerCode: landingAttribution.offerCode,
-            landingPath: landingAttribution.landingPath,
-            page: landingAttribution.page,
-            referrer: landingAttribution.referrer,
-            referrerHost: landingAttribution.referrerHost,
-            seoSurface: landingAttribution.seoSurface || landingAttribution.source,
-            seoQuery: landingAttribution.seoQuery,
-          }, req.headers, 'seo_landing_view');
-        }
-        const html = loadLandingPageHtml(hostedConfig, {
-          serverVisitorId: journeyState.visitorId,
-          serverSessionId: journeyState.sessionId,
-          serverAcquisitionId: journeyState.acquisitionId,
-          serverTelemetryCaptured: landingTelemetryCaptured,
-        });
-
-        sendHtml(
+        servePublicMarketingPage({
+          req,
           res,
-          200,
-          html,
-          journeyState.setCookieHeaders.length ? { 'Set-Cookie': journeyState.setCookieHeaders } : {}
-        );
+          parsed,
+          hostedConfig,
+          isHeadRequest,
+          renderHtml: loadLandingPageHtml,
+          extraTelemetry: {
+            pageType: 'homepage',
+          },
+        });
       } catch (err) {
         sendText(res, 500, err.message || 'Landing page unavailable');
       }
@@ -3031,6 +3104,7 @@ module.exports = {
   startServer,
   __test__: {
     buildCheckoutFallbackUrl,
+    renderSitemapXml,
   },
 };
 

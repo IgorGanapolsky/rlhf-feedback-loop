@@ -149,3 +149,15 @@ test('public landing page includes compatibility section for AI agent surfaces',
   assert.match(landingPage, /Browse plugins/);
   assert.match(landingPage, /View on npm/);
 });
+
+test('public landing page internally links to high-intent comparison and guide pages', () => {
+  const landingPage = readLandingPage();
+
+  assert.match(landingPage, /id="compare-guides"/);
+  assert.match(landingPage, /High-intent comparison and guide pages/i);
+  assert.match(landingPage, /href="\/compare\/speclock"/);
+  assert.match(landingPage, /href="\/compare\/mem0"/);
+  assert.match(landingPage, /href="\/guides\/pre-action-gates"/);
+  assert.match(landingPage, /href="\/guides\/claude-code-feedback"/);
+  assert.match(landingPage, /GSD Pages/);
+});
