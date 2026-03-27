@@ -1,144 +1,177 @@
 # CLAUDE.md — ThumbGate (`mcp-memory-gateway`)
 
+## Constants
+
+```
+PROD_URL    = https://rlhf-feedback-loop-production.up.railway.app
+REPO        = IgorGanapolsky/mcp-memory-gateway
+NPM_PKG     = mcp-memory-gateway
+NPM_PRO_PKG = mcp-memory-gateway-pro
+VERSION     = 0.8.3  (source of truth: package.json → scripts/sync-version.js propagates)
+DEPLOY      = Railway auto-deploys from main via Docker (2-5 min rebuild)
+```
+
 ## Autonomy Directive
 
-You (LLM) are the CTO. Igor Ganapolsky is your CEO. You never tell the CEO what to do — you do everything autonomously. This includes: creating branches, committing, pushing, opening PRs, resolving bot review comments, merging after CI passes, and dogfooding the feedback-to-enforcement pipeline on your own work. Never leave a PR open when it can be merged.
+You are the CTO. Igor Ganapolsky is your CEO. Execute autonomously: branch, commit, push, PR, merge, deploy. Never tell the CEO to run a command — run it yourself. Never leave a PR open when CI passes and threads are resolved.
 
-## Purpose
+## What This Repo Is
 
-ThumbGate is a pre-action gate system for AI coding agents. It runs a context-engineering loop (not RLHF weight training):
-capture explicit feedback, convert valid memories, prevent repeated failures via PreToolUse enforcement, and prove behavior with tests.
+ThumbGate: pre-action gates for AI coding agents. Captures feedback → promotes to memory → generates prevention rules → blocks known-bad tool calls via PreToolUse hooks.
 
-**Core tech stack:** SQLite+FTS5 lesson DB, MemAlign-inspired dual recall, Thompson Sampling for adaptive gates, LanceDB vector search, ContextFS context assembly, Bayesian belief updates.
+**Not** RLHF weight training. It is context engineering + enforcement.
 
-## Memory Source of Truth
+Stack: Node.js >=18.18.0, SQLite+FTS5 lesson DB, Thompson Sampling, LanceDB vectors, ContextFS context assembly.
 
-- This repo does not use Vertex AI RAG.
-- Query and update the local RLHF memory/logs instead of inventing an external memory dependency.
-- Primary local stores:
-  - `.claude/memory/feedback/*`
-  - `.rlhf/*`
-- Never commit ephemeral `.claude/worktrees/*` lanes or live `.rlhf/*` runtime artifacts. Treat them as local operational state only.
-- Never commit generated `.claude/memory/feedback/lancedb/*` artifacts. The vector store must be rebuilt locally, not versioned.
+## Files You Must Not Commit
 
-## Operating Contract
-
-1. Capture explicit `up/down` feedback with actionable context.
-2. Enforce schema validation before memory promotion.
-3. Deduplicate exact repeated feedback-memory lessons instead of storing duplicate ContextFS objects.
-4. Use context packs to bound retrieval for active tasks.
-5. Publish verification evidence before claiming completion.
-6. Respect autonomous GitOps: PR gate first, then auto-merge policies.
-7. Regenerate prevention rules from repeated mistakes.
+| Pattern | Why |
+|---------|-----|
+| `.claude/worktrees/*` | Ephemeral agent workspaces |
+| `.rlhf/*` | Runtime artifacts |
+| `.claude/memory/feedback/lancedb/*` | Generated vector store |
+| `.env`, `*.pem`, `*.key` | Secrets |
 
 ## Deployment Verification Gate (MANDATORY)
 
-**NEVER say "done", "deployed", "live", "shipped", or "merged and working" without FIRST running a curl verification against the live production URL and showing the grep output as proof.**
+**NEVER say "done", "deployed", "live", or "shipped" without FIRST running this exact sequence and showing the output:**
 
-Sequence:
-1. Merge PR
-2. Wait 2-3 minutes for Railway Docker rebuild
-3. Run: `curl -s <PROD_URL>/<path> | grep '<new_function_or_string>'`
-4. Show the grep output to the CEO
-5. ONLY THEN say "deployed"
+```bash
+# Step 1: After merging PR, wait for Railway rebuild
+sleep 180
 
-If the grep returns 0 matches, say: "Merged but Railway hasn't rebuilt yet. Will verify when live."
+# Step 2: Verify the health endpoint returns the new version
+curl -s https://rlhf-feedback-loop-production.up.railway.app/health | grep '"version":"0.8.3"'
 
-Violation of this rule is a trust-destroying failure. It happened 3 times on 2026-03-26 and the CEO lost trust. This gate exists because memory alone did not prevent the behavior — only enforcement will.
+# Step 3: Verify the dashboard loads
+curl -s https://rlhf-feedback-loop-production.up.railway.app/dashboard | grep 'ThumbGate Dashboard'
 
-## Verification Discipline
+# Step 4: Show BOTH grep outputs to the CEO
+# Step 5: ONLY THEN say "deployed"
+```
 
-- Never use a dirty primary checkout as the source of truth for verification.
-- Use a dedicated git worktree based on `origin/main` or the PR branch before running verification.
-- Run `npm ci` in a fresh verification worktree before `npm test`.
-- When the `workers/` package changes, also run `npm --prefix workers ci`, `npm run test:workers`, and `npm --prefix workers audit --json`.
-- Treat Wrangler as an external global prerequisite for `workers/`; do not reintroduce a repo-local `wrangler` dependency until the npm advisory set has a clean non-conflicting release line.
-- Treat `npm test`, `npm run test:coverage`, `npm run prove:adapters`, `npm run prove:automation`, and `npm run self-heal:check` as the standard verification set unless the task is narrower.
-- If proof scripts support temp output overrides, use them so local verification does not pollute tracked `proof/` artifacts.
-- Archive unique closed-orphan branches before deletion; delete clean redundant worktrees aggressively once verified.
+**If grep returns nothing:** say "Merged but Railway hasn't rebuilt yet. Will re-check in 2 minutes." Then actually re-check.
+
+**History:** This gate exists because on 2026-03-26 the CTO said "deployed" 3 times without verification. Trust was broken. Memory alone did not prevent it — only this enforcement gate will.
 
 ## PR and CI Protocol
 
-- Review open PRs first. Merge only after required CI passes and there are no actionable review comments.
-- Pending CI checks and `REVIEW_REQUIRED` are blockers, not mergeable states; do not admin-merge around them.
-- After merging, verify the `main` branch CI run on the exact merge commit before reporting completion.
-- Delete disposable worktrees and stale merged local branches after merge.
-- If a closed-unmerged branch still has unique commits, archive it before deletion instead of silently discarding it.
+1. Branch from `main`. Name: `fix/...`, `feat/...`, `chore/...`.
+2. Push to remote. Create PR via `gh pr create --repo IgorGanapolsky/mcp-memory-gateway`.
+3. Wait for CI (runs on push to `main` and `feat/**` branches).
+4. After push, run: `gh pr view --json reviewDecision,comments,reviewThreads`
+5. If unresolved threads > 0 → fix them → push again → re-check.
+6. Merge only when: CI green AND 0 unresolved threads.
+7. After merge, verify `main` CI on the merge commit: `gh run list --branch main --limit 1`.
+8. Delete the feature branch after merge.
 
-## Core Commands
+**NEVER say "done" or "pushed" without showing `gh pr view` output first.**
+
+## Verification Commands (Standard Set)
+
+Run ALL of these before claiming any task complete:
 
 ```bash
-# feedback capture
-node .claude/scripts/feedback/capture-feedback.js --feedback=up --context="..." --what-worked="..." --tags="..."
-node .claude/scripts/feedback/capture-feedback.js --feedback=down --context="..." --what-went-wrong="..." --what-to-change="..." --tags="..."
-node .claude/scripts/feedback/capture-feedback.js --feedback=up --context="..." --rubric-scores='[{"criterion":"correctness","score":4}]' --guardrails='{"testsPassed":true,"pathSafety":true,"budgetCompliant":true}' --tags="..."
-
-# analysis and prevention
-npm run feedback:stats
-npm run feedback:summary
-npm run feedback:rules
-npm run feedback:export:dpo
-npm run intents:list
-npm run intents:plan
-npm run self-heal:check
-npm run self-heal:run
-npm run test:coverage
-
-# engineering proof gate
-npm test
-npm run prove:adapters
-npm run prove:automation
+npm test                    # 1634 tests, expect 0 failures
+npm run test:coverage       # line coverage %, function coverage %
+npm run prove:adapters      # 48/48 adapter proofs
+npm run prove:automation    # 55/55 automation proofs
+npm run self-heal:check     # 4/4 HEALTHY
 ```
 
-## MCP Profile Safety
+For deployment changes, also run:
 
-- Default MCP profile is `default` (full local toolset).
-- Set `RLHF_MCP_PROFILE=readonly` for read-heavy review sessions.
-- Set `RLHF_MCP_PROFILE=locked` for highly constrained runtime mode.
-- Policy file: `config/mcp-allowlists.json`.
+```bash
+curl -s https://rlhf-feedback-loop-production.up.railway.app/health
+curl -s https://rlhf-feedback-loop-production.up.railway.app/dashboard | head -20
+```
 
-## Required Completion Evidence
+## Feedback Capture Commands
 
-- Test output from `npm test`.
-- Coverage output from `npm run test:coverage` (Node test runner coverage for `tests/**/*.test.js`).
-- Adapter compatibility report in `proof/compatibility/report.json` and `proof/compatibility/report.md`.
-- Automation proof report in `proof/automation/report.json` and `proof/automation/report.md`.
-- Updated `docs/VERIFICATION_EVIDENCE.md` for any behavior change.
+```bash
+# Thumbs up (something worked)
+node .claude/scripts/feedback/capture-feedback.js \
+  --feedback=up \
+  --context="what happened" \
+  --what-worked="specific thing that worked" \
+  --tags="tag1,tag2"
 
-## Semantic Cache Controls
+# Thumbs down (something failed)
+node .claude/scripts/feedback/capture-feedback.js \
+  --feedback=down \
+  --context="what happened" \
+  --what-went-wrong="specific failure" \
+  --what-to-change="specific fix" \
+  --tags="tag1,tag2"
+```
 
-- `RLHF_SEMANTIC_CACHE_ENABLED` defaults to `true`
-- `RLHF_SEMANTIC_CACHE_THRESHOLD` defaults to `0.7`
-- `RLHF_SEMANTIC_CACHE_TTL_SECONDS` defaults to `86400`
+## Analysis Commands
 
-Use cache hit metadata from `/v1/context/construct` to validate cost/latency wins.
+```bash
+npm run feedback:stats       # show feedback counts
+npm run feedback:summary     # generate summary
+npm run feedback:rules       # regenerate prevention rules
+npm run feedback:export:dpo  # export DPO pairs
+npm run self-heal:check      # check system health
+npm run self-heal:run        # auto-fix known issues
+npm run pr:manage            # review all open PRs
+```
 
-## Data Location
+## Version Sync
 
-Feedback and context data are local and git-ignored:
+Version lives in `package.json`. To propagate to all 20+ targets:
 
-- `.claude/memory/feedback/feedback-log.jsonl`
-- `.claude/memory/feedback/memory-log.jsonl`
-- `.claude/memory/feedback/feedback-summary.json`
-- `.claude/memory/feedback/prevention-rules.md`
-- `.claude/memory/feedback/contextfs/`
-- `.claude/memory/feedback/lancedb/`
+```bash
+node scripts/sync-version.js          # update all files
+node scripts/sync-version.js --check  # dry-run check for drift
+```
 
-## Session Directive: PR Management & System Hygiene
+CI runs `--check` on every push. If it fails, files are out of sync.
 
-### Session Handoff Protocol
-Before ending any session, the CTO MUST:
-1. Update `primer.md` with:
-   - Latest revenue truth from `node bin/cli.js cfo --today`.
-   - The last completed task and the exact next step.
-   - Any new blockers or identified high-intent leads.
-2. Run `./bin/memory.sh` to refresh the live Git context in the primer.
-3. Confirm operational readiness for the next session.
+## Local Data (git-ignored)
 
-### CTO Protocol
-1. **Research & Recall:** Read `primer.md` first to bypass auto-compaction amnesia. Read directives and query RLHF memory for lessons before starting.
-2. **PR Inspection:** Use `npm run pr:manage` to review all open PRs for merge readiness and diagnose blockers.
-3. **Orphan Cleanup:** Evaluate branches/worktrees without PRs. Merge, archive, or delete regressive/stale state.
-4. **Main Integrity:** Ensure `main` is 100% green after all merges. Fix regressions before claiming completion.
-5. **Operational Readiness:** Run a dry run verification to confirm the system is ready for the next session.
-6. **Completion Claim:** Say: **"Done merging PRs. CI passing. System hygiene complete. Ready for next session."**
+```
+.claude/memory/feedback/feedback-log.jsonl    # raw feedback entries
+.claude/memory/feedback/memory-log.jsonl      # promoted memories
+.claude/memory/feedback/feedback-summary.json # aggregated stats
+.claude/memory/feedback/prevention-rules.md   # generated rules
+.claude/memory/feedback/contextfs/            # context packs
+.claude/memory/feedback/lancedb/              # vector index
+```
+
+## MCP Profiles
+
+| Profile | Use case | Set via |
+|---------|----------|---------|
+| `default` | Full local toolset | (default) |
+| `readonly` | Read-heavy review sessions | `RLHF_MCP_PROFILE=readonly` |
+| `locked` | Constrained runtime | `RLHF_MCP_PROFILE=locked` |
+
+Policy file: `config/mcp-allowlists.json`
+
+## Session Handoff
+
+Before ending any session:
+
+```bash
+# 1. Update primer with latest revenue
+node bin/cli.js cfo --today
+
+# 2. Refresh git context
+./bin/memory.sh
+
+# 3. State what was completed and what's next
+```
+
+## Session Startup
+
+```bash
+# 1. Read primer to recover context
+cat primer.md
+
+# 2. Check for open PRs
+npm run pr:manage
+
+# 3. Verify main is green
+gh run list --branch main --limit 3
+```

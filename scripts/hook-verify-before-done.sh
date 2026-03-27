@@ -1,17 +1,20 @@
 #!/usr/bin/env bash
-# Hook: PreToolUse gate — blocks completion claims without deployment verification
-# Checks if the last tool call included a curl to the production URL.
-# If not, warns that verification is required before claiming done.
+# Hook: PreToolUse (matcher: Bash)
+#
+# When it fires: Before every Bash tool call in Claude Code.
+# What it does:  If the Bash command contains a curl to production,
+#                records the timestamp to a marker file.
+# Why:           The Stop hook (hook-stop-verify-deploy.sh) checks this
+#                marker to warn if no prod verification happened.
+# Env vars:
+#   CLAUDE_TOOL_INPUT — the Bash command about to execute (set by Claude Code)
+# Exit code: Always 0 (never blocks tool calls).
 
 PROD_URL="rlhf-feedback-loop-production.up.railway.app"
 VERIFICATION_MARKER="/tmp/.thumbgate-last-deploy-verify"
 
-# Check if this is a Bash tool call doing a curl to prod
-if echo "$CLAUDE_TOOL_INPUT" | grep -q "curl.*${PROD_URL}"; then
-  # Mark that verification happened
+if echo "${CLAUDE_TOOL_INPUT:-}" | grep -q "curl.*${PROD_URL}"; then
   date -u +"%Y-%m-%dT%H:%M:%SZ" > "$VERIFICATION_MARKER"
-  exit 0
 fi
 
-# Not a verification curl — allow all non-completion actions
 exit 0
