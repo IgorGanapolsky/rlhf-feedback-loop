@@ -1,16 +1,23 @@
 # PR Thread Verification Policy
 
-## Rule: Zero Open Threads Before Completion
+## Rule: Zero Open Threads Before Saying "Done"
 
-After every `git push`, you MUST:
+After every `git push`, run this exact command and show the output:
 
-1. Run `gh pr view --json reviewDecision,comments,reviewThreads` and quote the output
-2. Confirm **0 unresolved review threads** before any completion statement
-3. If new Copilot or reviewer threads appeared after push, address them before declaring done
+```bash
+gh pr view --json reviewDecision,comments,reviewThreads --jq '{decision: .reviewDecision, comments: (.comments | length), threads: ([.reviewThreads[] | select(.isResolved == false)] | length)}'
+```
 
-## Prohibited Phrases Without Evidence
+Expected output for a clean PR:
+```json
+{"decision":"APPROVED","comments":0,"threads":0}
+```
 
-Never say any of the following without first showing `gh pr view` output:
+If `threads` > 0: fix the issues, push again, re-run the command.
+
+## Blocked Phrases
+
+Never say these words without first showing the `gh pr view` output above:
 
 - "Done"
 - "Pushed and ready"
@@ -19,15 +26,22 @@ Never say any of the following without first showing `gh pr view` output:
 - "Fixed and pushed"
 - "Resolved"
 
-## Post-Push Checklist
+## Full Post-Push Sequence
 
+```bash
+# 1. Push
+git push
+
+# 2. Wait for CI to start (5-10 seconds)
+gh pr checks --watch
+
+# 3. Check threads
+gh pr view --json reviewDecision,comments,reviewThreads \
+  --jq '{decision: .reviewDecision, comments: (.comments | length), threads: ([.reviewThreads[] | select(.isResolved == false)] | length)}'
+
+# 4. Only if threads=0 AND CI green → say "Done. 0 unresolved threads. CI green."
 ```
-1. git push → wait for CI
-2. gh pr view --json reviewDecision,comments → quote result
-3. If unresolved > 0 → fix and re-push
-4. Only then → "Done. 0 unresolved threads. CI green."
-```
 
-## Why
+## Why This Exists
 
-Copilot and human reviewers add threads asynchronously after push. Declaring done without re-checking causes review loops and missed feedback. The RLHF pipeline tracks this as a recurring failure pattern.
+Copilot and human reviewers add threads asynchronously after push. Declaring done without re-checking causes review loops. This was identified as a recurring failure pattern in the RLHF pipeline.

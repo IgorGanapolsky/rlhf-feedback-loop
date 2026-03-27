@@ -31,6 +31,10 @@
           {
             "type": "command",
             "command": "bash scripts/hook-stop-verify-deploy.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash scripts/hook-stop-pr-thread-check.sh"
           }
         ]
       }
