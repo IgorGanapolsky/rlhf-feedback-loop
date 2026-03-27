@@ -204,3 +204,12 @@ test('Deploy to Railway workflow waits long enough to verify the promoted build 
   assert.match(workflow, /Observed build SHA/);
   assert.match(workflow, /Expected build SHA/);
 });
+
+test('Publish to NPM workflow uses the tested publish-decision guardrail', () => {
+  const workflow = fs.readFileSync(path.join(PROJECT_ROOT, '.github', 'workflows', 'publish-npm.yml'), 'utf8');
+
+  assert.match(workflow, /name: Plan publish action/);
+  assert.match(workflow, /run: node scripts\/publish-decision\.js/);
+  assert.match(workflow, /steps\.plan\.outputs\.skip_publish == 'true'/);
+  assert.match(workflow, /steps\.plan\.outputs\.publish_npm == 'true'/);
+});

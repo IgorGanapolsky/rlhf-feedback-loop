@@ -54,24 +54,21 @@ jobs:
           else
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
-      - name: Reject ambiguous published version without a release tag
-        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.npm.outputs.published == 'true' && steps.tag.outputs.exists == 'false'
+      - name: Plan publish action
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        id: plan
         env:
           VERSION: ${{ steps.package.outputs.version }}
-        run: |
-          echo "Version ${VERSION} is already published on npm but has no remote tag. Refusing to guess a source commit for the release. Recover from the original release commit or bump the version." >&2
-          exit 1
-      - name: Verify existing release tag matches the current commit
-        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.tag.outputs.exists == 'true'
-        env:
-          VERSION: ${{ steps.package.outputs.version }}
-        run: |
-          if [ "${{ steps.tag.outputs.sha }}" != "$GITHUB_SHA" ]; then
-            echo "Tag v${VERSION} already exists at ${{ steps.tag.outputs.sha }}, not ${GITHUB_SHA}. Refusing to publish or create a release for a different commit with the same version." >&2
-            exit 1
-          fi
+          CURRENT_SHA: ${{ github.sha }}
+          NPM_PUBLISHED: ${{ steps.npm.outputs.published }}
+          TAG_EXISTS: ${{ steps.tag.outputs.exists }}
+          TAG_SHA: ${{ steps.tag.outputs.sha }}
+        run: node scripts/publish-decision.js
+      - name: Report publish no-op
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.plan.outputs.skip_publish == 'true'
+        run: echo "${{ steps.plan.outputs.reason }}"
       - name: Create release tag
-        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.npm.outputs.published == 'false' && steps.tag.outputs.exists == 'false'
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.plan.outputs.create_tag == 'true'
         env:
           VERSION: ${{ steps.package.outputs.version }}
         run: |
@@ -80,12 +77,12 @@ jobs:
           git tag "v${VERSION}"
           git push origin "v${VERSION}"
       - name: Publish npm package
-        if: steps.npm.outputs.published == 'false'
+        if: ((github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.plan.outputs.publish_npm == 'true') || (github.event_name == 'release' && steps.npm.outputs.published == 'false')
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Ensure GitHub Release exists
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.plan.outputs.ensure_release == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.package.outputs.version }}
