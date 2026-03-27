@@ -1,0 +1,1086 @@
+'use strict';
+
+const fs = require('fs');
+const path = require('path');
+
+const ROOT = path.join(__dirname, '..');
+const DEFAULT_OUTPUT_DIR = path.join(ROOT, 'docs', 'seo-gsd');
+
+const PRODUCT = {
+  name: 'ThumbGate',
+  npm: 'mcp-memory-gateway',
+  repoUrl: 'https://github.com/IgorGanapolsky/ThumbGate',
+  homepageUrl: 'https://rlhf-feedback-loop-production.up.railway.app',
+  verificationUrl: 'https://github.com/IgorGanapolsky/ThumbGate/blob/main/docs/VERIFICATION_EVIDENCE.md',
+  automationUrl: 'https://github.com/IgorGanapolsky/ThumbGate/blob/main/proof/automation/report.json',
+  compatibility: ['Claude Code', 'Cursor', 'Codex', 'Gemini', 'Amp', 'OpenCode'],
+  proofPoints: [
+    'thumbs-up/down feedback loop',
+    'pre-action gates',
+    'verification evidence',
+    'automation proof',
+    'SQLite+FTS5 lesson DB',
+    'Thompson Sampling',
+  ],
+};
+
+const HIGH_ROI_QUERY_SEEDS = [
+  {
+    query: 'thumbgate vs speclock',
+    businessValue: 100,
+    source: 'seed',
+    notes: 'Bottom-of-funnel comparison against manual spec alternatives.',
+  },
+  {
+    query: 'thumbgate vs mem0',
+    businessValue: 98,
+    source: 'seed',
+    notes: 'Bottom-of-funnel comparison against memory-only tooling.',
+  },
+  {
+    query: 'pre-action gates for ai coding agents',
+    businessValue: 96,
+    source: 'seed',
+    notes: 'Category-defining query that explains the core wedge.',
+  },
+  {
+    query: 'thumbs up thumbs down feedback for ai coding agents',
+    businessValue: 95,
+    source: 'seed',
+    notes: 'Differentiates the explicit feedback loop and aligns with the brand.',
+  },
+  {
+    query: 'claude code feedback memory',
+    businessValue: 92,
+    source: 'seed',
+    notes: 'Agent-specific workflow page with high compatibility intent.',
+  },
+  {
+    query: 'ai coding agent guardrails',
+    businessValue: 90,
+    source: 'seed',
+    notes: 'Broader category demand that feeds comparison and guide pages.',
+  },
+  {
+    query: 'stop ai coding agents from repeating mistakes',
+    businessValue: 88,
+    source: 'seed',
+    notes: 'Problem-led copy that maps to landing-page positioning.',
+  },
+  {
+    query: 'claude code prevent repeated mistakes',
+    businessValue: 86,
+    source: 'seed',
+    notes: 'High-intent pain query for Claude Code buyers.',
+  },
+];
+
+const PAGE_BLUEPRINTS = [
+  {
+    query: 'thumbgate vs speclock',
+    path: '/compare/speclock',
+    pageType: 'comparison',
+    pillar: 'comparison',
+    title: 'ThumbGate vs SpecLock | Thumbs Feedback vs Manual Specs',
+    heroTitle: 'ThumbGate vs SpecLock',
+    heroSummary: 'SpecLock starts from manually written constraints. ThumbGate starts from thumbs-up/down feedback and turns it into pre-action gates that block repeated mistakes.',
+    takeaways: [
+      'ThumbGate learns from thumbs-up and thumbs-down feedback without requiring a separate spec-writing workflow.',
+      'SpecLock is strongest when a team already has strong specifications and wants enforcement tied to those documents.',
+      'ThumbGate is strongest when the pain is repeated agent mistakes across Claude Code, Cursor, Codex, Gemini, Amp, and OpenCode.',
+    ],
+    sections: [
+      {
+        heading: 'The product difference in one sentence',
+        paragraphs: [
+          'SpecLock helps a team codify rules before the work begins. ThumbGate helps a team convert real thumbs-up/down feedback into live pre-action gates after the work reveals what actually breaks.',
+          'That means ThumbGate is better for fast-moving agent workflows where the problem is not writing more specs, but preventing the same mistake from happening again tomorrow.',
+        ],
+      },
+      {
+        heading: 'Choose ThumbGate when',
+        bullets: [
+          'Your agent already repeats known mistakes and you need the block to happen before tool execution.',
+          'You want one feedback loop that supports both reinforcement from thumbs up and prevention from thumbs down.',
+          'You need proof assets, automation reports, and compatibility across multiple coding agents.',
+        ],
+      },
+      {
+        heading: 'Choose SpecLock when',
+        bullets: [
+          'Your team already maintains strong PRDs or system specs and wants the model constrained against those artifacts.',
+          'Your primary problem is uncontrolled file edits, not a missing feedback-to-enforcement loop.',
+          'You are willing to invest in manual constraint authoring as part of the workflow.',
+        ],
+      },
+    ],
+    faq: [
+      {
+        question: 'Is ThumbGate trying to replace specs?',
+        answer: 'No. ThumbGate complements specs by capturing thumbs-up/down feedback from live agent behavior and enforcing the learned rules as pre-action gates.',
+      },
+      {
+        question: 'What does ThumbGate do that SpecLock does not?',
+        answer: 'ThumbGate turns explicit feedback into searchable memory, auto-generated prevention rules, and runtime gates that block repeated mistakes before the next tool call executes.',
+      },
+    ],
+    relatedPaths: ['/compare/mem0', '/guides/pre-action-gates'],
+  },
+  {
+    query: 'thumbgate vs mem0',
+    path: '/compare/mem0',
+    pageType: 'comparison',
+    pillar: 'comparison',
+    title: 'ThumbGate vs Mem0 | Enforcement vs Memory for AI Agents',
+    heroTitle: 'ThumbGate vs Mem0',
+    heroSummary: 'Mem0 is memory. ThumbGate is memory plus enforcement. It captures thumbs-up/down feedback, promotes the signal into rules, and blocks repeat failures with pre-action gates.',
+    takeaways: [
+      'Mem0 is useful when you mainly need retrieval and cross-session context.',
+      'ThumbGate is useful when retrieval alone is not enough and the system has to stop the same mistake before execution.',
+      'ThumbGate adds proof assets and automation reports so the buying story is stronger for engineering teams.',
+    ],
+    sections: [
+      {
+        heading: 'Where Mem0 fits',
+        paragraphs: [
+          'Mem0 is designed as a cloud memory layer. It helps the model remember context and past interactions, but memory alone does not guarantee that the next action is safe.',
+        ],
+      },
+      {
+        heading: 'Where ThumbGate fits',
+        paragraphs: [
+          'ThumbGate begins with the same need to remember, but it goes further. A thumbs down can become a prevention rule, and that rule can become a pre-action gate that blocks a repeated tool call.',
+        ],
+        bullets: [
+          'Thumbs up reinforces good behavior.',
+          'Thumbs down blocks repeated mistakes.',
+          'Verification evidence and automation reports back up the reliability claim.',
+        ],
+      },
+      {
+        heading: 'Which page should rank',
+        paragraphs: [
+          'This comparison page should win when the searcher is already deciding between a memory system and an enforcement system. The goal is to make the distinction obvious in under 30 seconds.',
+        ],
+      },
+    ],
+    faq: [
+      {
+        question: 'Does ThumbGate still include memory?',
+        answer: 'Yes. ThumbGate keeps local-first memory, ContextFS packs, lesson search, and recall, but adds pre-action enforcement when memory alone is insufficient.',
+      },
+      {
+        question: 'Why compare Mem0 at all?',
+        answer: 'Because buyers often start with memory tooling and only later realize they also need enforcement. This page makes that upgrade path explicit.',
+      },
+    ],
+    relatedPaths: ['/compare/speclock', '/guides/claude-code-feedback'],
+  },
+  {
+    query: 'pre-action gates for ai coding agents',
+    path: '/guides/pre-action-gates',
+    pageType: 'guide',
+    pillar: 'pre-action-gates',
+    title: 'Pre-Action Gates for AI Coding Agents | ThumbGate Guide',
+    heroTitle: 'What Are Pre-Action Gates?',
+    heroSummary: 'Pre-action gates stop the risky move before the agent executes it. ThumbGate uses thumbs-up/down feedback to decide what should be reinforced, warned, or blocked.',
+    takeaways: [
+      'Prompt rules are advisory. Pre-action gates are enforcement.',
+      'A repeated thumbs down can become a warning gate or a hard block.',
+      'The right proof asset is not the rule text alone but the evidence that the gate fired before damage.',
+    ],
+    sections: [
+      {
+        heading: 'Why this matters',
+        paragraphs: [
+          'Most AI coding failures are not mysterious. They are repeated mistakes: force-pushes, destructive scripts, missed verification steps, or breaking architectural constraints.',
+          'A pre-action gate turns that failure pattern into a runtime checkpoint. The agent sees the stop before the bad action lands.',
+        ],
+      },
+      {
+        heading: 'How ThumbGate makes the loop useful',
+        bullets: [
+          'Capture structured thumbs-up/down feedback.',
+          'Promote repeated failures into prevention rules.',
+          'Score and enforce the rules with Thompson Sampling and pre-action hooks.',
+          'Publish verification evidence so the system is auditable.',
+        ],
+      },
+      {
+        heading: 'Best next step',
+        paragraphs: [
+          'If a buyer is exploring the category, this page should move them to either a comparison page or the main product proof pack.',
+        ],
+      },
+    ],
+    faq: [
+      {
+        question: 'How are pre-action gates different from prompt rules?',
+        answer: 'Prompt rules ask the model nicely. Pre-action gates intercept the tool call and block it before execution when the known-bad pattern matches.',
+      },
+      {
+        question: 'Can a thumbs up matter too?',
+        answer: 'Yes. ThumbGate explicitly uses thumbs up to reinforce successful behavior so the system is not only punitive.',
+      },
+    ],
+    relatedPaths: ['/compare/speclock', '/guides/claude-code-feedback'],
+  },
+  {
+    query: 'claude code feedback memory',
+    path: '/guides/claude-code-feedback',
+    pageType: 'integration',
+    pillar: 'agent-workflows',
+    title: 'Claude Code Feedback Memory with Thumbs Up and Thumbs Down',
+    heroTitle: 'Claude Code Feedback Memory That Actually Enforces',
+    heroSummary: 'Claude Code can remember more when the memory is structured, but reliability improves when thumbs-up/down feedback also becomes enforceable behavior. That is ThumbGate\'s angle.',
+    takeaways: [
+      'Claude Code users usually feel the pain as repeated mistakes across sessions.',
+      'ThumbGate captures the thumbs-up/down signal and turns it into memory, rules, and gates.',
+      'The page should convert Claude Code searchers into a product trial or a comparison-page reader.',
+    ],
+    sections: [
+      {
+        heading: 'The Claude Code problem',
+        paragraphs: [
+          'Claude Code is strongest when the context is fresh, but teams still hit repeated mistakes, compaction drift, and re-explaining constraints. A memory file alone helps, but it does not physically stop the next bad move.',
+        ],
+      },
+      {
+        heading: 'The ThumbGate angle',
+        bullets: [
+          'Thumbs up reinforces good behavior.',
+          'Thumbs down becomes a prevention rule.',
+          'Pre-action gates stop the repeated mistake before the next command executes.',
+          'The same flow works across Cursor, Codex, Gemini, Amp, and OpenCode.',
+        ],
+      },
+      {
+        heading: 'What to show on this page',
+        paragraphs: [
+          'Compatibility proof, install speed, and verification evidence matter more than generic "memory" copy. The buyer should leave knowing that ThumbGate is the enforcement layer for Claude Code, not just another notebook of past context.',
+        ],
+      },
+    ],
+    faq: [
+      {
+        question: 'Does this only work with Claude Code?',
+        answer: 'No. Claude Code is a strong entry point, but the same thumbs-up/down feedback loop and pre-action gates work across other MCP-compatible coding agents too.',
+      },
+      {
+        question: 'Why mention thumbs up as well as thumbs down?',
+        answer: 'Because reinforcement matters. Good behavior should become easier to repeat, not only bad behavior harder to repeat.',
+      },
+    ],
+    relatedPaths: ['/guides/pre-action-gates', '/compare/mem0'],
+  },
+];
+
+function normalizeText(value) {
+  return String(value || '').replace(/\s+/g, ' ').trim();
+}
+
+function slugify(value) {
+  return normalizeText(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function toNumber(value) {
+  if (value === undefined || value === null || value === '') return null;
+  const num = Number(value);
+  return Number.isFinite(num) ? num : null;
+}
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function parseCsvLine(line) {
+  const cells = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    const next = line[i + 1];
+    if (char === '"' && inQuotes && next === '"') {
+      current += '"';
+      i++;
+      continue;
+    }
+    if (char === '"') {
+      inQuotes = !inQuotes;
+      continue;
+    }
+    if (char === ',' && !inQuotes) {
+      cells.push(current);
+      current = '';
+      continue;
+    }
+    current += char;
+  }
+  cells.push(current);
+  return cells.map((cell) => cell.trim());
+}
+
+function parseCsv(text) {
+  const lines = String(text || '')
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  if (lines.length === 0) return [];
+  const headers = parseCsvLine(lines[0]).map((header) => slugify(header).replace(/-/g, '_'));
+  return lines.slice(1).map((line) => {
+    const values = parseCsvLine(line);
+    return Object.fromEntries(headers.map((header, index) => [header, values[index] || '']));
+  });
+}
+
+function loadKeywordRows(inputPath) {
+  if (!inputPath) {
+    return HIGH_ROI_QUERY_SEEDS.map((row) => ({ ...row }));
+  }
+  const resolved = path.resolve(inputPath);
+  const raw = fs.readFileSync(resolved, 'utf8');
+  if (resolved.endsWith('.json')) {
+    const data = JSON.parse(raw);
+    return Array.isArray(data) ? data : data.rows || [];
+  }
+  if (resolved.endsWith('.jsonl')) {
+    return raw
+      .split(/\r?\n/)
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+  }
+  if (resolved.endsWith('.csv')) {
+    return parseCsv(raw);
+  }
+  throw new Error(`Unsupported keyword input format for ${resolved}`);
+}
+
+function classifyIntent(query) {
+  const normalized = normalizeText(query).toLowerCase();
+  if (!normalized) return 'informational';
+  if (/\b(vs|versus|alternative|compare|comparison|better than)\b/.test(normalized)) return 'comparison';
+  if (/\b(price|pricing|buy|checkout|purchase|cost)\b/.test(normalized)) return 'transactional';
+  if (/\b(claude code|cursor|codex|gemini|amp|opencode|integration|plugin|setup|install)\b/.test(normalized)) {
+    return 'commercial';
+  }
+  if (/\b(what is|how to|guide|best practices|why)\b/.test(normalized)) return 'informational';
+  if (/\b(guardrails|pre-action gates|feedback|prevent repeated mistakes|memory)\b/.test(normalized)) {
+    return 'commercial';
+  }
+  return 'informational';
+}
+
+function inferPillar(query) {
+  const normalized = normalizeText(query).toLowerCase();
+  if (/\b(speclock|mem0|alternative|vs|compare|comparison)\b/.test(normalized)) return 'comparison';
+  if (/\b(thumbs up|thumbs down|feedback|reinforce|mistake)\b/.test(normalized)) return 'feedback-loop';
+  if (/\b(pre-action gates|guardrails|block|prevent repeated mistakes)\b/.test(normalized)) return 'pre-action-gates';
+  if (/\b(claude code|cursor|codex|gemini|amp|opencode|integration|plugin)\b/.test(normalized)) return 'agent-workflows';
+  return 'ai-agent-reliability';
+}
+
+function inferPersona(query) {
+  const normalized = normalizeText(query).toLowerCase();
+  if (normalized.includes('claude code')) return 'claude-code-builder';
+  if (normalized.includes('cursor')) return 'cursor-builder';
+  if (/\b(vs|alternative|compare)\b/.test(normalized)) return 'tool-evaluator';
+  if (/\b(guardrails|pre-action gates)\b/.test(normalized)) return 'engineering-lead';
+  return 'ai-engineer';
+}
+
+function inferPageType(intent, query) {
+  const normalized = normalizeText(query).toLowerCase();
+  if (intent === 'comparison') return 'comparison';
+  if (/\b(claude code|cursor|codex|gemini|amp|opencode|integration|plugin)\b/.test(normalized)) return 'integration';
+  if (/\b(guide|how to|what is|best practices)\b/.test(normalized)) return 'guide';
+  return intent === 'transactional' ? 'money-page' : 'guide';
+}
+
+function scoreOpportunity(row) {
+  const query = normalizeText(row.query);
+  const intent = row.intent || classifyIntent(query);
+  const pillar = row.pillar || inferPillar(query);
+  const pageType = row.pageType || inferPageType(intent, query);
+  let score = 0;
+
+  const intentWeight = {
+    comparison: 40,
+    transactional: 38,
+    commercial: 32,
+    informational: 24,
+  };
+  const pageTypeWeight = {
+    comparison: 20,
+    integration: 16,
+    'money-page': 18,
+    guide: 14,
+  };
+  const pillarWeight = {
+    comparison: 14,
+    'pre-action-gates': 12,
+    'feedback-loop': 12,
+    'agent-workflows': 11,
+    'ai-agent-reliability': 9,
+  };
+
+  score += intentWeight[intent] || 20;
+  score += pageTypeWeight[pageType] || 12;
+  score += pillarWeight[pillar] || 8;
+  score += clamp(toNumber(row.businessValue) || 0, 0, 25);
+
+  const impressions = toNumber(row.impressions);
+  const clicks = toNumber(row.clicks);
+  const ctr = toNumber(row.ctr);
+  const position = toNumber(row.position);
+
+  if (impressions !== null) score += clamp(impressions / 20, 0, 10);
+  if (clicks !== null) score += clamp(clicks, 0, 10);
+  if (ctr !== null) score += clamp(ctr * 100, 0, 6);
+  if (position !== null) {
+    if (position >= 4 && position <= 25) score += 6;
+    else if (position > 25) score += 3;
+  }
+
+  if (/\bthumbgate\b/.test(query.toLowerCase())) score += 4;
+  if (/\b(claude code|cursor|codex|gemini|amp|opencode)\b/.test(query.toLowerCase())) score += 4;
+
+  return clamp(Number(score.toFixed(2)), 0, 100);
+}
+
+function normalizeKeywordRow(row, index = 0) {
+  const query = normalizeText(row.query || row.keyword || row.term || row.topic);
+  if (!query) {
+    throw new Error(`Keyword row ${index + 1} is missing query/keyword/term/topic`);
+  }
+
+  const normalized = {
+    id: row.id || `kw_${index + 1}_${slugify(query)}`,
+    query,
+    source: normalizeText(row.source) || 'input',
+    notes: normalizeText(row.notes) || null,
+    impressions: toNumber(row.impressions),
+    clicks: toNumber(row.clicks),
+    ctr: toNumber(row.ctr),
+    position: toNumber(row.position),
+    businessValue: toNumber(row.businessValue) || 0,
+  };
+
+  normalized.intent = classifyIntent(normalized.query);
+  normalized.pillar = inferPillar(normalized.query);
+  normalized.persona = inferPersona(normalized.query);
+  normalized.pageType = inferPageType(normalized.intent, normalized.query);
+  normalized.opportunityScore = scoreOpportunity(normalized);
+  return normalized;
+}
+
+function clusterKeywordRows(rows) {
+  const clusters = new Map();
+
+  for (const row of rows) {
+    const key = row.pillar;
+    if (!clusters.has(key)) {
+      clusters.set(key, {
+        pillar: key,
+        pageType: row.pageType,
+        queries: [],
+        totalOpportunityScore: 0,
+        primaryQuery: null,
+        personas: new Set(),
+        intents: new Set(),
+      });
+    }
+    const cluster = clusters.get(key);
+    cluster.queries.push(row);
+    cluster.totalOpportunityScore += row.opportunityScore;
+    cluster.personas.add(row.persona);
+    cluster.intents.add(row.intent);
+    if (!cluster.primaryQuery || row.opportunityScore > cluster.primaryQuery.opportunityScore) {
+      cluster.primaryQuery = row;
+      cluster.pageType = row.pageType;
+    }
+  }
+
+  return [...clusters.values()]
+    .map((cluster) => ({
+      ...cluster,
+      personas: [...cluster.personas].sort(),
+      intents: [...cluster.intents].sort(),
+      totalOpportunityScore: Number(cluster.totalOpportunityScore.toFixed(2)),
+      queries: [...cluster.queries].sort((a, b) => b.opportunityScore - a.opportunityScore),
+    }))
+    .sort((a, b) => b.totalOpportunityScore - a.totalOpportunityScore);
+}
+
+function trimMetaDescription(value, max = 160) {
+  const text = normalizeText(value);
+  if (text.length <= max) return text;
+  return `${text.slice(0, max - 3).trim()}...`;
+}
+
+function createPageSpec(blueprint, row) {
+  const keywordCluster = clusterKeywordRows(
+    HIGH_ROI_QUERY_SEEDS.map((seed, index) => normalizeKeywordRow(seed, index))
+  ).find((cluster) => cluster.pillar === blueprint.pillar);
+  const description = trimMetaDescription(blueprint.heroSummary);
+  const relatedPages = blueprint.relatedPaths.map((relatedPath) => {
+    const related = PAGE_BLUEPRINTS.find((candidate) => candidate.path === relatedPath);
+    return {
+      path: relatedPath,
+      title: related ? related.heroTitle : relatedPath,
+    };
+  });
+
+  return {
+    path: blueprint.path,
+    slug: blueprint.path.split('/').filter(Boolean).join('-'),
+    query: row.query,
+    pillar: row.pillar,
+    intent: row.intent,
+    pageType: blueprint.pageType,
+    persona: row.persona,
+    opportunityScore: row.opportunityScore,
+    title: blueprint.title,
+    description,
+    heroTitle: blueprint.heroTitle,
+    heroSummary: blueprint.heroSummary,
+    takeaways: blueprint.takeaways,
+    sections: blueprint.sections,
+    faq: blueprint.faq,
+    relatedPages,
+    cta: {
+      label: 'Review verification evidence',
+      href: PRODUCT.verificationUrl,
+    },
+    proofLinks: [
+      { label: 'Verification evidence', href: PRODUCT.verificationUrl },
+      { label: 'Automation proof', href: PRODUCT.automationUrl },
+      { label: 'GitHub repository', href: PRODUCT.repoUrl },
+    ],
+    changefreq: blueprint.pageType === 'comparison' ? 'weekly' : 'monthly',
+    priority: blueprint.pageType === 'comparison' ? '0.9' : '0.8',
+    keywordCluster: keywordCluster ? keywordCluster.queries.slice(0, 4).map((item) => item.query) : [row.query],
+    imageAlt: `${PRODUCT.name} guide for ${blueprint.heroTitle}`,
+  };
+}
+
+function buildThumbGateSeoPlan(rawRows = HIGH_ROI_QUERY_SEEDS) {
+  const capture = rawRows.map((row, index) => normalizeKeywordRow(row, index));
+  const clusters = clusterKeywordRows(capture);
+  const rowsByQuery = new Map(capture.map((row) => [row.query.toLowerCase(), row]));
+  const pages = PAGE_BLUEPRINTS.map((blueprint) => {
+    const row = rowsByQuery.get(blueprint.query.toLowerCase()) || normalizeKeywordRow({
+      query: blueprint.query,
+      businessValue: 90,
+      source: 'blueprint',
+    });
+    return createPageSpec(blueprint, row);
+  }).sort((a, b) => b.opportunityScore - a.opportunityScore);
+
+  const briefs = pages.map((page, index) => ({
+    priority: index + 1,
+    path: page.path,
+    title: page.title,
+    primaryQuery: page.query,
+    persona: page.persona,
+    pageType: page.pageType,
+    opportunityScore: page.opportunityScore,
+    cta: page.cta,
+    keywordCluster: page.keywordCluster,
+    summary: page.heroSummary,
+  }));
+
+  return {
+    framework: 'GSD',
+    capture: {
+      keywordRows: capture,
+      totalKeywords: capture.length,
+    },
+    clarify: {
+      intents: capture.reduce((acc, row) => {
+        acc[row.intent] = (acc[row.intent] || 0) + 1;
+        return acc;
+      }, {}),
+      personas: capture.reduce((acc, row) => {
+        acc[row.persona] = (acc[row.persona] || 0) + 1;
+        return acc;
+      }, {}),
+      pageTypes: capture.reduce((acc, row) => {
+        acc[row.pageType] = (acc[row.pageType] || 0) + 1;
+        return acc;
+      }, {}),
+    },
+    organize: {
+      clusters,
+      topClusters: clusters.slice(0, 4),
+    },
+    execute: {
+      briefs,
+      pages,
+    },
+    review: {
+      topOpportunityQuery: capture.slice().sort((a, b) => b.opportunityScore - a.opportunityScore)[0],
+      recommendedOrder: briefs.map((brief) => brief.path),
+      proofAssets: PRODUCT.proofPoints,
+    },
+  };
+}
+
+function renderPlanMarkdown(plan) {
+  const lines = [
+    '# ThumbGate SEO/GEO GSD Plan',
+    '',
+    `Framework: ${plan.framework}`,
+    '',
+    '## Capture',
+    '',
+    `- Total keyword rows: ${plan.capture.totalKeywords}`,
+    ...plan.capture.keywordRows.map((row) => `- ${row.query} | intent=${row.intent} | pillar=${row.pillar} | score=${row.opportunityScore}`),
+    '',
+    '## Clarify',
+    '',
+    `- Intents: ${Object.entries(plan.clarify.intents).map(([key, value]) => `${key}=${value}`).join(', ')}`,
+    `- Personas: ${Object.entries(plan.clarify.personas).map(([key, value]) => `${key}=${value}`).join(', ')}`,
+    `- Page types: ${Object.entries(plan.clarify.pageTypes).map(([key, value]) => `${key}=${value}`).join(', ')}`,
+    '',
+    '## Organize',
+    '',
+    ...plan.organize.topClusters.map((cluster) => `- ${cluster.pillar}: ${cluster.primaryQuery.query} (${cluster.totalOpportunityScore})`),
+    '',
+    '## Execute',
+    '',
+    ...plan.execute.briefs.map((brief) => (
+      `### ${brief.priority}. ${brief.title}\n\n- Path: ${brief.path}\n- Primary query: ${brief.primaryQuery}\n- Persona: ${brief.persona}\n- Page type: ${brief.pageType}\n- Opportunity score: ${brief.opportunityScore}\n- CTA: ${brief.cta.label}\n- Summary: ${brief.summary}`
+    )),
+    '',
+    '## Review',
+    '',
+    `- Top opportunity query: ${plan.review.topOpportunityQuery.query}`,
+    `- Recommended publish order: ${plan.review.recommendedOrder.join(', ')}`,
+    `- Proof assets: ${plan.review.proofAssets.join(', ')}`,
+    '',
+  ];
+  return lines.join('\n');
+}
+
+function writePlanOutputs(plan, outputDir = DEFAULT_OUTPUT_DIR) {
+  fs.mkdirSync(outputDir, { recursive: true });
+  const files = {
+    capture: path.join(outputDir, '01-capture.json'),
+    clarify: path.join(outputDir, '02-clarify.json'),
+    organize: path.join(outputDir, '03-organize.json'),
+    execute: path.join(outputDir, '04-execute-briefs.md'),
+    review: path.join(outputDir, '05-review.json'),
+    pages: path.join(outputDir, '06-page-specs.json'),
+  };
+
+  fs.writeFileSync(files.capture, `${JSON.stringify(plan.capture, null, 2)}\n`);
+  fs.writeFileSync(files.clarify, `${JSON.stringify(plan.clarify, null, 2)}\n`);
+  fs.writeFileSync(files.organize, `${JSON.stringify(plan.organize, null, 2)}\n`);
+  fs.writeFileSync(files.execute, `${renderPlanMarkdown(plan)}\n`);
+  fs.writeFileSync(files.review, `${JSON.stringify(plan.review, null, 2)}\n`);
+  fs.writeFileSync(files.pages, `${JSON.stringify(plan.execute.pages, null, 2)}\n`);
+  return files;
+}
+
+function renderFaqJsonLd(page) {
+  if (!Array.isArray(page.faq) || page.faq.length === 0) return '';
+  return JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: page.faq.map((item) => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.answer,
+      },
+    })),
+  }, null, 2);
+}
+
+function renderWebPageJsonLd(page, runtimeConfig) {
+  return JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'TechArticle',
+    headline: page.heroTitle,
+    description: page.description,
+    about: page.keywordCluster,
+    url: `${runtimeConfig.appOrigin}${page.path}`,
+    publisher: {
+      '@type': 'Organization',
+      name: PRODUCT.name,
+      url: runtimeConfig.appOrigin,
+    },
+    mainEntityOfPage: `${runtimeConfig.appOrigin}${page.path}`,
+  }, null, 2);
+}
+
+function renderSeoPageHtml(page, runtimeConfig = {}) {
+  const appOrigin = normalizeText(runtimeConfig.appOrigin) || PRODUCT.homepageUrl;
+  const canonicalUrl = `${appOrigin}${page.path}`;
+  const relatedCards = page.relatedPages.map((related) => `
+        <a class="related-card" href="${escapeHtml(related.path)}">
+          <span class="related-label">Related page</span>
+          <strong>${escapeHtml(related.title)}</strong>
+        </a>`).join('');
+  const takeaways = page.takeaways.map((item) => `<li>${escapeHtml(item)}</li>`).join('');
+  const sections = page.sections.map((section) => `
+      <section class="detail-section">
+        <h2>${escapeHtml(section.heading)}</h2>
+        ${(section.paragraphs || []).map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join('')}
+        ${(section.bullets && section.bullets.length) ? `<ul>${section.bullets.map((bullet) => `<li>${escapeHtml(bullet)}</li>`).join('')}</ul>` : ''}
+      </section>`).join('');
+  const faq = page.faq.map((item) => `
+      <details class="faq-item">
+        <summary>${escapeHtml(item.question)}</summary>
+        <p>${escapeHtml(item.answer)}</p>
+      </details>`).join('');
+  const proofLinks = page.proofLinks.map((link) => `<a href="${escapeHtml(link.href)}" target="_blank" rel="noopener">${escapeHtml(link.label)}</a>`).join('');
+  const faqJsonLd = renderFaqJsonLd(page);
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${escapeHtml(page.title)}</title>
+  <meta name="description" content="${escapeHtml(page.description)}" />
+  <meta property="og:title" content="${escapeHtml(page.title)}" />
+  <meta property="og:description" content="${escapeHtml(page.description)}" />
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="${escapeHtml(canonicalUrl)}" />
+  <link rel="canonical" href="${escapeHtml(canonicalUrl)}" />
+  <style>
+    :root {
+      --bg: #0a0a0b;
+      --bg-raised: #111113;
+      --bg-card: #161618;
+      --line: #222225;
+      --text: #e8e8ec;
+      --muted: #8b8b96;
+      --cyan: #22d3ee;
+      --green: #4ade80;
+      --red: #f87171;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+    }
+    a { color: var(--cyan); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .container { max-width: 980px; margin: 0 auto; padding: 0 24px; }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(12px);
+      background: rgba(10, 10, 11, 0.88);
+      border-bottom: 1px solid var(--line);
+    }
+    .topbar .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 14px;
+      padding-bottom: 14px;
+    }
+    .brand {
+      font-weight: 700;
+      color: var(--text);
+    }
+    .hero { padding: 72px 0 32px; }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(34, 211, 238, 0.22);
+      background: rgba(34, 211, 238, 0.1);
+      color: var(--cyan);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    h1 {
+      font-size: clamp(34px, 5vw, 56px);
+      line-height: 1.06;
+      letter-spacing: -0.04em;
+      margin: 16px 0;
+      max-width: 760px;
+    }
+    .hero p {
+      max-width: 720px;
+      color: var(--muted);
+      font-size: 18px;
+    }
+    .signal-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin: 28px 0 0;
+    }
+    .signal-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: var(--bg-raised);
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .signal-pill.up {
+      border-color: rgba(74, 222, 128, 0.28);
+      color: #b8f7c8;
+      background: rgba(74, 222, 128, 0.1);
+    }
+    .signal-pill.down {
+      border-color: rgba(248, 113, 113, 0.28);
+      color: #ffc0c0;
+      background: rgba(248, 113, 113, 0.1);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+      gap: 24px;
+      padding-bottom: 72px;
+    }
+    .card, .detail-section, .sidebar-card {
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+    }
+    .card { padding: 24px; }
+    .detail-section { padding: 24px; margin-bottom: 18px; }
+    .detail-section h2 { margin: 0 0 12px; font-size: 24px; letter-spacing: -0.03em; }
+    .detail-section p { color: var(--muted); }
+    .detail-section ul, .card ul { padding-left: 18px; color: var(--muted); }
+    .card h2 { margin-top: 0; }
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .sidebar-card {
+      padding: 20px;
+      position: sticky;
+      top: 84px;
+    }
+    .proof-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .cta-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 18px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      background: var(--cyan);
+      color: #071116;
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .faq-item {
+      border-top: 1px solid var(--line);
+      padding: 14px 0;
+    }
+    .faq-item summary {
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .faq-item p {
+      color: var(--muted);
+    }
+    .related-card {
+      display: block;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--bg-raised);
+      margin-top: 12px;
+      color: var(--text);
+    }
+    .related-label {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 4px;
+    }
+    @media (max-width: 860px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+      .sidebar-card {
+        position: static;
+      }
+    }
+  </style>
+  <script type="application/ld+json">
+${renderWebPageJsonLd(page, { appOrigin })}
+  </script>
+  ${faqJsonLd ? `<script type="application/ld+json">\n${faqJsonLd}\n  </script>` : ''}
+</head>
+<body>
+  <div class="topbar">
+    <div class="container">
+      <a class="brand" href="/">👍👎 ThumbGate</a>
+      <a href="${escapeHtml(PRODUCT.verificationUrl)}" target="_blank" rel="noopener">Verification evidence</a>
+    </div>
+  </div>
+
+  <main class="container">
+    <section class="hero">
+      <div class="eyebrow">${escapeHtml(page.pageType)} | ${escapeHtml(page.query)}</div>
+      <h1>${escapeHtml(page.heroTitle)}</h1>
+      <p>${escapeHtml(page.heroSummary)}</p>
+      <div class="signal-row">
+        <div class="signal-pill up">👍 Thumbs up reinforces good behavior</div>
+        <div class="signal-pill down">👎 Thumbs down blocks repeated mistakes</div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div>
+        <div class="card">
+          <h2>Why this page exists</h2>
+          <ul>${takeaways}</ul>
+        </div>
+        ${sections}
+        <div class="detail-section">
+          <h2>FAQ</h2>
+          ${faq}
+        </div>
+      </div>
+
+      <aside class="sidebar">
+        <div class="sidebar-card">
+          <h2>GSD execution brief</h2>
+          <p>This page was prioritized because it captures high-intent demand around ${escapeHtml(page.query)} and feeds directly into ThumbGate's proof-led conversion path.</p>
+          <p><strong>Opportunity score:</strong> ${page.opportunityScore}</p>
+          <p><strong>Primary persona:</strong> ${escapeHtml(page.persona)}</p>
+          <p><strong>Keyword cluster:</strong> ${escapeHtml(page.keywordCluster.join(', '))}</p>
+          <div class="proof-links">${proofLinks}</div>
+          <a class="cta-button" href="${escapeHtml(page.cta.href)}" target="_blank" rel="noopener">${escapeHtml(page.cta.label)}</a>
+        </div>
+        <div class="sidebar-card">
+          <h2>Related pages</h2>
+          ${relatedCards}
+        </div>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>`;
+}
+
+const THUMBGATE_SEO_PLAN = buildThumbGateSeoPlan(HIGH_ROI_QUERY_SEEDS);
+const THUMBGATE_SEO_PAGE_SPECS = THUMBGATE_SEO_PLAN.execute.pages;
+const THUMBGATE_SEO_SITEMAP_ENTRIES = THUMBGATE_SEO_PAGE_SPECS.map((page) => ({
+  path: page.path,
+  changefreq: page.changefreq,
+  priority: page.priority,
+}));
+
+function findSeoPageByPath(pathname) {
+  return THUMBGATE_SEO_PAGE_SPECS.find((page) => page.path === pathname) || null;
+}
+
+function parseArgs(argv) {
+  const args = { command: 'full', write: false, input: null, outDir: DEFAULT_OUTPUT_DIR };
+  const tokens = argv.slice(2);
+  for (const token of tokens) {
+    if (token === 'plan' || token === 'full') {
+      args.command = token;
+      continue;
+    }
+    if (token === '--write') {
+      args.write = true;
+      continue;
+    }
+    if (token.startsWith('--input=')) {
+      args.input = token.slice('--input='.length);
+      continue;
+    }
+    if (token.startsWith('--out-dir=')) {
+      args.outDir = path.resolve(token.slice('--out-dir='.length));
+      continue;
+    }
+  }
+  return args;
+}
+
+async function main() {
+  const args = parseArgs(process.argv);
+  const rows = args.input ? loadKeywordRows(args.input) : HIGH_ROI_QUERY_SEEDS;
+  const plan = buildThumbGateSeoPlan(rows);
+
+  if (args.write) {
+    const files = writePlanOutputs(plan, args.outDir);
+    console.log(`Wrote SEO GSD outputs to ${args.outDir}`);
+    for (const filePath of Object.values(files)) {
+      console.log(`  - ${path.relative(ROOT, filePath)}`);
+    }
+  }
+
+  if (args.command === 'plan' || args.command === 'full') {
+    console.log(renderPlanMarkdown(plan));
+  }
+}
+
+if (require.main === module) {
+  main().catch((error) => {
+    console.error(error.message || String(error));
+    process.exit(1);
+  });
+}
+
+module.exports = {
+  DEFAULT_OUTPUT_DIR,
+  HIGH_ROI_QUERY_SEEDS,
+  PAGE_BLUEPRINTS,
+  PRODUCT,
+  THUMBGATE_SEO_PLAN,
+  THUMBGATE_SEO_PAGE_SPECS,
+  THUMBGATE_SEO_SITEMAP_ENTRIES,
+  buildThumbGateSeoPlan,
+  classifyIntent,
+  clusterKeywordRows,
+  createPageSpec,
+  findSeoPageByPath,
+  inferPageType,
+  inferPersona,
+  inferPillar,
+  loadKeywordRows,
+  normalizeKeywordRow,
+  parseCsv,
+  renderPlanMarkdown,
+  renderSeoPageHtml,
+  scoreOpportunity,
+  writePlanOutputs,
+};
