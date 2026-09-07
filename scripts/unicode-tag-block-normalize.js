@@ -279,14 +279,16 @@ function missingDecideReport() {
 async function main(argv = process.argv.slice(2)) {
   const options = parseArgs(argv);
   let report;
-  if (options.decideRequested) {
+  if (options.claimLive) {
+    report = evaluateCheckout({ root: options.root, claimLive: true });
+  } else if (options.decideRequested) {
     if (!String(options.decide || '').trim()) {
       report = missingDecideReport();
     } else {
       report = evaluateText(JSON.parse(options.decide));
     }
   } else {
-    report = evaluateCheckout({ root: options.root, claimLive: options.claimLive });
+    report = evaluateCheckout({ root: options.root, claimLive: false });
   }
   if (options.json) process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
   else process.stdout.write(formatText(report));

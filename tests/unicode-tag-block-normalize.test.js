@@ -127,6 +127,19 @@ test('CLI --decide without payload exits 2', () => {
   assert.match(cli.stdout, /missing_decide_payload/);
 });
 
+test('CLI --claim-live before --decide denies even on a clean payload', () => {
+  const cli = spawnSync(process.execPath, [
+    path.join(__dirname, '..', 'scripts', 'unicode-tag-block-normalize.js'),
+    '--claim-live',
+    '--decide',
+    JSON.stringify({ text: 'hello' }),
+  ], { encoding: 'utf8' });
+  assert.equal(cli.status, 2, cli.stderr + cli.stdout);
+  assert.match(cli.stdout, /decision=deny/);
+  assert.match(cli.stdout, /Refused: this doctor cannot become Microsoft Defender/);
+  assert.doesNotMatch(cli.stdout, /decision=allow/);
+});
+
 test('CLI --decide= empty payload exits 2', () => {
   const cli = spawnSync(process.execPath, [
     path.join(__dirname, '..', 'scripts', 'unicode-tag-block-normalize.js'),

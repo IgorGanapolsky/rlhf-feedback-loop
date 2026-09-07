@@ -20,7 +20,7 @@ We are not Microsoft Defender. 2.37 million messages is their count.
 - missing text → `text_inventory_unavailable`
 - `modelSaidSafe` → `model_cannot_grant_authority`
 - empty `--decide` → `missing_decide_payload`
-- `--claim-live` → deny
+- `--claim-live` → deny (including when combined with `--decide`)
 
 ## Out of scope (ECI)
 
