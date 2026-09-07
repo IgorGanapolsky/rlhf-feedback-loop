@@ -61,6 +61,14 @@ test('POST to the pulls collection is still a PR create', () => {
   assert.equal(result.decision, 'deny');
 });
 
+test('POST create is not bypassed by a /pulls/N string in a field value', () => {
+  const command = 'gh api repos/IgorGanapolsky/ThumbGate/pulls -X POST -f title=/pulls/3702';
+  assert.equal(isGhApiPrCreateCommand(command), true);
+  const result = evaluateGates('Bash', { command });
+  assert.ok(result);
+  assert.equal(result.gate, 'gh-api-pr-create-restricted');
+});
+
 test('ls config/gates does not trip permission-change-approval on the word policy', () => {
   const result = evaluateGates('Bash', { command: 'ls config/gates/' });
   assert.equal(result, null, result && result.gate);

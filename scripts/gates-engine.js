@@ -351,14 +351,35 @@ function ghApiHttpMethod(words) {
   return null;
 }
 
+function ghApiEndpoint(words) {
+  const list = Array.isArray(words) ? words : [];
+  const apiIndex = list.findIndex((word, i) => word === 'api' && list[i - 1] === 'gh');
+  if (apiIndex < 0) return null;
+  const flagsWithValue = new Set([
+    '-x', '--method', '-f', '--field', '-F', '--raw-field',
+    '-h', '--header', '--hostname', '--jq', '--input', '--cache',
+  ]);
+  for (let i = apiIndex + 1; i < list.length; i += 1) {
+    const word = list[i];
+    if (word.startsWith('-')) {
+      if (word.includes('=')) continue;
+      if (flagsWithValue.has(word)) i += 1;
+      continue;
+    }
+    return word;
+  }
+  return null;
+}
+
 function isGhApiPrCreateCommand(command) {
   const words = commandWords(command);
   if (!commandContainsSequence(words, ['gh', 'api'])) return false;
   const method = ghApiHttpMethod(words);
   if (method && method !== 'post') return false;
-  if (words.some((word) => /\/pulls\/\d+/.test(word))) return false;
-  const hasCollectionPulls = words.some((word) => word === '/pulls' || /\/pulls$/.test(word));
-  if (!hasCollectionPulls) return false;
+  const endpoint = ghApiEndpoint(words);
+  if (!endpoint) return false;
+  if (/\/pulls\/\d+/.test(endpoint)) return false;
+  if (!(endpoint === '/pulls' || /\/pulls$/.test(endpoint))) return false;
   const fieldFlags = new Set(['-f', '--field', '--raw-field']);
   const hasFieldWrite = words.some((word) => (
     fieldFlags.has(word) ||
