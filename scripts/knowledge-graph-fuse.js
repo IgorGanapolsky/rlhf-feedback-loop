@@ -285,6 +285,9 @@ function evaluateFusionAblation(input = {}) {
 }
 
 function formatText(fused, ablation) {
+  if (fused.decision === 'deny') {
+    return `knowledge-graph-fuse  decision=deny  issues=${(fused.issues || []).join(',')}\n${fused.claimBoundary}\n`;
+  }
   const lines = [
     `knowledge-graph-fuse  pipeline=${fused.pipeline}  decision=${fused.decision}`,
     `search=${fused.searchHitCount} fused=${fused.fusedIds.length} paths=${fused.paths.length} answerAllowed=${fused.answerAllowed}`,
@@ -337,17 +340,18 @@ async function main(argv = process.argv.slice(2)) {
     graph.searchHits = JSON.parse(fs.readFileSync(options.hitsPath, 'utf8'));
   }
   const fused = fuseKnowledgeGraph(graph);
+  const isDemo = !options.graphPath;
   const ablation = options.ablate
     ? evaluateFusionAblation({
       nodes: graph.nodes,
       edges: graph.edges,
       cases: asArray(graph.cases).length
         ? graph.cases
-        : Array.from({ length: 6 }, () => ({
+        : (isDemo ? Array.from({ length: 6 }, () => ({
           searchHits: graph.searchHits,
           expectedNodeIds: ['claim', 'triage'],
           expectedPathTypes: ['APPLIES_TO'],
-        })),
+        })) : []),
     })
     : null;
   if (options.json) {

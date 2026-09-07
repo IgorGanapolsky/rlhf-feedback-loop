@@ -172,15 +172,18 @@ function evaluateChecklist(input = {}) {
     missingHuman.length ? `missing_human_principal:${missingHuman.join(',')}` : 'humanPrincipalId present on registered agents',
   ));
 
+  const inventoryUnavailable = observed.length === 0;
   items.push(item(
     'shadow_ai',
     PILLARS.govern,
     'Observed adapters missing from the inventory are shadow AI',
-    shadowAgents.length === 0 ? 'pass' : 'fail',
-    shadowAgents.length
-      ? `unregistered:${shadowAgents.join(',')}`
-      : `0 shadow adapters among ${observed.length} observed`,
-    { shadowAgents, observedCount: observed.length },
+    inventoryUnavailable ? 'fail' : (shadowAgents.length === 0 ? 'pass' : 'fail'),
+    inventoryUnavailable
+      ? 'adapter inventory unavailable (0 observed directories)'
+      : shadowAgents.length
+        ? `unregistered:${shadowAgents.join(',')}`
+        : `0 shadow adapters among ${observed.length} observed`,
+    { shadowAgents, observedCount: observed.length, inventoryUnavailable },
   ));
 
   const leastPrivilege = surfaceExists(root, SURFACES.mcpAllowlists)

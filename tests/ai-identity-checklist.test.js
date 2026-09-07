@@ -105,6 +105,20 @@ test('missing owner or purpose fails closed', () => {
   assert.equal(report.items.find((row) => row.id === 'human_principal').status, 'fail');
 });
 
+test('empty adapter discovery fails closed instead of allowing', () => {
+  const root = tmpRoot([]);
+  const registryPath = writeRegistry(root, [
+    { id: 'adapter:claude', purpose: 'Claude wiring' },
+  ]);
+  const report = evaluateChecklist({ root, registryPath });
+  fs.rmSync(root, { recursive: true, force: true });
+  assert.equal(report.decision, 'deny');
+  const shadow = report.items.find((row) => row.id === 'shadow_ai');
+  assert.equal(shadow.status, 'fail');
+  assert.match(shadow.detail, /inventory unavailable/i);
+  assert.equal(shadow.inventoryUnavailable, true);
+});
+
 test('complete local inventory allows without becoming a live identity plane', () => {
   const root = tmpRoot(['claude']);
   const registryPath = writeRegistry(root, [

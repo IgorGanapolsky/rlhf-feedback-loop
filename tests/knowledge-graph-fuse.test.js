@@ -2,6 +2,8 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
@@ -134,6 +136,45 @@ test('RRF is deterministic', () => {
     reciprocalRankFusion([['a', 'b'], ['b', 'c']]).map((row) => row.id),
     reciprocalRankFusion([['a', 'b'], ['b', 'c']]).map((row) => row.id),
   );
+});
+
+test('CLI rejected caller mode exits 2 without crashing formatText', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kgf-'));
+  const graphPath = path.join(dir, 'wiki.json');
+  fs.writeFileSync(graphPath, JSON.stringify({
+    mode: 'wiki_first',
+    nodes: [{ id: 'claim' }],
+    edges: [],
+    searchHits: [{ id: 'claim' }],
+  }));
+  const cli = spawnSync(process.execPath, [
+    path.join(__dirname, '..', 'scripts', 'knowledge-graph-fuse.js'),
+    '--graph', graphPath,
+  ], { encoding: 'utf8' });
+  fs.rmSync(dir, { recursive: true, force: true });
+  assert.equal(cli.status, 2, cli.stderr + cli.stdout);
+  assert.match(cli.stdout, /decision=deny/);
+  assert.doesNotMatch(cli.stderr + cli.stdout, /TypeError/);
+});
+
+test('supplied graph without cases fail-closes ablation on insufficient golden cases', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kgf-'));
+  const graphPath = path.join(dir, 'empty-cases.json');
+  fs.writeFileSync(graphPath, JSON.stringify({
+    nodes: [{ id: 'claim' }],
+    edges: [],
+    searchHits: [{ id: 'claim' }],
+  }));
+  const cli = spawnSync(process.execPath, [
+    path.join(__dirname, '..', 'scripts', 'knowledge-graph-fuse.js'),
+    '--graph', graphPath,
+    '--ablate',
+    '--json',
+  ], { encoding: 'utf8' });
+  fs.rmSync(dir, { recursive: true, force: true });
+  assert.equal(cli.status, 2, cli.stderr + cli.stdout);
+  const payload = JSON.parse(cli.stdout);
+  assert.ok(payload.ablation.issues.includes('insufficient_golden_cases'));
 });
 
 test('CLI demo declines to settle the seeded contradiction and does not claim Azure', () => {
