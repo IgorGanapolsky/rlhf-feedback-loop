@@ -194,25 +194,55 @@ function formatText(report) {
 }
 
 function parseArgs(argv) {
-  const options = { json: false, root: DEFAULT_ROOT, claimLive: false, decide: null };
+  const options = {
+    json: false,
+    root: DEFAULT_ROOT,
+    claimLive: false,
+    decide: null,
+    decideRequested: false,
+  };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === '--json') options.json = true;
     else if (arg === '--claim-live') options.claimLive = true;
     else if (arg === '--root') options.root = argv[++i];
     else if (arg.startsWith('--root=')) options.root = arg.slice('--root='.length);
-    else if (arg === '--decide') options.decide = argv[++i];
-    else if (arg.startsWith('--decide=')) options.decide = arg.slice('--decide='.length);
+    else if (arg === '--decide') {
+      options.decideRequested = true;
+      options.decide = argv[++i];
+    } else if (arg.startsWith('--decide=')) {
+      options.decideRequested = true;
+      options.decide = arg.slice('--decide='.length);
+    }
   }
   return options;
+}
+
+function missingDecideReport() {
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    decision: 'deny',
+    issues: ['missing_decide_payload'],
+    identity: null,
+    declaredIntent: null,
+    tool: null,
+    resource: null,
+    redirectGateway: false,
+    weAreNot: evaluateIntentScope().weAreNot,
+    claimBoundary: 'Empty --decide payload is not a checkout. Fail closed.',
+  };
 }
 
 async function main(argv = process.argv.slice(2)) {
   const options = parseArgs(argv);
   let report;
-  if (options.decide) {
-    const payload = JSON.parse(options.decide);
-    report = evaluateIntentScope(payload);
+  if (options.decideRequested) {
+    if (!String(options.decide || '').trim()) {
+      report = missingDecideReport();
+    } else {
+      const payload = JSON.parse(options.decide);
+      report = evaluateIntentScope(payload);
+    }
   } else {
     report = evaluateCheckout({ root: options.root, claimLive: options.claimLive });
   }

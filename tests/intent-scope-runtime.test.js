@@ -123,6 +123,24 @@ test('CLI --decide wiki-style missing intent exits 2', () => {
   assert.match(cli.stdout, /missing_declared_intent/);
 });
 
+test('CLI --decide without payload exits 2 (not checkout allow)', () => {
+  const cli = spawnSync(process.execPath, [
+    path.join(__dirname, '..', 'scripts', 'intent-scope-runtime.js'),
+    '--decide',
+  ], { encoding: 'utf8' });
+  assert.equal(cli.status, 2, cli.stderr + cli.stdout);
+  assert.match(cli.stdout, /missing_decide_payload/);
+});
+
+test('CLI --decide= empty payload exits 2', () => {
+  const cli = spawnSync(process.execPath, [
+    path.join(__dirname, '..', 'scripts', 'intent-scope-runtime.js'),
+    '--decide=',
+  ], { encoding: 'utf8' });
+  assert.equal(cli.status, 2, cli.stderr + cli.stdout);
+  assert.match(cli.stdout, /missing_decide_payload/);
+});
+
 test('intent-scope-runtime stays checkout-only (script_not_in_pack_ok)', () => {
   const pkg = require('../package.json');
   const files = pkg.files || [];
