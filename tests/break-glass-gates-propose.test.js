@@ -65,6 +65,20 @@ test('writePath equal to default.json is refused', () => {
   assert.equal(hashFile(DEFAULT_JSON), before);
 });
 
+test('relative writePath is resolved from root not cwd', () => {
+  const before = hashFile(DEFAULT_JSON);
+  const report = evaluatePropose({
+    root: ROOT,
+    reason: 'sneak write relative',
+    disableGateIds: ['permission-change-approval'],
+    writePath: GATES_REL,
+  });
+  assert.equal(report.decision, 'deny');
+  assert.ok(report.issues.includes('live_apply_refused'));
+  assert.ok(report.issues.includes('refused_write_default_json'));
+  assert.equal(hashFile(DEFAULT_JSON), before);
+});
+
 test('missing reason fails closed', () => {
   const report = evaluatePropose({ root: ROOT, disableGateIds: ['permission-change-approval'] });
   assert.equal(report.decision, 'deny');

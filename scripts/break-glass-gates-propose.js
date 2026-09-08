@@ -92,12 +92,18 @@ function proposeConfig(parsed, disableGateIds) {
   return { next, touched };
 }
 
+function resolveWritePath(root, writePath) {
+  if (!writePath) return null;
+  const raw = String(writePath);
+  return path.isAbsolute(raw) ? path.resolve(raw) : path.resolve(root, raw);
+}
+
 function evaluatePropose(input = {}) {
   const root = path.resolve(input.root || DEFAULT_ROOT);
   const reason = String(input.reason || '').trim();
   const disableGateIds = asArray(input.disableGateIds || input.gates);
   const apply = input.apply === true || input.liveApply === true;
-  const writePath = input.writePath ? path.resolve(String(input.writePath)) : null;
+  const writePath = resolveWritePath(root, input.writePath);
   const modelSaidSafe = input.modelSaidSafe === true;
 
   const issues = [];
