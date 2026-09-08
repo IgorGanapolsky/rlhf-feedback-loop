@@ -110,7 +110,7 @@ jobs:
 
 test('scanWorkflowText flags AWS secret literals', () => {
   const scan = scanWorkflowText(
-    'AWS_SECRET_ACCESS_KEY: wJalrXUtnFEMI/K7MDENG\n',
+    'AWS_SECRET_ACCESS_KEY: NOTAREALSECRET/0000\n',
     'aws.yml',
   );
   assert.ok(scan.findings.some((f) => f.id === 'aws_secret_literal'));
